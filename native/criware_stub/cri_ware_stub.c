@@ -456,7 +456,7 @@ EXPORT void criAtomExVoicePool_SetDefaultConfigForStandardVoicePool_Macro() { }
 EXPORT void* criAtomExVoicePool_AllocateWaveVoicePool() { return NULL; }
 EXPORT void criAtomExVoicePool_SetDefaultConfigForWaveVoicePool_Macro() { }
 EXPORT void* criAtomExVoicePool_AllocateRawPcmVoicePool() { return NULL; }
-EXPORT int32_t criWareUnity_GetVersionNumber() { return 38082304; // 2.45.26 }
+EXPORT int32_t criWareUnity_GetVersionNumber() { return 38082304; /* 2.45.26 */ }
 EXPORT void criAtomExDebug_GetResourcesInfo() { }
 EXPORT int32_t criAtomExAcb_GetAcbInfo() { return 0; }
 EXPORT int32_t criAtomExPlayback_GetParameterFloat32() { return 0; }

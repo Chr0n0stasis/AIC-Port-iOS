@@ -27,6 +27,14 @@ if [[ ! -d "${EXTRACT_DIR}" ]]; then
   
   echo "[*] Expanding iOS Support PKG using pkgutil..."
   pkgutil --expand-full "${PKG_FILE}" "${EXTRACT_DIR}"
+  
+  # Unpack inner Payload if it exists
+  PAYLOAD_FILE=$(find "${EXTRACT_DIR}" -name "Payload" -type f | head -n 1)
+  if [[ -n "${PAYLOAD_FILE}" ]]; then
+    echo "[*] Unpacking inner Payload (${PAYLOAD_FILE})..."
+    PAYLOAD_DIR=$(dirname "${PAYLOAD_FILE}")
+    (cd "${PAYLOAD_DIR}" && gunzip -c "${PAYLOAD_FILE}" | cpio -idmu)
+  fi
   rm -f "${PKG_FILE}"
 else
   echo "[+] Reusing existing extracted Playback Engine."
@@ -35,17 +43,18 @@ fi
 # 2. Locate components inside Playback Engine
 echo "[*] Locating Trampoline, IL2CPP compiler, and iOS runtime..."
 TRAMPOLINE_SRC=$(find "${EXTRACT_DIR}" -type d -name "Trampoline" | head -n 1)
-LIB_IPHONE_SRC=$(find "${EXTRACT_DIR}" -type f -name "libiPhone-lib.a" | grep -i "release" | head -n 1)
+LIB_IPHONE_SRC=$(find "${EXTRACT_DIR}" -type f -name "libiPhone-lib.a" | head -n 1)
 IL2CPP_DLL=$(find "${EXTRACT_DIR}" -type f -name "il2cpp.dll" | head -n 1)
-
-if [[ -z "${TRAMPOLINE_SRC}" || -z "${LIB_IPHONE_SRC}" || -z "${IL2CPP_DLL}" ]]; then
-  echo "::error::Could not locate required playback engine components in ${EXTRACT_DIR}"
-  exit 1
-fi
 
 echo "  -> Trampoline template: ${TRAMPOLINE_SRC}"
 echo "  -> libiPhone-lib.a:     ${LIB_IPHONE_SRC}"
 echo "  -> IL2CPP compiler:     ${IL2CPP_DLL}"
+
+if [[ -z "${TRAMPOLINE_SRC}" || -z "${LIB_IPHONE_SRC}" || -z "${IL2CPP_DLL}" ]]; then
+  echo "::error::Could not locate required playback engine components in ${EXTRACT_DIR}"
+  find "${EXTRACT_DIR}" -maxdepth 4
+  exit 1
+fi
 
 # 3. Scaffold the Xcode project directory
 XCODE_DIR="${WORK_DIR}/XcodeProject"
@@ -81,12 +90,16 @@ echo "[+] IL2CPP compilation complete! Generated C++ source and metadata."
 echo "[*] Installing converted game assets into Data/..."
 cp -R "${ROOT_DIR}/ConvertedData/"* "${DATA_OUT}/"
 
-# 6. Copy native plugins & stubs
-echo "[*] Installing native C sources (NanoSockets & CRIWARE stub)..."
-mkdir -p "${XCODE_DIR}/Libraries/Plugins"
-cp "${ROOT_DIR}/native/nanosockets/nanosockets.c" "${XCODE_DIR}/Libraries/Plugins/"
-cp "${ROOT_DIR}/native/nanosockets/nanosockets.h" "${XCODE_DIR}/Libraries/Plugins/"
-cp "${ROOT_DIR}/native/criware_stub/cri_ware_stub.c" "${XCODE_DIR}/Libraries/Plugins/"
+# 6. Compile native C plugins (NanoSockets & CRIWARE stub) into static library
+echo "[*] Compiling native plugins (NanoSockets & CRIWARE stub) into static library..."
+SDK_PATH=$(xcrun --sdk iphoneos --show-sdk-path)
+clang -c -O3 -arch arm64 -isysroot "${SDK_PATH}" -miphoneos-version-min=12.0 \
+  -I"${ROOT_DIR}/native/nanosockets" \
+  "${ROOT_DIR}/native/nanosockets/nanosockets.c" \
+  "${ROOT_DIR}/native/criware_stub/cri_ware_stub.c"
+
+ar rcs "${XCODE_DIR}/Libraries/libNativePlugins.a" nanosockets.o cri_ware_stub.o
+rm -f nanosockets.o cri_ware_stub.o
 
 # 7. Configure Info.plist for landscape and metadata
 INFO_PLIST=$(find "${XCODE_DIR}" -name "Info.plist" | head -n 1)
@@ -117,6 +130,7 @@ xcodebuild -project "${XCODE_DIR}/Unity-iPhone.xcodeproj" \
   -sdk iphoneos \
   -configuration Release \
   -derivedDataPath "${DERIVED_DATA}" \
+  OTHER_LDFLAGS="\$(inherited) -force_load ${XCODE_DIR}/Libraries/libNativePlugins.a" \
   CODE_SIGNING_ALLOWED=NO \
   CODE_SIGNING_REQUIRED=NO \
   CODE_SIGN_IDENTITY="" \

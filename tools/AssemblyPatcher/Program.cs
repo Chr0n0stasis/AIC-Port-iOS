@@ -80,8 +80,70 @@ class Program
 
                     if (modified)
                     {
+                        Console.WriteLine("  [+] mscorlib.dll injected with IL2CPP shared enum types.");
+                    }
+
+                    // 1c. Fix System.Array generic icalls for IL2CPP
+                    var arrayType = mod.Types.FirstOrDefault(t => t.FullName == "System.Array");
+                    if (arrayType != null)
+                    {
+                        var getValueMethod = arrayType.Methods.FirstOrDefault(m => m.Name == "GetValue" && m.Parameters.Count == 1 && m.Parameters[0].ParameterType.FullName == "System.Int32");
+                        var setValueMethod = arrayType.Methods.FirstOrDefault(m => m.Name == "SetValue" && m.Parameters.Count == 2 && m.Parameters[0].ParameterType.FullName == "System.Object" && m.Parameters[1].ParameterType.FullName == "System.Int32");
+
+                        var getGenericImpl = arrayType.Methods.FirstOrDefault(m => m.Name == "GetGenericValueImpl");
+                        if (getGenericImpl != null && getValueMethod != null)
+                        {
+                            var tParam = getGenericImpl.GenericParameters[0];
+                            getGenericImpl.Body = new MethodBody(getGenericImpl);
+                            var il = getGenericImpl.Body.GetILProcessor();
+                            il.Emit(OpCodes.Ldarg_2); // T& value
+                            il.Emit(OpCodes.Ldarg_0); // this Array
+                            il.Emit(OpCodes.Ldarg_1); // int index
+                            il.Emit(OpCodes.Callvirt, getValueMethod);
+                            il.Emit(OpCodes.Unbox_Any, tParam);
+                            il.Emit(OpCodes.Stobj, tParam);
+                            il.Emit(OpCodes.Ret);
+                            Console.WriteLine("  -> Rewrote System.Array::GetGenericValueImpl to avoid generic icall.");
+                            modified = true;
+                        }
+
+                        var setGenericImpl = arrayType.Methods.FirstOrDefault(m => m.Name == "SetGenericValueImpl");
+                        if (setGenericImpl != null && setValueMethod != null)
+                        {
+                            var tParam = setGenericImpl.GenericParameters[0];
+                            setGenericImpl.Body = new MethodBody(setGenericImpl);
+                            var il = setGenericImpl.Body.GetILProcessor();
+                            il.Emit(OpCodes.Ldarg_0); // this Array
+                            il.Emit(OpCodes.Ldarg_2); // T& value
+                            il.Emit(OpCodes.Ldobj, tParam);
+                            il.Emit(OpCodes.Box, tParam);
+                            il.Emit(OpCodes.Ldarg_1); // int index
+                            il.Emit(OpCodes.Callvirt, setValueMethod);
+                            il.Emit(OpCodes.Ret);
+                            Console.WriteLine("  -> Rewrote System.Array::SetGenericValueImpl to avoid generic icall.");
+                            modified = true;
+                        }
+
+                        foreach (var icallName in new[] { "GetGenericValue_icall", "SetGenericValue_icall" })
+                        {
+                            var icall = arrayType.Methods.FirstOrDefault(m => m.Name == icallName);
+                            if (icall != null)
+                            {
+                                icall.IsInternalCall = false;
+                                icall.ImplAttributes = MethodImplAttributes.IL | MethodImplAttributes.Managed;
+                                icall.Body = new MethodBody(icall);
+                                var il = icall.Body.GetILProcessor();
+                                il.Emit(OpCodes.Ret);
+                                Console.WriteLine($"  -> Neutralized generic icall {icallName}.");
+                                modified = true;
+                            }
+                        }
+                    }
+
+                    if (modified)
+                    {
                         asm.Write(mscorlibPath);
-                        Console.WriteLine("  [+] mscorlib.dll patched with IL2CPP shared enum types.");
+                        Console.WriteLine("  [+] mscorlib.dll saved successfully.");
                     }
                 }
             }

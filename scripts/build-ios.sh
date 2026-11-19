@@ -87,10 +87,15 @@ IL2CPP_OUT="${XCODE_DIR}/Il2CppOutputProject/Source/il2cppOutput"
 DATA_OUT="${XCODE_DIR}/Data"
 mkdir -p "${IL2CPP_OUT}" "${DATA_OUT}"
 
+echo "[*] Printing IL2CPP help info..."
+dotnet "${IL2CPP_DLL}" --help || true
+
 echo "[*] Running IL2CPP ahead-of-time compilation on patched assemblies..."
 dotnet "${IL2CPP_DLL}" \
   --convert-to-cpp \
-  --dotnetprofile="unityaot-ios" \
+  --platform=iOS \
+  --architecture=ARM64 \
+  --dotnetprofile="unityaot-macos" \
   --directory="${ROOT_DIR}/PatchedManaged" \
   --generatedcppdir="${IL2CPP_OUT}" \
   --data-folder="${DATA_OUT}" \
@@ -104,6 +109,9 @@ echo "[+] IL2CPP compilation complete! Generated C++ source and metadata."
 # 5. Copy converted game data into Data/
 echo "[*] Installing converted game assets into Data/..."
 cp -R "${ROOT_DIR}/ConvertedData/"* "${DATA_OUT}/"
+mkdir -p "${DATA_OUT}/Managed"
+cp -f "${ROOT_DIR}/ConvertedData/RuntimeInitializeOnLoads.json" "${DATA_OUT}/Managed/" 2>/dev/null || true
+cp -f "${ROOT_DIR}/ConvertedData/ScriptingAssemblies.json" "${DATA_OUT}/Managed/" 2>/dev/null || true
 
 # 6. Compile native C plugins (NanoSockets & CRIWARE stub) into static library
 echo "[*] Compiling native plugins (NanoSockets & CRIWARE stub) into static library..."
@@ -138,6 +146,9 @@ if [[ -f "${INFO_PLIST}" ]]; then
 fi
 
 # 8. Build with xcodebuild
+echo "[*] Available schemes in Xcode project:"
+xcodebuild -list -project "${XCODE_DIR}/Unity-iPhone.xcodeproj" || true
+
 echo "[*] Building Xcode project with xcodebuild (target: iphoneos)..."
 DERIVED_DATA="${WORK_DIR}/DerivedData"
 
@@ -154,7 +165,12 @@ xcodebuild -project "${XCODE_DIR}/Unity-iPhone.xcodeproj" \
 
 # 9. Package into unsigned IPA
 PRODUCTS_DIR="${DERIVED_DATA}/Build/Products/Release-iphoneos"
-APP_BUNDLE=$(find "${PRODUCTS_DIR}" -maxdepth 1 -name "*.app" | head -n 1)
+APP_BUNDLE=$(find "${PRODUCTS_DIR}" -maxdepth 1 -name "*.app" 2>/dev/null | head -n 1)
+
+if [[ -z "${APP_BUNDLE}" ]]; then
+  echo "[!] .app bundle not found in ${PRODUCTS_DIR}, searching whole DerivedData..."
+  APP_BUNDLE=$(find "${DERIVED_DATA}" -name "*.app" | head -n 1)
+fi
 
 if [[ -z "${APP_BUNDLE}" ]]; then
   echo "::error::Compiled .app bundle not found in ${PRODUCTS_DIR}"

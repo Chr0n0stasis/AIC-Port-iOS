@@ -214,15 +214,7 @@ xcrun --sdk iphoneos clang++ -c -Os -arch arm64 -isysroot "${sdk_path}" -miphone
 EOF
 chmod +x /tmp/compile_worker.sh
 
-# Check if libiPhone-lib.a contains il2cpp runtime
-if nm -g "${LIB_IPHONE_SRC}" 2>/dev/null | grep -q "il2cpp_init"; then
-  echo "[+] libiPhone-lib.a contains IL2CPP runtime symbols (skipping libil2cpp source compile)."
-else
-  echo "[*] libiPhone-lib.a does not contain il2cpp_init, compiling libil2cpp runtime..."
-  find "${XCODE_DIR}/Il2CppOutputProject/IL2CPP/libil2cpp" -name "*.cpp" -print0 | \
-    xargs -0 -P 4 -n 1 /tmp/compile_worker.sh "${OBJ_DIR}" "${SDK_PATH}" "${XCODE_DIR}" "${IL2CPP_OUT}"
-fi
-
+# Compile generated game logic C++ sources in parallel
 echo "[*] Compiling generated game logic C++ sources in parallel..."
 find "${IL2CPP_OUT}" -name "*.cpp" -print0 | \
   xargs -0 -P 4 -n 1 /tmp/compile_worker.sh "${OBJ_DIR}" "${SDK_PATH}" "${XCODE_DIR}" "${IL2CPP_OUT}"

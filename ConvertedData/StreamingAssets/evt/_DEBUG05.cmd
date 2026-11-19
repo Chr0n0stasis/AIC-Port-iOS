@@ -1,0 +1,31 @@
+
+TALKER	v R   
+PIC   v v/a11__F1__m1__b1_u0    
+WAIT_BUTTON
+
+
+
+
+WALKCOUNT  99
+
+INIT_MAP_MATERIAL_EV_FLUSHABLE school_in_garage 1
+PIC_FILL #9 DARK
+PIC_FADEIN #9 40
+PIC_HIDE v
+
+WAIT 40
+COOK_ADD_WALK_COUNT
+WAIT_FN MAP_TRANSFER 
+NEL_MAP_TRANSFER school_in_garage R !!
+WAIT 5
+
+<LOAD>
+#MS_ % '>>[Ev_L.b] P[event_sink~ =10] '
+
+PIC_FADEOUT #9 50
+WAIT 30
+TALKER	v R   
+
+PIC   v v/a5L1RR__F1__m1__b1_u0    
+WAIT_BUTTON
+PIC_HIDE v

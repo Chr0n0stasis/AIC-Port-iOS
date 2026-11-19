@@ -1,0 +1,20 @@
+ManifestFileVersion: 0
+CRC: 2779891701
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: fb8eb9c831a1b71a0a8e73697bba0031
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 2612ac43db082a73502ee80f2eceb73f
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: fb8eb9c831a1b71a0a8e73697bba0031
+HashAppended: 0
+ClassTypes:
+- Class: 28
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/Editor/AssetBundlesSrc/SpineAnim/stand_bunnyrev.png
+Dependencies: []

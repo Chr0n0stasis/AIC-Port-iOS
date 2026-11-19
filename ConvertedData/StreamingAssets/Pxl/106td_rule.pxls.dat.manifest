@@ -1,0 +1,20 @@
+ManifestFileVersion: 0
+CRC: 4129073485
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: f729ab9dbd43444ae64c6fc583f3f1cd
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 5ad585dd02dfb5016c0dad519eab8f49
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: f729ab9dbd43444ae64c6fc583f3f1cd
+HashAppended: 0
+ClassTypes:
+- Class: 49
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/Editor/AssetBundlesSrc/Pxl/106td_rule.pxls.bytes
+Dependencies: []

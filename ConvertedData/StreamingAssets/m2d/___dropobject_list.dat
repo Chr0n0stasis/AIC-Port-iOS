@@ -1,0 +1,448 @@
+﻿/* ___ snake_ground_break ___ */
+count 23
+dirR PI*(0.5+0.2) PI*(0.5-0.2)
+mv 0.10 0.18
+gravity_scale 0.4
+bounce_y_reduce 0.5
+bounce_x_reduce_when_ground 0.6
+x -0.3 0.3
+y -0.1 0
+time 30
+saf_i 40
+
+/* ___ snake_ground_break_out ___ */
+%CLONE snake_ground_break
+saf_i 10
+
+/* ___ snake_punch_bite_liquid ___ */
+fn_key splash_sperma
+type GROUND_STOP_X
+bounce_y_reduce 0
+bounce_x_reduce 0
+count 20
+time 0 // color
+z 1 // alpha
+gravity_scale 0.25
+dirR -PI PI
+mv 0.06 0.12
+vy 0 -0.25
+x -0.2 0.2
+
+/* ___ white_sperma ___ */
+fn_key splash_sperma
+type GROUND_STOP_X
+bounce_y_reduce 0
+bounce_x_reduce 0
+count 4
+time ~00:#EEE9DB // color
+z 1 // alpha
+gravity_scale 0.33
+dirR -PI*0.3 -PI*0.7
+mv 0.06 0.12
+vy -0.02 0.02
+x -0.3 0.3
+y 0.3 0.4
+/* ___ web_sperma ___ */
+%CLONE white_sperma
+fn_key splash_sperma_s
+gravity_scale 0.15
+y -0.1 -0.2
+vy -0.013 -0.02
+dirR PI*0.3 PI*0.7
+
+/* ___ leechqueen_swallow_sperma ___ */
+%CLONE white_sperma
+fn_key splash_sperma_s
+gravity_scale 0.18
+vy 0.006 -0.001
+mv 0 0
+x -0.2 0.2
+y 0.3 0.4
+count 18
+saf_i 32
+
+
+
+/* ___ sperma_small_drop ___ */
+%CLONE white_sperma
+fn_key splash_sperma_s
+gravity_scale 0.18
+y -0.02 0.02
+x 0 0
+vy 0 0
+vx 0 0
+dirR -PI*0.46 -PI*0.54
+count 2
+saf_i 14
+
+/* ___ white_sperma_L ___ */
+%CLONE white_sperma
+dirR PI*0.5+PI*0.4 PI*0.5+PI*0.32
+
+/* ___ white_sperma_R ___ */
+%CLONE white_sperma
+dirR PI*0.5-PI*0.4 PI*0.5-PI*0.32
+
+
+/* ___ en_invisible_white ___ */
+%CLONE white_sperma
+fn_key splash_sperma_b
+x -0.6 0.6
+y 0 0
+mv 0 0
+vy -0.02 0
+gravity_scale 0.13
+
+/* ___ en_invisible_black ___ */
+%CLONE en_invisible_white
+time ~ff:#303030 // color
+
+/* ___ sponge_shot_liquid ___ */
+%CLONE snake_punch_bite_liquid
+
+gravity_scale 0.08
+vy 0 -0.11
+
+
+/* ___ uni_drill_hit ___ */
+%CLONE snake_ground_break
+x 0
+y 0
+dirR 0
+mv 0.10 0.28
+saf_i 10
+count 4
+gravity_scale 0.23
+vy -0.04 -0.1
+
+
+/* ___ uni_od_ground_pound ___ */
+%CLONE snake_ground_break
+type GROUND_STOP_X
+vx 0 
+vy 0
+x -1.5 1.5
+y -1.2 1.2
+mv 0.10 0.28
+saf_i 10
+dirR 0 1
+count 10
+
+
+
+/* ___ magic_hit_to_water ___ */
+%CLONE snake_punch_bite_liquid
+count 26
+time 00:#D8DDE7 // color
+z 1 // alpha
+vx 0.04
+vy 0.1
+gravity_scale 0.25
+dirR PI*0.25 PI*0.5
+mv 0.16 0.22
+x -0.2 0.2
+
+/* ___ absorb_bite_water ___ */
+%CLONE snake_punch_bite_liquid
+type GROUND_STOP_X
+time 00:#111111 // color
+count 90
+saf_i 10
+z 0.89 // alpha
+vx -0.08 0.08
+vy 0.09 -0.22
+gravity_scale 0.25
+mv 0 0 
+y 0.1 -0.18
+x -0.2 0.2
+
+/* ___ absorb_bite_water_s ___ */
+%CLONE absorb_bite_water
+count 50
+/* ___ absorb_bite_water_ss ___ */
+%CLONE absorb_bite_water
+count 20
+
+/* ___ absorb_kiss_water ___ */
+%CLONE absorb_bite_water_ss
+count 20
+vx -0.05 0.05
+vy 0.05 -0.03
+
+
+/* ___ golemtoy_bone_break ___ */
+count 1
+time 30 78
+vx -0.05 0.05
+vy -0.11 -0.24
+gravity_scale 0.15
+type KILL_IF_STOP
+bounce_y_reduce 0.5
+bounce_x_reduce_when_ground 0.6
+
+
+
+/* ___ mkb_ground_break ___ */
+%CLONE snake_ground_break
+saf_i 60
+vx -0.04 0.04
+vy -0.24 -0.32
+mv 0
+count 40
+
+
+/* ___ mkb_ground_break_bump ___ */
+%CLONE snake_ground_break
+mv 0
+vx -0.12 0.12
+vy -0.17 -0.3
+saf_i 1
+count 20
+
+
+
+/* ___ golemtoy_break ___ */
+%CLONE snake_ground_break
+count 25
+dirR PI*(0.5+0.4) PI*(0.5-0.4)
+x -1 1
+y -1.5 0.4
+time 30
+saf_i 6
+
+
+/* ___ golemtoy_orbit_break ___ */
+%CLONE snake_ground_break
+mv 0
+vx -0.06 0.06
+vy -0.13 -0.2
+saf_i 1
+count 23
+
+/* ___ pvv104_nusi_drip ___ */
+render_key EnemyBlood
+type GROUND_STOP_X
+bounce_y_reduce 0
+bounce_x_reduce 0
+mv 0
+x -3 3
+vx -0.03 0.03
+vy 0 0.2
+z 0.02 0.3
+time 25 50
+saf_i 90
+count 30
+
+
+
+
+
+/* ___ nusitgrab_ground_break_2_t ___ */
+%CLONE snake_ground_break
+count 30
+mv 0.10 0.18
+vx -0.06 0.06
+y -0.15  -0.2
+
+saf_i 90
+
+/* ___ nusitgrab_ground_break_2_b ___ */
+%CLONE nusitgrab_ground_break_2_t
+dirR PI*(-0.5+0.12) PI*(-0.5-0.12)
+x -0.6 0.6
+y 0.15  0.2
+vx -0.002 0.002
+
+
+/* ___ nusitgrab_ground_break_trigger_t ___ */
+%CLONE nusitgrab_ground_break_2_t
+count 20
+vy -0.04 -0.1
+vx -0.06 0.06
+
+saf_i 0
+
+/* ___ nusitgrab_ground_break_trigger_b ___ */
+%CLONE nusitgrab_ground_break_2_b
+
+count 14
+mv 0 0
+vx -0.023 0
+vx -0.06 0.06
+saf_i 0
+
+
+/* ___ nusitgrab_ground_break_end_t ___ */
+%CLONE nusitgrab_ground_break_2_t
+count 10
+saf_i 20
+
+/* ___ nusitgrab_ground_break_end_b ___ */
+%CLONE nusitgrab_ground_break_2_b
+
+saf_i 20
+count 5
+
+/* ___ ceildrop_prepare ___ */
+%CLONE nusitgrab_ground_break_2_b
+
+saf_i 50
+count 4
+
+
+/* ___ stone_ser_finish  ___ */
+fn_key graystone
+count 15
+dirR PI*(0.5+0.2) PI*(0.5-0.2)
+mv 0.10 0.18
+vy 0 -0.12
+gravity_scale 0.4
+bounce_y_reduce 0.5
+bounce_x_reduce_when_ground 0.5
+x -0.1 0.1
+y -0.3 0.2
+time 30
+saf_i 20
+
+
+
+
+/* ___ ramda_sperma ___ */
+%CLONE white_sperma
+fn_key splash_sperma_s
+count 22
+x -0.1 0.1
+y -0.1 0.3
+mv 0 0
+vx -0.05 0.05
+vy -0.02 -0.18
+gravity_scale 0.16
+bounce_y_reduce 0
+bounce_x_reduce_when_ground 0
+time ~00:#EEE9DB // color
+
+
+/* ___ p_yellow ___ */
+%CLONE ramda_sperma
+fn_key splash_sperma_s_long
+gravity_scale 0.12
+
+z 1
+x 0 0
+y 0 0
+mv 0 0
+vx -0.002 -0.002
+vy -0.004 -0.004
+count 50
+saf_i 40
+
+mv 0.058 0.067
+time ~00:#F7DD95 // color
+
+/* ___ p_yellow_wide ___ */
+%CLONE p_yellow
+mv 0.038 0.067
+vx -0.015 0.015
+/* ___ p_white ___ */
+%CLONE p_yellow
+time ~00:#ffffff // color
+
+/* ___ p_white_wide ___ */
+%CLONE p_white
+mv 0.038 0.067
+vx -0.015 0.015
+
+/* ___ p_white_splash ___ */
+%CLONE p_white
+mv 0 0
+count 9
+vx -0.035 0.035
+vy -0.044 -0.128
+gravity_scale 0.22
+
+saf_i 3
+
+/* ___ td_barricade_break_s ___ */
+%CLONE snake_ground_break
+count 12
+dirR PI*(0.5+0.4) PI*(0.5-0.4)
+x -0.6 0.6
+y -0.1 0.9
+vy 0 -0.14
+time 45
+saf_i 6
+z 0
+
+/* ___ td_barricade_break_m ___ */
+%CLONE td_barricade_break_s
+count 44
+saf_i 20
+
+/* ___ td_barricade_break_l ___ */
+%CLONE td_barricade_break_s
+count 95
+saf_i 30
+x -1.4 1.4
+y -0.2 2.9
+
+/* ___ ehome_meteor_land ___ */
+%CLONE snake_ground_break
+count 45
+x -2.4 2.4
+y -0.2 -2.9
+vy -0.1 -0.34
+time 80
+saf_i 50
+z 0
+
+dirR PI*(0.9) PI*(0.1)
+mv 0.10 0.28
+
+/* ___ bun_coin1 ___ */
+fn_key Coin1
+type GROUND_STOP_X
+count 12
+saf_i 20
+x -0.6 0.6
+y -0.3 0.3
+gravity_scale 0.27
+time_extend 0.4
+
+
+bounce_x_reduce  0.4 0.5
+bounce_y_reduce  0.14 0.3
+
+vx -0.05 0.05
+vy -0.05 -0.12
+size 0.03
+
+
+/* ___ bun_coin2 ___ */
+%CLONE bun_coin1
+fn_key Coin2
+size 0.07
+
+/* ___ mgm_bun_confetti ___ */
+
+fn_key Confetti
+type KILL_IF_STOP
+
+bounce_x_reduce 0
+bounce_y_reduce 0
+
+vx -0.25 0.25
+vy -0.08 -0.38
+x -0.6 0.6
+y -0.3 0.3
+
+count 40
+saf_i 12
+gravity_scale 0.08
+
+/* ___ mgm_bun_confetti2 ___ */
+%CLONE mgm_bun_confetti
+
+x -2.6 2.6
+
+vx -0.55 0.55
+vy -0.08 -0.48

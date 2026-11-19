@@ -1,0 +1,20 @@
+ManifestFileVersion: 0
+CRC: 3508061097
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 47758fc4aab2832eefd7d70dfe8c65f8
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 2612ac43db082a73502ee80f2eceb73f
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 47758fc4aab2832eefd7d70dfe8c65f8
+HashAppended: 0
+ClassTypes:
+- Class: 28
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/Editor/AssetBundlesSrc/SpineAnimEn/boss_spider/enemy_boss_spider.png
+Dependencies: []

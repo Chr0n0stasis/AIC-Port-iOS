@@ -1,0 +1,76 @@
+ManifestFileVersion: 0
+CRC: 2551377858
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 05d15b431d535eb4f949b58206b6127d
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 0df1dec30b5d061d422d3e6493d27647
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 05d15b431d535eb4f949b58206b6127d
+HashAppended: 0
+ClassTypes:
+- Class: 48
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/Editor/AssetBundlesSrc/MTI_Shader/ShaderGDTSecureTransp.shader
+- Assets/Editor/AssetBundlesSrc/MTI_Shader/ShaderGDTMul.shader
+- Assets/Editor/AssetBundlesSrc/MTI_Shader/ShaderGDTP3.shader
+- Assets/Editor/AssetBundlesSrc/MTI_Shader/ShaderGDTPattern.shader
+- Assets/Editor/AssetBundlesSrc/MTI_Shader/HsvShift.shader
+- Assets/Editor/AssetBundlesSrc/MTI_Shader/ShaderGDTSTBorder8.shader
+- Assets/Editor/AssetBundlesSrc/MTI_Shader/ShaderGDT.shader
+- Assets/Editor/AssetBundlesSrc/MTI_Shader/ShaderMesh.shader
+- Assets/Editor/AssetBundlesSrc/MTI_Shader/BufferDrawDepth.shader
+- Assets/Editor/AssetBundlesSrc/MTI_Shader/ShaderGDTPAdd2.shader
+- Assets/Editor/AssetBundlesSrc/MTI_Shader/ShaderMeshST.shader
+- Assets/Editor/AssetBundlesSrc/MTI_Shader/PxlsShaderNormal.shader
+- Assets/Editor/AssetBundlesSrc/MTI_Shader/ShaderGDTP2.shader
+- Assets/Editor/AssetBundlesSrc/MTI_Shader/ShaderMeshSubZT.shader
+- Assets/Editor/AssetBundlesSrc/MTI_Shader/ShaderGDTNormalBlur.shader
+- Assets/Editor/AssetBundlesSrc/MTI_Shader/ShaderMtrAlphaSplice.shader
+- Assets/Editor/AssetBundlesSrc/MTI_Shader/BufferBlur.shader
+- Assets/Editor/AssetBundlesSrc/MTI_Shader/ShaderGDTAddGlow.shader
+- Assets/Editor/AssetBundlesSrc/MTI_Shader/ShaderGDTFont.shader
+- Assets/Editor/AssetBundlesSrc/MTI_Shader/ShaderGDTAddZT.shader
+- Assets/Editor/AssetBundlesSrc/MTI_Shader/ShaderMeshAddZT.shader
+- Assets/Editor/AssetBundlesSrc/MTI_Shader/ShaderGDTZW.shader
+- Assets/Editor/AssetBundlesSrc/MTI_Shader/ShaderGDTSTFontBorder8.shader
+- Assets/Editor/AssetBundlesSrc/MTI_Shader/BufferSolidColor.shader
+- Assets/Editor/AssetBundlesSrc/MTI_Shader/ShaderMeshMul.shader
+- Assets/Editor/AssetBundlesSrc/MTI_Shader/ShaderGDTPAdd.shader
+- Assets/Editor/AssetBundlesSrc/MTI_Shader/ShaderGDTMask.shader
+- Assets/Editor/AssetBundlesSrc/MTI_Shader/PxlsShaderCopying.shader
+- Assets/Editor/AssetBundlesSrc/MTI_Shader/ShaderMeshMask.shader
+- Assets/Editor/AssetBundlesSrc/MTI_Shader/ShaderGDTAlphaSafe.shader
+- Assets/Editor/AssetBundlesSrc/MTI_Shader/BufferJustPaste.shader
+- Assets/Editor/AssetBundlesSrc/MTI_Shader/BufferNormalClearing.shader
+- Assets/Editor/AssetBundlesSrc/MTI_Shader/ShaderGDTSubZT.shader
+- Assets/Editor/AssetBundlesSrc/MTI_Shader/ShaderGDTSTFont.shader
+- Assets/Editor/AssetBundlesSrc/MTI_Shader/ShaderGDTPatternAdd.shader
+- Assets/Editor/AssetBundlesSrc/MTI_Shader/ShaderMeshSubStriped.shader
+- Assets/Editor/AssetBundlesSrc/MTI_Shader/ShaderMeshAdd.shader
+- Assets/Editor/AssetBundlesSrc/MTI_Shader/ShaderMeshZW.shader
+- Assets/Editor/AssetBundlesSrc/MTI_Shader/ShaderGDTZT.shader
+- Assets/Editor/AssetBundlesSrc/MTI_Shader/ShaderGDTC.shader
+- Assets/Editor/AssetBundlesSrc/MTI_Shader/ShaderGDTST.shader
+- Assets/Editor/AssetBundlesSrc/MTI_Shader/ShaderMeshDashLine.shader
+- Assets/Editor/AssetBundlesSrc/MTI_Shader/ShaderMeshMaskTransparent.shader
+- Assets/Editor/AssetBundlesSrc/MTI_Shader/BufferColorShiftScreen.shader
+- Assets/Editor/AssetBundlesSrc/MTI_Shader/ToneCurveShift.shader
+- Assets/Editor/AssetBundlesSrc/MTI_Shader/ShaderGDTAdd.shader
+- Assets/Editor/AssetBundlesSrc/MTI_Shader/ShaderGDTAddST.shader
+- Assets/Editor/AssetBundlesSrc/MTI_Shader/ShaderGDTErase.shader
+- Assets/Editor/AssetBundlesSrc/MTI_Shader/ShaderGDTMosaic.shader
+- Assets/Editor/AssetBundlesSrc/MTI_Shader/ShaderMeshSub.shader
+- Assets/Editor/AssetBundlesSrc/MTI_Shader/ShaderGDTNormalGlow.shader
+- Assets/Editor/AssetBundlesSrc/MTI_Shader/ShaderGDTSub.shader
+- Assets/Editor/AssetBundlesSrc/MTI_Shader/BufferNormalDrawRota.shader
+- Assets/Editor/AssetBundlesSrc/MTI_Shader/ShaderMeshStriped.shader
+- Assets/Editor/AssetBundlesSrc/MTI_Shader/ShaderGDTSecureTranspMul.shader
+- Assets/Editor/AssetBundlesSrc/MTI_Shader/ShaderGDTBorder8.shader
+- Assets/Editor/AssetBundlesSrc/MTI_Shader/ShaderGDTFontBorder8.shader
+Dependencies: []

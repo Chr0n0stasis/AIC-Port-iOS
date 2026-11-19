@@ -1,0 +1,20 @@
+ManifestFileVersion: 0
+CRC: 3328565645
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 12bc867efb8ffb27133b9276a337b3e0
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 2612ac43db082a73502ee80f2eceb73f
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 12bc867efb8ffb27133b9276a337b3e0
+HashAppended: 0
+ClassTypes:
+- Class: 28
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/Editor/AssetBundlesSrc/SpineAnim/damage_backvore.png
+Dependencies: []

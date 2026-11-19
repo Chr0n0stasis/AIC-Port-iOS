@@ -1,0 +1,20 @@
+ManifestFileVersion: 0
+CRC: 2806422765
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 52e621a0b9c56f08e1b06040382f8d87
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 5ad585dd02dfb5016c0dad519eab8f49
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 52e621a0b9c56f08e1b06040382f8d87
+HashAppended: 0
+ClassTypes:
+- Class: 49
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/Editor/AssetBundlesSrc/MapChars/sub_mob_general.pxls.bytes
+Dependencies: []

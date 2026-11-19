@@ -1,0 +1,20 @@
+ManifestFileVersion: 0
+CRC: 165808247
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: d57995b6339cbf77d6eff607459e3ea7
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 2612ac43db082a73502ee80f2eceb73f
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: d57995b6339cbf77d6eff607459e3ea7
+HashAppended: 0
+ClassTypes:
+- Class: 28
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/Editor/AssetBundlesSrc/SpineAnimEn/enemy_labo_fly/enemy_labo_fly.png
+Dependencies: []

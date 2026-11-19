@@ -1,0 +1,20 @@
+ManifestFileVersion: 0
+CRC: 1193492248
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 86f48add85ec93d104df2b046ac4421a
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 2612ac43db082a73502ee80f2eceb73f
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 86f48add85ec93d104df2b046ac4421a
+HashAppended: 0
+ClassTypes:
+- Class: 28
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/Editor/AssetBundlesSrc/Fatal/fatal_spider.png
+Dependencies: []

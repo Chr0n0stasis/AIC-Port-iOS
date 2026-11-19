@@ -1,0 +1,20 @@
+ManifestFileVersion: 0
+CRC: 2524570490
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: abc4b77e41f64aac707f9b210815a8cc
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 5ad585dd02dfb5016c0dad519eab8f49
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: abc4b77e41f64aac707f9b210815a8cc
+HashAppended: 0
+ClassTypes:
+- Class: 49
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/Editor/AssetBundlesSrc/PxlCane/cane_monopolizer.pxls.bytes
+Dependencies: []

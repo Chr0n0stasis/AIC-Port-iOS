@@ -1,0 +1,29 @@
+ManifestFileVersion: 0
+CRC: 4065961298
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: eab9ae125b621fa63bb07e1e8fb65b2a
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: abe42f113c6781325502875cb84ab500
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: eab9ae125b621fa63bb07e1e8fb65b2a
+HashAppended: 0
+ClassTypes:
+- Class: 21
+  Script: {instanceID: 0}
+- Class: 28
+  Script: {instanceID: 0}
+- Class: 48
+  Script: {instanceID: 0}
+- Class: 49
+  Script: {instanceID: 0}
+- Class: 128
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/Editor/AssetBundlesSrc/Fis/letterspace_moby.txt
+- Assets/Editor/AssetBundlesSrc/Fis/Moby-Bold.otf
+Dependencies: []

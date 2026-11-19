@@ -1,0 +1,21 @@
+ManifestFileVersion: 0
+CRC: 2516511474
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 613648feb11d560b2c9532434ee34c52
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 5ad585dd02dfb5016c0dad519eab8f49
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 613648feb11d560b2c9532434ee34c52
+HashAppended: 0
+ClassTypes:
+- Class: 49
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/Editor/AssetBundlesSrc/SpineAnim/stand_normal.atlas.txt
+- Assets/Editor/AssetBundlesSrc/SpineAnim/stand_normal.json
+Dependencies: []

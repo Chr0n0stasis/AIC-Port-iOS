@@ -1,0 +1,20 @@
+ManifestFileVersion: 0
+CRC: 1459145969
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 60c3399710aa3b2ff0f7e85fdfae4058
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 5ad585dd02dfb5016c0dad519eab8f49
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 60c3399710aa3b2ff0f7e85fdfae4058
+HashAppended: 0
+ClassTypes:
+- Class: 49
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/Editor/AssetBundlesSrc/Fis/_icons_fis.pxls.bytes
+Dependencies: []

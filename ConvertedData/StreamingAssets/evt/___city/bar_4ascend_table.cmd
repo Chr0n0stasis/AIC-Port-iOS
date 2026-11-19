@@ -1,0 +1,54 @@
+
+GREETING	L -4
+
+
+IF 1 {
+    WAIT 15
+    TALKER	n    R
+    PIC   n a_3/a0__F1__f3__m1__b4_uo    
+    MSG n_00
+    GFB_SET TTR_PLAYED 1
+    GFB_SET TTR_PLAYED_BAR 1
+    
+
+}
+
+MGM_4ASCEND DEFINE_SCORE_EXISTS
+
+IF 'GFB[TTR_ALLOC_ONLINE]||PVV>=200' {
+
+    SELECTARRAY_CLEAR
+    SELECTARRAY &&EvTitle_4ascend_play PLAY
+    SELECTARRAY &&Select_nothanks _SKIP
+    SELECT -1 
+    LABEL _SKIP
+    SEEK_END
+
+} ELSE {
+    SEEK_END
+}
+
+// ======================== あそぶ
+_stop=1
+
+LABEL PLAY
+
+PIC_HIDE_ALL	 
+
+
+PIC_FILL	&9 DARK
+PIC_FADEIN	&9 55
+WAIT 60
+
+
+MGM_4ASCEND INIT _online _local2p _auto
+PIC_FADEOUT	&9 15
+
+MGM_4ASCEND PLAY
+REPLACE_BGM	40 150 
+
+#MS_ % '='
+PIC_FILL	&9 DARK
+PIC_FADEOUT	&9 55
+WAIT 40
+AUTO_SAVE

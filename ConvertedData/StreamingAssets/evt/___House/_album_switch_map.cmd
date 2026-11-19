@@ -1,0 +1,18 @@
+// map / aim / LP
+
+
+INIT_MAP_MATERIAL $1 1
+SCN_MANUAL_BGM_REPLACE ''
+WAIT_FN MAP_TRANSFER 
+NEL_MAP_TRANSFER $1 $2 '!'$3
+TITLECALL_HIDE 1
+HIDE_BLURSC
+#MS_ % '##'
+IFSTR $2 IS 'L' {
+    #MS_ % '@R P[stand_ev~]'
+}
+IFSTR $2 IS 'R' {
+    #MS_ % '@L P[stand_ev~]'
+}
+#CMDRELOAD	IMMEDIATE IMMEDIATE_LOAD
+WAIT 2

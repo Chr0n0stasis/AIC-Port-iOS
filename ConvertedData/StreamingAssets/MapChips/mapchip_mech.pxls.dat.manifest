@@ -1,0 +1,20 @@
+ManifestFileVersion: 0
+CRC: 984983279
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 4ce2f3954008752ba35fbfc3ee1c9b9b
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 5ad585dd02dfb5016c0dad519eab8f49
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 4ce2f3954008752ba35fbfc3ee1c9b9b
+HashAppended: 0
+ClassTypes:
+- Class: 49
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/Editor/AssetBundlesSrc/MapChips/MapChip_mech.pxls.bytes
+Dependencies: []

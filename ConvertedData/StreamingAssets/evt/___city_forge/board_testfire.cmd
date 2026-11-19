@@ -1,0 +1,4 @@
+GREETING	L -15
+WAIT 20
+
+TX_BOARD *board_testfire FRAMED_PAPER

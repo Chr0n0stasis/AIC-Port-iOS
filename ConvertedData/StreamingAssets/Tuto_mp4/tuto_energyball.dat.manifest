@@ -1,0 +1,20 @@
+ManifestFileVersion: 0
+CRC: 690703050
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 16abb7a84a50a6198e3235f2d0b9b87c
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: c12678a98877549a3fe7bb52917258ad
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 16abb7a84a50a6198e3235f2d0b9b87c
+HashAppended: 0
+ClassTypes:
+- Class: 329
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/Editor/AssetBundlesSrc/Tuto_mp4/tuto_energyball.mp4
+Dependencies: []

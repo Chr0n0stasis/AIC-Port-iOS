@@ -1,0 +1,20 @@
+ManifestFileVersion: 0
+CRC: 4004648082
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 8d43759299caf68329d4a4bebc1580c7
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 2612ac43db082a73502ee80f2eceb73f
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 8d43759299caf68329d4a4bebc1580c7
+HashAppended: 0
+ClassTypes:
+- Class: 28
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/Editor/AssetBundlesSrc/SpineAnim/cuts_iyapan.png
+Dependencies: []

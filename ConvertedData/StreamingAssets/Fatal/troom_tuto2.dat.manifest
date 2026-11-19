@@ -1,0 +1,20 @@
+ManifestFileVersion: 0
+CRC: 1638324095
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 3b2f9bd3def43395cb67b779fe440f2d
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 2612ac43db082a73502ee80f2eceb73f
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 3b2f9bd3def43395cb67b779fe440f2d
+HashAppended: 0
+ClassTypes:
+- Class: 28
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/Editor/AssetBundlesSrc/Fatal/troom_tuto2.png
+Dependencies: []

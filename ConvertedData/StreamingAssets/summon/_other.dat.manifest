@@ -1,0 +1,29 @@
+ManifestFileVersion: 0
+CRC: 3742216142
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: e23a6caea63aa87bb321cfcf23609587
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 5ad585dd02dfb5016c0dad519eab8f49
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: e23a6caea63aa87bb321cfcf23609587
+HashAppended: 0
+ClassTypes:
+- Class: 49
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/Editor/AssetBundlesSrc/summon/_other/puppetrevenge_mount.summon.csv
+- Assets/Editor/AssetBundlesSrc/summon/_other/school_in_garage_l1.summon.csv
+- Assets/Editor/AssetBundlesSrc/summon/_other/school_106td_02.summon.csv
+- Assets/Editor/AssetBundlesSrc/summon/_other/puppetrevenge_0.summon.csv
+- Assets/Editor/AssetBundlesSrc/summon/_other/school_in_garage.summon.csv
+- Assets/Editor/AssetBundlesSrc/summon/_other/school_in_garage_l2.summon.csv
+- Assets/Editor/AssetBundlesSrc/summon/_other/_description.csv
+- Assets/Editor/AssetBundlesSrc/summon/_other/school_106td_01.summon.csv
+- Assets/Editor/AssetBundlesSrc/summon/_other/school_106td_00.summon.csv
+- Assets/Editor/AssetBundlesSrc/summon/_other/puppetrevenge_debug.summon.csv
+Dependencies: []

@@ -1,0 +1,21 @@
+ManifestFileVersion: 0
+CRC: 2710916208
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: a2dd33c89e1b88e9c0243cfb69cdf477
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 5ad585dd02dfb5016c0dad519eab8f49
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: a2dd33c89e1b88e9c0243cfb69cdf477
+HashAppended: 0
+ClassTypes:
+- Class: 49
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/Editor/AssetBundlesSrc/Fatal/fatal_td107_mobs.atlas.txt
+- Assets/Editor/AssetBundlesSrc/Fatal/fatal_td107_mobs.json
+Dependencies: []

@@ -1,0 +1,21 @@
+ManifestFileVersion: 0
+CRC: 436367484
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: cd7b788ad1ef25e7b948de0b646edc22
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 5ad585dd02dfb5016c0dad519eab8f49
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: cd7b788ad1ef25e7b948de0b646edc22
+HashAppended: 0
+ClassTypes:
+- Class: 49
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/Editor/AssetBundlesSrc/summon/school/_description.csv
+- Assets/Editor/AssetBundlesSrc/summon/school/school_b1_out.summon.csv
+Dependencies: []

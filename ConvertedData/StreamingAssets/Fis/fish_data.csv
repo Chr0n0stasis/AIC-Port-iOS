@@ -1,0 +1,576 @@
+// 魚ごとの釣りデータ
+// イワシ
+// ニシン
+// アジ
+// ヒラメ
+// ウナギ
+// エビ
+// タラ
+// カニ
+// イカ
+// タイ
+// サバ
+// カツオ
+// サーモン
+// マグロ
+// カジキ
+
+
+/* ___ sardine 1 ___ */
+
+fistjump_multiple 100.25 100.30
+t_switch 180 320
+jump01 0.1 0.2
+switch_slower_ratio 0
+
+force_goto_reverse_ratio 0.2 
+switchspeed01 0.8 1
+first_speed_ratio 1
+
+switch_another_ratio 0
+
+punch_need_count 5
+hoverhp_max 160
+
+
+hover_margin 0.06
+inv_add 2 4
+rslt_score 120 220
+size 0.14 0.08
+fav seastar 3 worm 1 
+rarelity_base 4
+basic_miss_damage_speed 0.2
+
+/* ___ herring 1 ___ */
+
+
+fistjump_multiple 100.25 100.40
+jump01 0.16 0.24
+t_switch 100 140
+switch_slower_ratio 0
+
+hoverhp_max 160
+
+hover_margin 0.05
+
+rslt_score 140 280
+rslt_score_divide 300
+inv_add 2 5
+size 0.15 0.12
+fav worm 1 sardine 1
+rarelity_base 5
+basic_miss_damage_speed 0.2
+
+/* ___ aji 1 ___ */
+
+t_switch 120 130
+
+fistjump_multiple 1.5 2
+
+switch_slower_ratio 0.5
+switch_slower_multiple 1.8 2.8
+switch_slower_lock 1 1
+switch_slower_lock_reduce 0
+jump01 0.34 0.36
+force_goto_reverse_ratio 0.2
+
+switch_another_ratio 0.15
+switch_another_lock 800
+
+
+hoverhp_max 140
+
+hover_margin 0.04
+punch_need_count 6
+inv_add 3 6
+rslt_score 200 320
+rslt_score_divide 360
+size 0.18 0.18
+fav herring 2 sardine 2 worm 1 
+rarelity_base 5
+basic_miss_damage_speed 0.3
+
+/* ___ flounder 1 ___ */ 
+// ヒラメ
+
+switch_another_ratio 0
+fistjump_multiple 100.4 100.6
+fistjump_time_max_extend 0.8
+move_fast_range 0.1 0.4
+
+t_switch 50 150
+jump01 0.3 0.4
+switch_slower_ratio 0
+outrange_flip_ratio 0.01
+
+minus_extend_ratio 0.1
+force_goto_reverse_ratio 0.1
+
+hoverhp_max 140
+punch_need_count 7
+
+hover_margin 0.03
+inv_add 3 7
+rslt_score 350 500
+rslt_score_divide 420
+size 0.23 0.2
+fav herring 2 aji 2 sardine 1
+rarelity_base 5
+basic_miss_damage_speed 0.3
+
+/* ___ eel 1 ___ */
+// ウナギ
+switch_another_ratio 0.9
+switch_another_lock 0 
+t_switch 110 150
+jump01 0.5 1.39
+
+switch_slower_ratio 0.2
+switch_slower_multiple 1.5 2.2
+switch_slower_lock 1 2
+switch_slower_lock_reduce 0.2
+
+minus_extend_ratio 0.30
+
+
+hover_margin 0.03
+hoverhp_max 160
+punch_need_count 7
+force_goto_reverse_ratio 0.1
+
+inv_add 4 9
+rslt_score 350 500
+rslt_score_divide 480
+size 0.44 0.18 0.2 0.09
+
+fav herring 3 aji 2 shrimp 2
+rarelity_base 5
+basic_miss_damage_speed 0.4
+
+/* ___ shrimp 1 ___ */
+// エビ
+fistjump_multiple 100.16 100.35
+fistjump_time_max_extend 1.4
+jump01 0.06 0.19
+t_switch 14 30
+
+switch_another_ratio 0.4
+switch_another_lock 1350 
+
+switch_slower_ratio 0.29
+switch_slower_multiple 2.4 3.2
+switch_slower_lock 2 3
+switch_slower_lock_reduce 0.3
+force_goto_reverse_ratio 0.7
+switchspeed01 0.8 0.9
+move_fast_range 0.2 0.34
+outrange_flip_ratio 1
+
+hover_margin 0.02
+hoverhp_max 180
+punch_need_count 5
+
+inv_add 3 11
+rslt_score 50 140
+rslt_score_divide 500
+size 0.05 0.19 0.48 0.08
+
+fav sardine 3 herring 2 worm 2
+rarelity_base 5
+basic_miss_damage_speed 0.67
+
+
+/* ___ cod 1 ___ */
+// タラ
+jump01 0.46 0.85
+t_switch 54 120
+
+switch_another_ratio 0.25
+switch_another_lock 550 
+
+switch_slower_ratio 0.24
+switch_slower_multiple 3.4 4
+switch_slower_lock 3 3
+switch_slower_lock_reduce 0.12
+
+move_fast_range 0.4 0.6
+switchspeed01 0.3 0.5
+first_speed_ratio 0.2
+
+hover_margin 0.02
+hoverhp_max 110
+punch_need_count 8
+
+
+inv_add 5 10
+rslt_score 540 1100
+rslt_score_divide 560
+size 0.41 0.34
+
+
+fav shrimp 4 aji 2 flounder 2  
+rarelity_base 4
+basic_miss_damage_speed 0.67
+
+/* ___ crab 1 ___ */
+// カニ
+
+jump01 0.4 0.5
+t_switch 40 70
+
+switch_another_ratio 0.12
+switch_another_lock 650 
+
+switch_slower_ratio 0.2
+switch_slower_multiple 2.3 3.2
+switch_slower_lock 3 5
+switch_slower_lock_reduce 0.3
+force_goto_reverse_ratio 0.82
+outrange_flip_ratio 1
+
+hoverhp_max 200
+punch_need_count 8
+
+
+hover_margin 0.02
+rslt_score 450 800
+rslt_score_divide 660
+inv_add 7 15
+size 0.26 0.38
+
+// not_fav_escape_ratio100 70
+
+fav flounder 3  herring 2 sardine 1
+rarelity_base 4
+basic_miss_damage_speed 0.8
+
+
+/* ___ squid 1 ___ */
+// イカ
+jump01 0.3 0.48
+t_switch 30 70
+switch_another_ratio 0.82
+switch_another_lock 310 
+wall_clip_level 0.12
+
+force_goto_reverse_ratio 0.1
+outrange_flip_ratio 0.12
+
+
+hoverhp_max 200
+punch_need_count 6
+
+rslt_score 250 480
+rslt_score_divide 700
+inv_add 12 16
+size 0.45 0.33
+
+hover_margin 0.02
+fav shrimp 3 eel 2 aji 1
+rarelity_base 4
+basic_miss_damage_speed 0.67
+
+// not_fav_escape_ratio100 50
+
+/* ___ seabream 1 ___ */
+// タイ
+fistjump_multiple 100.44 100.78
+fistjump_time_max_extend 0.5
+
+
+move_fast_range 0.1 0.3
+jump01 0.5 0.66
+t_switch 40 130
+switch_another_ratio 0.62
+switch_another_lock 210 
+force_goto_reverse_ratio 0.34
+wall_clip_level -0.2 0.05
+outrange_flip_ratio 0.142
+
+minus_extend_ratio 0.88
+
+switch_slower_ratio 0.04
+hoverhp_max 240
+punch_need_count 10
+
+hover_margin 0.01
+inv_add 14 20
+rslt_score 300 520
+rslt_score_divide 760
+size 0.52 0.37
+
+
+fav cod 3 flounder 2 herring 1
+rarelity_base 4
+basic_miss_damage_speed 0.7
+// not_fav_escape_ratio100 50
+
+/* ___ mackerel 1 ___ */
+// サバ
+fistjump_multiple 100.54 100.78
+fistjump_time_max_extend 0.7
+
+jump01 0.3 0.45
+t_switch 70 125
+
+move_fast_range 1.4 2.36
+switchspeed01_min 0.3 0.4
+slow_ZCOS 1
+
+switch_another_ratio 0.4
+switch_another_lock 510 
+
+switch_slower_ratio 0.5
+switch_slower_multiple 2.0 2.6
+
+wall_clip_level 1.1 2.1
+
+
+hover_margin 0.01
+hoverhp_max 220
+punch_need_count 9
+
+inv_add 15 24
+rslt_score 420 900
+rslt_score_divide 760
+size 0.65 0.43
+
+fav  squid 3  crab 2 shrimp 1
+rarelity_base 3
+basic_miss_damage_speed 0.7
+// not_fav_escape_ratio100 50
+
+/* ___ bonito 1 ___ */
+// カツオ
+
+fistjump_multiple 100.24 100.58
+fistjump_time_max_extend 0.4
+t_switch 80 120
+jump01 0.8 2.8
+move_fast_range 0.2 0.2
+switchspeed01 0.2 0.4
+
+slow_ZCOS 1
+
+switch_another_ratio 0.6
+switch_another_lock 30 
+wall_clip_level -0.6 2.1
+
+outrange_flip_ratio 0.442
+basic_miss_damage_speed 1
+
+
+
+switch_slower_ratio 0.5
+switch_slower_multiple 2.9 3.5
+switch_slower_lock 2 6
+switch_slower_lock_reduce 0.2
+
+hover_margin 0.01
+hoverhp_max 280
+punch_need_count 10
+
+rslt_score 550 1300
+rslt_score_divide 840
+inv_add 16 26
+size 0.69 0.52
+rarelity_base 3
+// not_fav_escape_ratio100 60
+
+fav squid 3 crab 3 aji 2 
+/* ___ salmon 1 ___ */
+// サーモン
+
+t_switch 70 90
+switch_another_ratio 0.42
+switch_another_lock 510 
+move_fast_range 1.2 1.54
+switch_slower_ratio 0.3
+switch_slower_multiple 1.8 2.3
+switch_slower_lock 3 6
+switch_slower_lock_reduce 0.25
+
+switchspeed01 0.4 0.7
+jump01 0.5 0.66
+wall_clip_level -0.3 0.04
+outrange_flip_ratio 0.142
+force_goto_reverse_ratio 0.04
+minus_extend_ratio 0.28
+
+hover_margin 0.01
+hoverhp_max 210
+punch_need_count 10
+
+
+rslt_score 700 950
+rslt_score_divide 1000
+size 0.56 0.67
+inv_add 16 30
+
+fav mackerel 3 seabream 2 eel 1
+rarelity_base 3
+basic_miss_damage_speed 1.4
+// not_fav_escape_ratio100 40
+
+/* ___ tuna 1 ___ */
+// マグロ
+
+t_switch 14 34
+jump01 0.1 0.44
+wall_clip_level 0.5 1.3
+switchspeed01 0.3 0.4
+move_fast_range -0.4 -0.1
+outrange_flip_ratio 0.7
+force_goto_reverse_ratio 0.74
+
+switch_another_ratio 0.32
+switch_another_lock 710 
+
+switch_slower_ratio 0.58
+switch_slower_multiple 4 4.5
+switch_slower_lock 1 1
+switch_slower_lock_reduce 0.35
+
+slow_ZCOS 1
+
+hover_margin 0.01
+hoverhp_max 230
+punch_need_count 10
+
+rslt_score 900 1800
+rslt_score_divide 1100
+inv_add 18 22
+size 0.73 0.64
+
+fav seabream 3 mackerel 2 cod 1
+rarelity_base 3
+basic_miss_damage_speed 0.4
+// not_fav_escape_ratio100 80
+
+
+/* ___ marlin 1 ___ */
+// カジキ
+
+switch_another_ratio 0.9
+switch_another_lock 240
+t_switch 30 60
+force_goto_reverse_ratio 0.66
+switchspeed01 0.2 1.3
+
+switch_slower_ratio 0.3
+switch_slower_multiple 2.6 4
+switch_slower_lock 1 2
+switch_slower_lock_reduce 0.5
+
+jump01 0.3 0.8
+hoverhp_max 180
+outrange_flip_ratio 0.2
+minus_extend_ratio 0.28
+punch_need_count 10
+first_speed_ratio 0.6
+
+inv_add 20 40
+
+hover_margin 0.01
+rslt_score 1300 2600
+rslt_score_divide 1200
+size 1.8 0.08 0.2 0.72 14.4
+
+fav bonito 4 squid 2 eel 1
+rarelity_base 3
+basic_miss_damage_speed 2
+// not_fav_escape_ratio100 80
+
+/* ___ seastar 5 ___ */
+// ヒトデ
+areaw 1.45
+inv_add 5 25
+
+first_speed_ratio 100.5 101.2
+fistjump_time_max_extend 0.2
+
+switch_another_ratio 0.6
+switch_another_lock 340
+t_switch 60 80
+jump01 0.35 0.95
+force_goto_reverse_ratio 0.66
+switchspeed01 0.54 0.76
+move_fast_range -0.18 1.24
+
+outrange_flip_ratio 0.3
+minus_extend_ratio 0.38
+punch_need_count 10
+
+switch_slower_ratio 0
+
+wall_clip_level -0.2 0.15
+basic_miss_damage_speed 0.8
+
+
+
+// GOTO __END
+%MARKER_COPYTO 
+// ========================
+%MARKER_TARGET 1
+t_switch 20 110
+first_speed_ratio 100.7 100.8
+jump01 0.7 1.4
+
+minus_extend_ratio 0.78
+move_fast_range -0.32 1.24
+force_goto_reverse_ratio 0.76
+switch_slower_ratio 0.3
+switch_slower_multiple 1.4 2.2
+switch_slower_lock 2 3
+switch_slower_lock_reduce 0.2
+
+
+t_switch 30 50
+switchspeed01 0.2 0.4
+ 
+// ========================
+%MARKER_TARGET 2
+t_switch 10 50
+minus_extend_ratio 0.78
+switch_another_ratio 0.1
+switch_another_lock 640
+first_speed_ratio 100.07 101.08
+switchspeed01 0.2 0.8
+force_goto_reverse_ratio 0.06
+move_fast_range 0.22 1.44
+
+switch_slower_ratio 0.8
+switch_slower_multiple 8.4 10.2
+switch_slower_lock 5 9
+switch_slower_lock_reduce 0.01
+
+// ========================
+%MARKER_TARGET 3
+%MARKER_COPYFROM marlin 
+first_speed_ratio 101.4 101.5
+t_switch 20 90
+// ========================
+%MARKER_TARGET 4
+%MARKER_COPYFROM tuna 
+t_switch 50 130
+first_speed_ratio 101.1 101.2
+switchspeed01 -0.4 0.1
+move_fast_range 0.22 0.6
+jump01 0.5 1.4
+
+
+// ========================
+// LABEL __END
+
+hoverhp_max 300
+hover_margin -0.024
+hoverhp_start_ratio 0.34
+
+rslt_score 100 1370
+rslt_score_divide 1500
+size 0.001 0.001 0.95 0.6
+
+fav marlin 3 tuna 2  salmon 1
+rarelity_base 2
+// not_fav_escape_ratio100 100
+is_star 1

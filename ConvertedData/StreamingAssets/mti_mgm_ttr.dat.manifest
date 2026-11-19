@@ -1,0 +1,82 @@
+ManifestFileVersion: 0
+CRC: 18941424
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 1cffc409e97a8e6a37e42d441c3a81bb
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 43ce17f5b9ae69a36d734b4fe1416f84
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 1cffc409e97a8e6a37e42d441c3a81bb
+HashAppended: 0
+ClassTypes:
+- Class: 1
+  Script: {instanceID: 0}
+- Class: 4
+  Script: {instanceID: 0}
+- Class: 20
+  Script: {instanceID: 0}
+- Class: 21
+  Script: {instanceID: 0}
+- Class: 23
+  Script: {instanceID: 0}
+- Class: 28
+  Script: {instanceID: 0}
+- Class: 33
+  Script: {instanceID: 0}
+- Class: 43
+  Script: {instanceID: 0}
+- Class: 48
+  Script: {instanceID: 0}
+- Class: 49
+  Script: {instanceID: 0}
+- Class: 65
+  Script: {instanceID: 0}
+- Class: 114
+  Script: {fileID: 11500000, guid: ab2eae16855eb4f5a80c29ccdc8803b1, type: 3}
+- Class: 114
+  Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
+- Class: 114
+  Script: {fileID: -1199893898, guid: e725a070cec140c4caffb81624c8c787, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 90a93abf1a391964a94e5c139605105b, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: a79441f348de89743a2939f4d699eac1, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: cd50d8568bb3c44cd819b08c1fae0a6f, type: 3}
+- Class: 115
+  Script: {instanceID: 0}
+- Class: 128
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers:
+- AssemblyName: Fusion.Realtime
+  ClassName: Fusion.Photon.Realtime.AppSettings
+- AssemblyName: Fusion.Runtime
+  ClassName: Fusion.NetworkObjectGuid
+- AssemblyName: Fusion.Runtime
+  ClassName: Fusion.NetworkPrefabRef
+- AssemblyName: Unity.RenderPipelines.Universal.Runtime
+  ClassName: UnityEngine.Rendering.Universal.TemporalAA/Settings
+Assets:
+- Assets/Editor/AssetBundlesSrc/MTI_mgm_ttr/Dice6/Plastic Glossy Pure write/Dice_d6_Height.png
+- Assets/Editor/AssetBundlesSrc/MTI_mgm_ttr/TTR Main Camera.prefab
+- Assets/Editor/AssetBundlesSrc/MTI_mgm_ttr/Dice6/Dice_d6_Plastic Glossy Pure write.prefab
+- Assets/Editor/AssetBundlesSrc/MTI_mgm_ttr/_icons_ttr.pxls.bytes
+- Assets/Editor/AssetBundlesSrc/MTI_mgm_ttr/Dice6/Dice_d6.fbx
+- Assets/Editor/AssetBundlesSrc/MTI_mgm_ttr/Dice6/Plastic Glossy Pure write/Dice_d6_Normal.png
+- Assets/Editor/AssetBundlesSrc/MTI_mgm_ttr/DataTTR/stage.csv
+- Assets/Editor/AssetBundlesSrc/MTI_mgm_ttr/Dice6/Plastic Glossy Pure write/Dice_d6_Roughness.png
+- Assets/Editor/AssetBundlesSrc/MTI_mgm_ttr/Font/letterspace_aadhunik.txt
+- Assets/Editor/AssetBundlesSrc/MTI_mgm_ttr/Dice6/Plastic Glossy Pure write.mat
+- Assets/Editor/AssetBundlesSrc/MTI_mgm_ttr/Dice6/Plastic Glossy Pure write/Dice_d6_AO.png
+- Assets/Editor/AssetBundlesSrc/MTI_mgm_ttr/Dice6/Plastic Glossy Pure write/Dice_d6_Metallic.png
+- Assets/Editor/AssetBundlesSrc/MTI_mgm_ttr/TTRPlayer.prefab
+- Assets/Editor/AssetBundlesSrc/MTI_mgm_ttr/PrefabTTROnline.prefab
+- Assets/Editor/AssetBundlesSrc/MTI_mgm_ttr/DataTTR/ai.csv
+- Assets/Editor/AssetBundlesSrc/MTI_mgm_ttr/Font/Aadhunik.ttf
+- Assets/Editor/AssetBundlesSrc/MTI_mgm_ttr/Dice6/Plastic Glossy Pure write/Dice_d6_Albedo.png
+- Assets/Editor/AssetBundlesSrc/MTI_mgm_ttr/DataTTR/ttr_gamemain.particle.csv
+- Assets/Editor/AssetBundlesSrc/MTI_mgm_ttr/FusionPrefab.prefab
+Dependencies: []

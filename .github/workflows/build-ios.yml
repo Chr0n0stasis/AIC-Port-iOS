@@ -1,0 +1,45 @@
+name: Build Alice in Cradle iOS IPA
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-ios:
+    name: Build Unsigned iOS IPA (Release)
+    runs-on: macos-14
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up .NET Core SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Cache Unity iOS Playback Engine
+        uses: actions/cache@v4
+        id: cache-playback-engine
+        with:
+          path: /tmp/aic_ios_build/playback_engine
+          key: unity-ios-engine-2022.3.62f2-7670c08855a9
+
+      - name: Make scripts executable
+        run: chmod +x scripts/*.sh
+
+      - name: Execute iOS Port Build Pipeline
+        run: bash scripts/build-ios.sh
+
+      - name: Upload iOS IPA Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: AliceInCradle_v0.30i_iOS
+          path: artifacts/*.ipa
+          if-no-files-found: error

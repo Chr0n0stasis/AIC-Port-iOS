@@ -1,0 +1,303 @@
+// 1: アルマがいるかどうか
+IFNDEF 1
+    1=0
+
+IF '('$1'&1)==1 ' {
+    _alma_exists=$1
+}
+_no_trauma_play=0
+IF '('$1'&2)==2' {
+    _no_trauma_play=1
+}
+
+___2weekattack=1
+STOP_GMAIN
+
+
+
+HIDE_STATUS 1
+    
+_ptc_apply=2w0
+TL 2 INIT_MAP_MATERIAL city_scl_ground 3
+IF $_no_trauma_play'==0' {
+    IFNDEF _album_categ {
+        @___Other/trauma -1
+    }
+
+    PIC_FILL	&10 0xff3A3434
+
+    #SND_LOAD  ev_2weekattack
+    DOTL
+    SCN_MANUAL_BGM_REPLACE 'BGM_sailen_2week'
+    START_GMAIN
+    WAIT_FN MAP_TRANSFER 
+    NEL_MAP_TRANSFER city_scl_ground L !Ev_2weekattack
+    WAIT 2
+    START_BGM	60 
+    SCN_MANUAL_BGM_REPLACE 
+} ELSE {
+    START_GMAIN
+    LOAD_BGM BGM_sailen_2week
+    PIC_FILL	&10 0xff3A3434
+    STOP_BGM	60 0
+}
+TITLECALL_HIDE 1
+
+#< % >
+<LOAD>
+#MS 'q ##'
+PIC_FADEOUT	&10 90
+PIC_FILL	&7 ff:#E46226
+
+
+// GOTO _5
+IF $_no_trauma_play'==1' {
+    REPLACE_BGM 30 140 0
+}
+
+PIC_FADEOUT	&7 80
+PIC_B #0 bg/2weekattack
+TL 40 #PTCST ui_snd_1 '_cue=wk2_himei_gaya' 
+WAIT 100
+
+DOTL
+
+HKDS	mb0 CRT @C WIDE
+TALKER_REPLACE	mb0 Army talk_mob_w1
+
+MSG	mb0_00 A
+MSG_HIDE 
+WAIT 70
+
+
+PIC_MOVEA	#0 15 SCARY
+
+PIC_FLASH	&7 5 0 28 88:#000000
+TALKER	l R
+PIC   l l1/a0L3R2__F1__m1__b7_ua3   
+PIC_MOVEA	l   15  SCARY
+SND pr_hit_wall
+
+TL 24 PIC_MOVE l D,D-630 30 ZPOW
+TL 40 PIC_FADEOUT l 40
+
+DENY_EVENTHANDLE
+TL 60 ALLOW_EVENTHANDLE
+
+TL 88 SND wk2_enemy_grawl
+TL 110 MSG_SKIP
+MSG	l_01 
+MSG_HIDE 
+
+DOTL
+
+WAIT　40
+
+PIC_FLASH	&12 0 0 50 ff:#000000
+
+PIC   #6 still_2weekattack/1
+PIC_MOVE2	#6 0 140 0 10 200 ZSIN
+PIC_MOVEA	#6 120 HANDSHAKE
+
+
+HKDS	l CRT @B TT
+
+WAIT　50
+
+MSG	l_02 
+
+
+MSG	l_03 T 
+
+MSG_HIDE 
+WAIT 40
+
+
+HKDS	n CCR @L TT
+
+#MS_ $_ptc_apply '>>[#<%> -100,0] ptcC[ev_wk2_whitearrow_0] w45 >+[200,0 :40]'
+DENY_EVENTHANDLE
+TL 85 ALLOW_EVENTHANDLE
+
+PIC_FLASH	&8  15 1 30 44:#ffffff 
+TL 47 PIC_FLASH	&9  5 10 60 aa:#ffffff 
+TL 70 PIC_FLASH	&9  10 0 40 ff:#ffffff 
+TL 70 PIC #8 still_2weekattack/2   
+TL 70 PIC_FADEIN #8 20
+TL 70 PIC_MOVE2 #8 80 0 0 0 45 ZSIN
+TL 85 PIC_FADEOUT #6 120
+TL 50 #PTCST_REMOVE ui_snd_1
+MSG	n_04 A
+
+HKDS	l LB @LBOUT  TT
+
+MSG	l_05 
+
+
+MSG	n_06 
+
+
+MSG_HIDE	  
+DOTL
+
+WAIT 20
+PIC_FADEOUT #8 70
+TL 50 PIC #7 still_2weekattack/3
+TL 50 PIC_FADEIN #7 70
+TL 50 PIC_MOVE2 #7 0 -330 0 -160 45 ZSIN
+TL 50 PIC_MOVEA	#7 70 HANDSHAKE
+TL 35 SND od_land_low
+TL 110 PIC_MOVE #7 0 0 45 ZSIN
+TL 70 SND wk2_enemy_grawl2
+TL 95 SND od_land_low
+TL 155 PIC_MOVE #7 0 20 145 ZCOS
+TL 155 PIC_MOVEA	#7 -1 HANDSHAKE
+
+
+WAIT 120
+HKDS	n RB @BOUT 
+
+MSG	n_07 T
+
+DOTL
+MSG_HIDE
+#PTCST ui_snd_1 '_cue=wk2_enemy_tentacle' 
+WAIT 18
+
+
+HKDS	l L @LOUT  TT
+TL 22 PIC #8 still_2weekattack/4
+TL 22 PIC_FADEIN #8 40
+TL 22 PIC_MOVE2 #8 0,-50 0,900 320 ZSIN
+
+MSG	l_08 AI
+
+HKDS	n R @T TT
+
+MSG	n_09 
+
+MSG_HIDE
+TL 20 #PTCST_REMOVE ui_snd_1 
+WAIT 70
+DOTL
+PIC_FADEOUT #7 0 
+PIC_FADEOUT #8 0
+PIC_FLASH	&9 0 10 60 ff:#F87335 
+
+
+SND wk2_Nmother_eva1
+SND wk2_enemy_stand
+SND insect_rape2
+PIC #5 still_2weekattack/5
+PIC_FADEIN #5 40
+PIC_MOVE2 #5 230,0 230,-500 1100 ZSIN
+PIC_MOVEA	#5 -1 HANDSHAKE
+
+@_VO_SPOT mouth_fin Noel
+
+HKDS	n RB @RT TT
+
+
+WAIT 25
+// しまっ..
+MSG	n_10 IT
+
+WAIT 25
+
+@_VO_SPOT mouth_wk Noel
+SND insect_rape2
+SND insect_rape0
+PIC_FLASH	&9 10 0 45 66:#000000
+PIC_MOVEA	#5 30 HANDSHAKE
+
+MSG	n_11  IA
+
+WAIT 35
+@_VO_SPOT mouth_wk Noel
+SND insect_rape2
+SND insect_rape0
+PIC_FLASH	&9 10 0 25 40:#000000
+PIC_MOVEA	#5 55 SIN_H
+MSG	n_11_2  IA
+
+WAIT 55
+PIC_MOVEA	#5 90 SIN_V2
+PIC_FLASH	&9 10 0 45 99:#000000
+MSG	n_12 P[130]CB
+
+DOTL
+
+TL 45 SND insect_rape2
+TL 45 SND insect_rape0
+TL 45 PIC_FLASH	&9 10 0 45 77:#000000
+TL 70 SND insect_rape3
+TL 70 SND insect_rape1
+TL 70 PIC_FLASH	&9 10 0 45 77:#000000
+TL 130 SND insect_rape2
+TL 130 SND insect_rape0
+TL 130 PIC_FLASH	&9 10 0 45 77:#000000
+
+WAIT 170
+
+PIC_FLASH	&10 10 0 55 99:#000000
+PIC_MOVEA	#5 -1 HANDSHAKE
+
+PIC #6 still_2weekattack/6
+PIC_FADEIN	#6 80
+PIC_MOVE2 #6 -250,0 -250,240 920 ZSIN
+
+HKDS	l  L @CLT TT
+
+TL 70 SND insect_rape2
+TL 70 SND insect_rape0
+TL 70 PIC_FLASH	&9 10 0 45 77:#000000
+
+MSG	l_12 
+TL 20 SND insect_rape1
+TL 20 SND insect_rape3
+TL 20 PIC_FLASH	&9 10 0 45 77:#000000
+MSG_HOLD n
+WAIT 60
+
+TL 70 SND insect_rape2
+TL 70 SND insect_rape0
+TL 70 PIC_FLASH	&9 10 0 45 77:#000000
+TL 180 SND insect_rape2
+TL 180 SND insect_rape0
+TL 180 PIC_FLASH	&9 10 0 45 77:#000000
+
+MSG	l_13  T
+CLEARTL
+PIC_FILL &11 DARK
+PIC_FADEIN	&11 60
+MSG_HIDE 
+
+WAIT 65
+//  GOTO _6
+
+PIC_FADEOUT	&11 60
+LABEL _5
+PE BGM_WATER 70 0.5
+#< $_ptc_apply >
+PIC_HIDE_ALL	 
+
+
+// UIPICT_GOB_DEACTIVE 1
+
+CHANGE_EVENT2	___city/2weekattack_05
+PE BGM_WATER 50 1
+
+LABEL _6
+CHANGE_EVENT2 ___city/2weekattack_06
+
+LABEL _7
+
+CHANGE_EVENT2 ___city/2weekattack_07
+// #< # >
+// #VANISH
+
+___2weekattack!
+
+IFNDEF _album_categ {
+    GFB_SET CITY_2WEEKATTACK 1
+}

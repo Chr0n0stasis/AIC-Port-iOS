@@ -1,0 +1,21 @@
+
+_bossskip=1
+GFC_SET_MX IXA1 4
+
+SCN_MANUAL_BGM_REPLACE ''
+INIT_MAP_MATERIAL forest_senzyo 1
+WAIT 2
+WAIT_FN MAP_TRANSFER
+GFC_SET_MX IXA3 1
+
+NEL_MAP_TRANSFER forest_senzyo L !Ev_near_ixia
+
+WAIT 5
+
+PIC_FADEOUT #9 40
+
+
+SUMMONER_TYPE forest_senzyo NO_EFFECT NO_BORDER
+LP_ACTIVATE WalkDecline_event
+LP_ACTIVATE WalkDecline_event_2
+CHANGE_EVENT s11_4a

@@ -1,0 +1,18 @@
+// QUEST_PROGRESS p999_trial_finished 0
+QUEST_REMOVE p999_trial_finished 1
+
+SHOW_QUEST_PROGRESS
+SEEK_END
+IF 'quest_progress[p002_primula]<0' {
+GFC_SET IXA1 0
+PVV 107
+QUEST_PROGRESS p107_td 0
+QUEST_PROGRESS p002_primula 0
+
+SHOW_QUEST_PROGRESS
+WAIT_BUTTON
+
+} ELSE {
+    
+QUEST_PROGRESS p002_primula 2
+}

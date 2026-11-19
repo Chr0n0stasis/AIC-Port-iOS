@@ -1,0 +1,20 @@
+ManifestFileVersion: 0
+CRC: 1340518886
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: d5b408b5d9e28dbd5c59dbb54a30132b
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 5ad585dd02dfb5016c0dad519eab8f49
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: d5b408b5d9e28dbd5c59dbb54a30132b
+HashAppended: 0
+ClassTypes:
+- Class: 49
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/Editor/AssetBundlesSrc/Enemies/puppy.pxls.bytes
+Dependencies: []

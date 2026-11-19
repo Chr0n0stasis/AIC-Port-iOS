@@ -1,0 +1,21 @@
+ManifestFileVersion: 0
+CRC: 2133683032
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 5551da53c653d40100c92438843a6efa
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 5ad585dd02dfb5016c0dad519eab8f49
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 5551da53c653d40100c92438843a6efa
+HashAppended: 0
+ClassTypes:
+- Class: 49
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/Editor/AssetBundlesSrc/Fatal/fatal_td107_3.json
+- Assets/Editor/AssetBundlesSrc/Fatal/fatal_td107_3.atlas.txt
+Dependencies: []

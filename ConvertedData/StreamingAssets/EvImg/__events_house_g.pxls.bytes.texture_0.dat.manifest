@@ -1,0 +1,20 @@
+ManifestFileVersion: 0
+CRC: 3483040438
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: a08c0c2ea109d9478fc12ac82a3e78fc
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 2612ac43db082a73502ee80f2eceb73f
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: a08c0c2ea109d9478fc12ac82a3e78fc
+HashAppended: 0
+ClassTypes:
+- Class: 28
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/Editor/AssetBundlesSrc/EvImg/__events_house_g.pxls.bytes.texture_0.png
+Dependencies: []

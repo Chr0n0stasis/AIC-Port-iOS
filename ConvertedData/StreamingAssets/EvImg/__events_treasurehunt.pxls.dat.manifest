@@ -1,0 +1,20 @@
+ManifestFileVersion: 0
+CRC: 1211536659
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 56bf8d5963bf23e8763a11b5283d61ac
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 5ad585dd02dfb5016c0dad519eab8f49
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 56bf8d5963bf23e8763a11b5283d61ac
+HashAppended: 0
+ClassTypes:
+- Class: 49
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/Editor/AssetBundlesSrc/EvImg/__events_treasurehunt.pxls.bytes
+Dependencies: []

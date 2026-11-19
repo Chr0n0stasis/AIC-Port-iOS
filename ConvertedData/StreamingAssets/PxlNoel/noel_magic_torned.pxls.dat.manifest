@@ -1,0 +1,20 @@
+ManifestFileVersion: 0
+CRC: 1553857914
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 0241fefc56e10318c123406e782d1e69
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 5ad585dd02dfb5016c0dad519eab8f49
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 0241fefc56e10318c123406e782d1e69
+HashAppended: 0
+ClassTypes:
+- Class: 49
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/Editor/AssetBundlesSrc/PxlNoel/noel_magic_torned.pxls.bytes
+Dependencies: []

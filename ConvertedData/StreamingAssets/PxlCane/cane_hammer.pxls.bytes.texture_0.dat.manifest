@@ -1,0 +1,20 @@
+ManifestFileVersion: 0
+CRC: 1928326792
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 4d2c956d1f4513e88e1d9ccd63b22d75
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 2612ac43db082a73502ee80f2eceb73f
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 4d2c956d1f4513e88e1d9ccd63b22d75
+HashAppended: 0
+ClassTypes:
+- Class: 28
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/Editor/AssetBundlesSrc/PxlCane/cane_hammer.pxls.bytes.texture_0.png
+Dependencies: []

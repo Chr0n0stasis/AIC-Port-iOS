@@ -1,0 +1,9 @@
+TITLECALL_HIDE 1
+START_LETTERBOX
+DENY_SKIP
+WAIT 30
+ALLOW_SKIP
+TX_BOARD ___city_forge*board_announce_v030 
+QUEST_REMOVE city_forge_030
+QUEST_PROGRESS city_forge_030 0
+

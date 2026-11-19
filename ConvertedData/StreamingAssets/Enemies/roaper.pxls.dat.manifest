@@ -1,0 +1,20 @@
+ManifestFileVersion: 0
+CRC: 3194157498
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: c39c708e98520c51406ff63b2de4ca62
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 5ad585dd02dfb5016c0dad519eab8f49
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: c39c708e98520c51406ff63b2de4ca62
+HashAppended: 0
+ClassTypes:
+- Class: 49
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/Editor/AssetBundlesSrc/Enemies/roaper.pxls.bytes
+Dependencies: []

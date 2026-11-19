@@ -1,0 +1,20 @@
+ManifestFileVersion: 0
+CRC: 3304281432
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 4658d8053e2c4fc0df9e238d83050736
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 5ad585dd02dfb5016c0dad519eab8f49
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 4658d8053e2c4fc0df9e238d83050736
+HashAppended: 0
+ClassTypes:
+- Class: 49
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/Editor/AssetBundlesSrc/Enemies/golem.pxls.bytes
+Dependencies: []

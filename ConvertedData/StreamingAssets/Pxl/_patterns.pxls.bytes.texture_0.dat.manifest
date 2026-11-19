@@ -1,0 +1,20 @@
+ManifestFileVersion: 0
+CRC: 831703618
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: ccae860fead82bf1615a94082f7f6f82
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 2612ac43db082a73502ee80f2eceb73f
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: ccae860fead82bf1615a94082f7f6f82
+HashAppended: 0
+ClassTypes:
+- Class: 28
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/Editor/AssetBundlesSrc/Pxl/_patterns.pxls.bytes.texture_0.png
+Dependencies: []

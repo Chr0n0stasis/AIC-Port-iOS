@@ -1,0 +1,20 @@
+ManifestFileVersion: 0
+CRC: 3816674242
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: def7606e140825c69b6596fea1c7ab92
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 5ad585dd02dfb5016c0dad519eab8f49
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: def7606e140825c69b6596fea1c7ab92
+HashAppended: 0
+ClassTypes:
+- Class: 49
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/Editor/AssetBundlesSrc/Enemies/mage.pxls.bytes
+Dependencies: []

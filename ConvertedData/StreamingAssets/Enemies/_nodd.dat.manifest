@@ -1,0 +1,20 @@
+ManifestFileVersion: 0
+CRC: 929239744
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 69ed5628b4cecc012b26d4a814401110
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 5ad585dd02dfb5016c0dad519eab8f49
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 69ed5628b4cecc012b26d4a814401110
+HashAppended: 0
+ClassTypes:
+- Class: 49
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/Editor/AssetBundlesSrc/Enemies/_nodd.csv
+Dependencies: []

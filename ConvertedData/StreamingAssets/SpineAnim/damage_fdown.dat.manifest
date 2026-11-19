@@ -1,0 +1,20 @@
+ManifestFileVersion: 0
+CRC: 144303724
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 9c5f34f2670f01b407a81bf3196eeed2
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 2612ac43db082a73502ee80f2eceb73f
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 9c5f34f2670f01b407a81bf3196eeed2
+HashAppended: 0
+ClassTypes:
+- Class: 28
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/Editor/AssetBundlesSrc/SpineAnim/damage_fdown.png
+Dependencies: []

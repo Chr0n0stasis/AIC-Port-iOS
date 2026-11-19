@@ -1,0 +1,74 @@
+UIGM DEACTIVATE
+DEFINENDEF 1=0
+MSG_PREFIX so <tigrina> 
+
+STOP_GMAIN
+SHOW_BLURSC
+    
+WAIT 20
+TALKER	so L   
+
+IF 'PVV==107' {
+    GOTO NO_PIC
+}
+
+MTL MSG_SKIPHOLD
+IF $1'==0' {
+    PIC   so so2/a0L3R1__F2__f2__m1__e1_ua    
+    PIC_MP so QUE
+    MSG so_00
+    // 通常時
+} ELSE {
+
+    PIC   so so1/a0L4R2__F1__f1__m7__e1_ua    
+    PIC_MP	so EXQ  
+
+    MSG so_10
+}
+WAIT 4
+LABEL NO_PIC
+DENY_SKIP
+SELECTARRAY_CLEAR
+SELECT_POS CCB
+SELECTARRAY &&Status_Tab_smnc_abort ABORT
+SELECTARRAY &&Select_nothanks _CANCEL C
+SELECT_FOCUS 1
+SELECT -1
+
+
+LABEL _CANCEL 
+MSG_HIDE
+PIC_HIDE_ALL	
+HIDE_BLURSC
+WAIT 30
+SEEK_END
+
+LABEL ABORT // ========================
+
+PIC_HIDE_ALL	
+MSG_HIDE
+
+DEF_CURMAP _cur_map
+
+INIT_MAP_MATERIAL $_cur_map 1
+
+
+PIC_FILL	&9 DARK
+PIC_FADEIN	&9 50
+WAIT 60
+
+HIDE_BLURSC 1
+WAIT_FN MAP_TRANSFER
+NEL_MAP_TRANSFER $_cur_map R !Ev_tig
+
+#CMDRELOAD	IMMEDIATE IMMEDIATE_LOAD
+
+WAIT 4
+@___Tigrina/_gameover_after 0
+PIC_FADEOUT	&9 50
+
+#MS_ % '#; >>[Ev_tig.b -120,0] >+[50,0 :70]' 
+WAIT 80
+
+
+

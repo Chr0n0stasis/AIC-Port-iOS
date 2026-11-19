@@ -1,0 +1,21 @@
+ManifestFileVersion: 0
+CRC: 3423702889
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: e42802642fff046cbfc1914a11981332
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 5ad585dd02dfb5016c0dad519eab8f49
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: e42802642fff046cbfc1914a11981332
+HashAppended: 0
+ClassTypes:
+- Class: 49
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/Editor/AssetBundlesSrc/Fatal/fatal_snake.atlas.txt
+- Assets/Editor/AssetBundlesSrc/Fatal/fatal_snake.json
+Dependencies: []

@@ -1,0 +1,21 @@
+ManifestFileVersion: 0
+CRC: 1576328427
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: f5b236061241da90c86ccc75117e6032
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 5ad585dd02dfb5016c0dad519eab8f49
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: f5b236061241da90c86ccc75117e6032
+HashAppended: 0
+ClassTypes:
+- Class: 49
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/Editor/AssetBundlesSrc/SpineAnim/damage_ketsudasi.atlas.txt
+- Assets/Editor/AssetBundlesSrc/SpineAnim/damage_ketsudasi.json
+Dependencies: []

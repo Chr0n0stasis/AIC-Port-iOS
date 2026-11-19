@@ -1,0 +1,20 @@
+ManifestFileVersion: 0
+CRC: 670096346
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 9fdaf7c9d5e8dc13c6b603b88efc0b22
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 2612ac43db082a73502ee80f2eceb73f
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 9fdaf7c9d5e8dc13c6b603b88efc0b22
+HashAppended: 0
+ClassTypes:
+- Class: 28
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/Editor/AssetBundlesSrc/Enemies/ramda.pxls.bytes.texture_0.png
+Dependencies: []

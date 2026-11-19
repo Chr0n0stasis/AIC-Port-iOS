@@ -1,0 +1,20 @@
+ManifestFileVersion: 0
+CRC: 3277094205
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 0bf17c667a26926d3907a9afb60f3178
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: c12678a98877549a3fe7bb52917258ad
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 0bf17c667a26926d3907a9afb60f3178
+HashAppended: 0
+ClassTypes:
+- Class: 329
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/Editor/AssetBundlesSrc/Effect_mp4/107cyber_s.mp4
+Dependencies: []

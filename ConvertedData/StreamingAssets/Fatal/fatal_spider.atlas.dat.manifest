@@ -1,0 +1,21 @@
+ManifestFileVersion: 0
+CRC: 2673817839
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: a0b4d1c81e24257e03cb94c33485e495
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 5ad585dd02dfb5016c0dad519eab8f49
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: a0b4d1c81e24257e03cb94c33485e495
+HashAppended: 0
+ClassTypes:
+- Class: 49
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/Editor/AssetBundlesSrc/Fatal/fatal_spider.json
+- Assets/Editor/AssetBundlesSrc/Fatal/fatal_spider.atlas.txt
+Dependencies: []

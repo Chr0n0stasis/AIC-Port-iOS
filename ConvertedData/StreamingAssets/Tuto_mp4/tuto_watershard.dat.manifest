@@ -1,0 +1,20 @@
+ManifestFileVersion: 0
+CRC: 1032652752
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 7c58bf74a11ab4c9040b3b521281fe54
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: c12678a98877549a3fe7bb52917258ad
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 7c58bf74a11ab4c9040b3b521281fe54
+HashAppended: 0
+ClassTypes:
+- Class: 329
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/Editor/AssetBundlesSrc/Tuto_mp4/tuto_watershard.mp4
+Dependencies: []

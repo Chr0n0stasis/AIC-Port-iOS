@@ -1,0 +1,21 @@
+ManifestFileVersion: 0
+CRC: 610185571
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 035b7688ef957a33d1f32658d1dc1481
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 5ad585dd02dfb5016c0dad519eab8f49
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 035b7688ef957a33d1f32658d1dc1481
+HashAppended: 0
+ClassTypes:
+- Class: 49
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/Editor/AssetBundlesSrc/SpineAnim/hipdown.json
+- Assets/Editor/AssetBundlesSrc/SpineAnim/hipdown.atlas.txt
+Dependencies: []

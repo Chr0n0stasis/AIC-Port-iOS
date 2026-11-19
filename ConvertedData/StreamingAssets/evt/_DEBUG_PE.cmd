@@ -1,0 +1,47 @@
+
+TALKER	n L  
+HKDS	n R   
+IF 0 {
+
+MSG n_<<<EOM BC
+ふつうに会話
+EOM;
+WAIT_BUTTON
+WAIT 40
+
+PIC_PE &15 ENEMY_OVERDRIVE_APPEAR|ff:#ffffff
+
+MSG n_<<<EOM BC
+PEを後に貼るテスト。
+EOM;
+WAIT_BUTTON
+WAIT 40
+
+PIC_HIDE_ALL	'' 1
+
+PIC_PE #15 ENEMY_OVERDRIVE_APPEAR|ff:#ffffff
+
+MSG n_<<<EOM
+PEを前に貼るテスト。
+EOM;
+
+WAIT 40
+} ELSE {
+
+    PIC_PE #15 ENEMY_OVERDRIVE_APPEAR|ff:#ffffff
+    WAIT 30
+}
+
+PIC_HIDE_ALL	'' 1
+PIC_PE #15 BURST|ff:#ffffff
+TL 60 PIC_PE &16 SEPIA|ff:#ffffff
+
+MSG n_<<<EOM BC
+PEをどちらにも貼るテスト。
+EOM;
+
+TL 120  PIC_HIDE_ALL	'&' 1
+WAIT_BUTTON
+DOTL
+WAIT_BUTTON
+WAIT 40

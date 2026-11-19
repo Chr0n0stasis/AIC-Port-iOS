@@ -1,0 +1,20 @@
+ManifestFileVersion: 0
+CRC: 577024508
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: b30db6ee412a722b4a95291a75b98d84
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 2612ac43db082a73502ee80f2eceb73f
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: b30db6ee412a722b4a95291a75b98d84
+HashAppended: 0
+ClassTypes:
+- Class: 28
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/Editor/AssetBundlesSrc/EvImg/__events_forest_nusi.pxls.bytes.texture_0.png
+Dependencies: []

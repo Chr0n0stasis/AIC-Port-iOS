@@ -1,0 +1,164 @@
+SND memoryback
+LOAD_BGM BGM_wind
+BG_MSG_FRONT 1
+#SND_LOAD enemy_slime
+#SND_LOAD item_bomb
+STOP_BGM	40 0
+PIC_FILL #9 0xffDCDCDC
+PIC_FADEIN #9 30
+
+HKDS	n CLT @C
+
+WAIT 32
+<LOAD>
+PIC_FILL #8 DARK
+PIC_FILL #0 DARK
+PIC_PE #15 SEPIA|bb:#ffffff
+PIC_FADEOUT #9 70
+
+REPLACE_BGM 10 80 
+LOAD_BGM BGM_traumascene200 
+WAIT 50
+STOP_GDRAW
+SND cloth_gosogoso
+MSG n_00
+
+
+SND small_hit
+SND pr_hit_wall
+TL 4 PIC_FLASH	#11 0 6 2 66:#ffffff 
+TL 4 PIC_MVA #11 7 SCARY2
+
+TL 22 SND prko_ground
+TL 32 SND break_weed
+MSG n_01 IA
+
+DOTL
+
+MSG	n_02
+TL 56 PIC_FLASH	#11 0 45 2 aa:#ff0000 
+TL 56 PIC_MVA #11 7 SCARY2
+TL 68 PIC_FLASH #12 0 10 45 aa:#ffffff
+TL 68 PIC_MVA #12 15 SCARY
+TL 65 SND summoner_activate
+MSG	n_03
+
+DOTL
+TL 33 REPLACE_BGM	10 40 
+
+PIC_FADEOUT #8 40
+PIC_B #3 mountain200_still/mountain_flashback0
+PIC_MOVE2 #3 30 0 -30 0 500 
+PIC_MVA #3  120 HANDSHAKE
+
+WAIT 70
+PIC_FLASH	#11 0 5 20 78:#ffffff 
+TL 6 PIC_MVA #11 8 SCARY
+DOTL
+HKDS	n L @CRT  
+
+MSG	n_05
+WAIT 15
+SND od_prepare
+SND insect_rape1
+PIC_FLASH	#11 0 4 30 cc:#ff0000 
+PIC_MVA #3 8 SCARY
+TL 12 PIC_MVA #3  120 HANDSHAKE
+
+WAIT 70
+
+
+PIC_FLASH	#11 0 4 30 cc:#ff0000 
+MSG	n_11
+PIC_MVA #3 8 SCARY
+TL 12 PIC_MVA #3  200 HANDSHAKE
+PIC_FLASH	#11 0 4 10 66:#ff0000  
+TL 25 PIC_FLASH	#12 0 4 40 66:#ff0000  
+SND absorb_catch
+SND od_eat_open_low
+MSG	n_12
+WAIT 15
+PIC_FADEOUT #3 1
+WAIT 6
+
+PIC_FLASH	#11 0 4 10 cc:#ffffff
+WAIT 6
+LOAD_BGM BGM_light
+STOP_BGM 20
+PIC_FLASH	#12 0 4 10 cc:#ffffff
+PIC_MVA #12 15 SCARY2
+SND enemy_heavy_jump
+SND od_charge_growl
+HKDS	v RT @C TT
+DENY_EVENTHANDLE
+
+
+
+TL 24 PIC_FLASH	#12 5 1 70 cc:#ffffff
+
+TL 39 PIC_B #3 mountain200_still/mountain_flashback1
+TL 39 PIC_FADEIN	#3 20
+TL 39 PIC_MVA #3 28 SCARY
+TL 39 PIC_MOVE2 #3 0 30 0 -30 200 ZSIN
+TL 69 PIC_MVA #3  120 HANDSHAKE
+
+TL 40 SND itembomb_magic_explode
+TL 40 SND hit_arrow_enemy
+TL 46 SND en_die
+TL 49 SND en_die
+TL 58 SND en_die
+TL 54 PIC_FLASH	#8 5 1 20 cc:#ffffff
+TL 54 PIC_MVA #8 9 SCARY2
+TL 90 PIC_FLASH	#8 5 1 20 66:#ffffff
+TL 90 PIC_MVA #8 12 SCARY
+TL 180 ALLOW_EVENTHANDLE
+
+MSG	v_11  A
+
+
+DOTL
+WAIT 15
+PIC_FILL	#12  ff:#ffffff
+PIC_FADEIN	#12 40
+WAIT 44
+HKDS	v RB @CRT
+
+PIC_B #3 mountain200_still/mountain_flashback2
+PIC_FADEOUT	#12 120
+PIC_MVA #3  470 HANDSHAKE
+PIC_MOVE2 #3 0 30 0 -30 200 ZSIN
+
+TL 60  REPLACE_BGM 70 70
+MSG	v_12 
+
+DOTL
+WAIT 40
+
+
+//爆弾投げ
+//一瞬だけ本気モード（真面目）なレヴィ
+HKDS	n lB @ClT
+
+MSG	n_13 A
+
+
+MSG	v_14 
+
+WAIT 20
+
+MSG	n_15 
+
+WAIT 35
+SND memoryback
+STOP_BGM 200 1
+PIC_FADEOUT #3 140
+PIC_FILL &9 0xffDCDCDC
+PIC_FADEIN &9 60
+WAIT 80
+
+PIC_HIDE_ALL	#%  1
+
+START_GDRAW
+PIC_FADEOUT &9 50
+BG_MSG_FRONT 0
+CHANGE_EVENT 200/84_spider_comes

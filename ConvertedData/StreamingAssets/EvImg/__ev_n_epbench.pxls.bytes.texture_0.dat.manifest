@@ -1,0 +1,20 @@
+ManifestFileVersion: 0
+CRC: 2047767693
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 8d14991d8c24f07c91cb5d32a4b47239
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 2612ac43db082a73502ee80f2eceb73f
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 8d14991d8c24f07c91cb5d32a4b47239
+HashAppended: 0
+ClassTypes:
+- Class: 28
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/Editor/AssetBundlesSrc/EvImg/__ev_n_epbench.pxls.bytes.texture_0.png
+Dependencies: []

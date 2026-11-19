@@ -1,0 +1,21 @@
+ManifestFileVersion: 0
+CRC: 2437011641
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 16b8312fe860672ab46f03851ae3d9cb
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 5ad585dd02dfb5016c0dad519eab8f49
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 16b8312fe860672ab46f03851ae3d9cb
+HashAppended: 0
+ClassTypes:
+- Class: 49
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/Editor/AssetBundlesSrc/SpineAnim/torture_slime_1.atlas.txt
+- Assets/Editor/AssetBundlesSrc/SpineAnim/torture_slime_1.json
+Dependencies: []

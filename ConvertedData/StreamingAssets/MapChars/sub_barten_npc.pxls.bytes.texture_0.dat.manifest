@@ -1,0 +1,20 @@
+ManifestFileVersion: 0
+CRC: 634498973
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 1daaa5548550b0c7e2f0c61226d40f5a
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 2612ac43db082a73502ee80f2eceb73f
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 1daaa5548550b0c7e2f0c61226d40f5a
+HashAppended: 0
+ClassTypes:
+- Class: 28
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/Editor/AssetBundlesSrc/MapChars/sub_barten_npc.pxls.bytes.texture_0.png
+Dependencies: []

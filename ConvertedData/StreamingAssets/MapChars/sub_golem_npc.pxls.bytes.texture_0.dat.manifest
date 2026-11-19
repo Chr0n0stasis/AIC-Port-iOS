@@ -1,0 +1,20 @@
+ManifestFileVersion: 0
+CRC: 3680883307
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 6ed89bf0c4ac84caf35a05f57af0da53
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 2612ac43db082a73502ee80f2eceb73f
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 6ed89bf0c4ac84caf35a05f57af0da53
+HashAppended: 0
+ClassTypes:
+- Class: 28
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/Editor/AssetBundlesSrc/MapChars/sub_golem_npc.pxls.bytes.texture_0.png
+Dependencies: []

@@ -1,0 +1,327 @@
+_sc2_l_x=-620
+_sc2_l_y=200
+_sc2_i_x=620
+_sc2_i_y=-140
+DENY_SKIP
+IF '(GFC[ALM1]&8)!=0' {
+    GFC_SET ALM1 -=8
+    ITEMMNG_POP_BYTES
+    AUTO_SAVE 1
+} 
+
+
+PIC_FILL        #9 DARK
+WAIT 2
+<LOAD>
+#SND_LOAD ev_restroom
+LOAD_BGM BGM_tuuzyou
+START_BLURSC_TO_BEHIND
+// GOTO _ANN
+
+WAIT 3
+#MS_ alma '## >>[Ev_door_shower.b -200,0] >>[Ev_door_shower.b -10,0 :110]'
+#MS_ % '>>[Ev_106_00.b -100,0]'
+
+PIC_FADEOUT          #9 80
+WAIT 40
+ALLOW_SKIP
+WAIT 90
+
+GFC_SET IXA1 11 // グラフィック読み込み
+#CMDRELOAD	IMMEDIATE IMMEDIATE_LOAD
+WAIT 2
+LP_ACTIVATE_TO_CHIP Ev_door_shower
+
+#< woman_elf_student_8 >
+#MS '>>[Ev_door_shower.b -10,0 ] w40 P[walk] >+[-400,0 :260] '
+#REMOVE load_once
+WAIT 80
+LP_DEACTIVATE_TO_CHIP Ev_door_shower
+
+WAIT 50
+
+
+
+
+REPLACE_BGM
+
+WAIT 25 
+TL 30 SND restroom_shower
+// GOTO n02
+
+PIC_FLASH        %10 10 4 50 WHITE 
+WAIT 10
+PIC #10 scl_106_shower/scl_106_shower_121 XW
+PIC_MV2 #10 $_sc2_l_x ~$_sc2_l_y+320 $_sc2_l_x $_sc2_l_y 300
+PIC_MVA #10 -1 ZOOM2 
+START_BLURSC_TO_BEHIND
+SHOW_BLURSC
+
+#< % 
+#MS '>>[Ev_door_shower.b -10,0] ## #;' 
+
+HKDS	l CCLB @CRT
+
+MSG	l_00
+
+WAIT 30
+HKDS	i CCRB @CLT
+PIC_SWAP #10 #11
+PIC_FADEOUT	#11 40
+
+PIC #10 scl_106_shower/scl_106_shower_121 XW
+PIC_MV2 #10 $_sc2_i_x ~$_sc2_i_y+220 $_sc2_i_x $_sc2_i_y 340
+PIC_MVA #10 -1 ZOOM2 
+ 
+MSG	i_01 
+
+WAIT 15
+PIC_SWAP #10 #11
+PIC_FADEOUT	#11 40
+
+PIC #10 scl_106_shower/scl_106_shower_121 XW
+
+
+WAIT 30
+HKDS	n  CRRTT @C TT 
+
+MSG	n_02 
+
+PIC_SWAP #10 #11
+PIC_FADEOUT	#11 40
+PIC #10 scl_106_shower/scl_106_shower_221 XW
+
+PIC_MP2 #10 ixia LAG
+HKDS	i  LB @L
+
+
+
+MSG	i_03 
+
+PIC_SWAP #10 #11
+PIC_FADEOUT	#11 20
+PIC #10 scl_106_shower/scl_106_shower_222 XW
+PIC_MP2 #10 alma PLE
+
+HKDS	l  RT @R TT 
+
+MSG	l_04 
+
+WAIT 30
+PIC_FLASH        %11 1 0 20 WHITE 
+SND ping
+
+PIC #10 scl_106_shower/scl_106_shower_222 XW
+PIC_MV #10 $_sc2_i_x $_sc2_i_y
+PIC_MVA #10 -1 ZOOM2 
+HKDS	i  CRB @CLT
+
+MSG	i_05 
+
+WAIT 30
+PIC_SWAP #10 #11
+PIC_FADEOUT	#11 20
+PIC #10 scl_106_shower/scl_106_shower_212 XW
+PIC_MP2 #10 noel SWT
+
+HKDS	n  CRRTT @C TT 
+
+MSG	n_06 
+
+PIC_SWAP #10 #11
+PIC_FADEOUT	#11 20
+PIC #10 scl_106_shower/scl_106_shower_111 XW
+
+
+HKDS	i  CLB @L
+MSG	i_07 
+
+HKDS	n  RT @C 
+
+MSG	n_08 
+
+WAIT 30
+HKDS	l CCLB @CRT
+
+PIC_SWAP #10 #11
+PIC_FADEOUT	#11 20
+
+PIC #10 scl_106_shower/scl_106_shower_121 XW
+PIC_MV2 #10 $_sc2_l_x ~$_sc2_l_y+220 $_sc2_l_x $_sc2_l_y 340
+PIC_MVA #10 -1 ZOOM2 
+ 
+
+MSG	l_09 
+
+WAIT 30
+PIC_SWAP #10 #11
+PIC_FADEOUT	#11 20
+
+PIC #10 scl_106_shower/scl_106_shower_211 XW
+
+MSG	i_10 
+
+PIC_SWAP #10 #11
+PIC_FADEOUT	#11 20
+
+PIC #10 scl_106_shower/scl_106_shower_212 XW
+
+MSG	n_11 
+
+LABEL  _ANN
+
+SHOW_BLURSC
+LOAD_BGM BGM_sailen_2week BGM_sailen_2week_2
+WAIT 20
+PIC_HIDE_ALL	 '' 1
+PIC_FLASH %15 0 7 1 WHITE
+TL 11 PIC_FLASH %13 0 3 11 BLACK
+
+TL 35 PIC_FLASH %12 0 3 60 99:#000000
+
+REPLACE_BGM 
+
+WAIT 15
+
+HKDS	ann T @C WIDE
+TALKER_REPLACE	ann Mob  ''
+
+
+MSG	ann_30  A
+
+DOTL
+WAIT 35
+
+HKDS	n LB @T
+HKDS	i LT @LTOUT
+HKDS	l RT @ROUT
+
+
+START_FRONT_IMAGE_ON_MSG
+PIC #10 scl_106_shower/scl_106_shower_121 XW
+PIC_MV2 #10 0 410 0 250 300 ZSIN
+PIC_FADEIN #10 30
+PIC_MVA #10 -1 ZOOM2
+
+
+MSG	n_31 
+
+
+TL 60 PIC_PE &8 WORM_TRAPPED|ff:#ffffff
+TL 60 PIC_FADEIN &8 200
+
+MSG	i_32 
+
+
+MSG	l_33 
+
+DENY_SKIP
+WAIT 40 
+MSG_HIDE 1
+DOTL
+SND flashback_noise
+PIC_HIDE_ALL	'' 1
+PIC_FLASH	&4 0 5 4 0xffBBA0A0
+PIC_FILL	&3 0xff3A3434
+PIC_PE	&15 ENEMY_OVERDRIVE_APPEAR|ff:#ffffff
+PIC_FADEIN &15 15
+
+WAIT 15
+PIC_FLASH	&20 0 1 14 0xffBBA0A0
+
+PIC &5 still_2weekattack/3
+PIC_MOVEA	&5 -1 HANDSHAKE
+
+WAIT 12
+PIC_FLASH	&20 0 1 6 0xffBBA0A0
+PIC &6 still_2weekattack/4
+PIC_MOVEA	&6 -1 HANDSHAKE
+
+
+WAIT 12
+PIC_FLASH	&20 0 1 18 0xffBBA0A0
+PIC &7 still_2weekattack/5
+PIC_MV &7 0 -632
+PIC_MOVEA	&7 -1 HANDSHAKE
+
+PIC_FILL &20 ff:#C91515
+PIC_FADEIN	&20 30
+WAIT 30
+// ========================
+PIC_HIDE_ALL	'' 1
+#< % >
+
+
+#PTCST ui_snd_1 '_cue=heartbeat_fast_loop' 
+
+
+ALLOW_SKIP
+PIC_FILL &20 ff:#C91515
+PIC_FADEOUT	&20 30
+WAIT 20
+PIC_PE	&15 ENEMY_OVERDRIVE_APPEAR|ff:#ffffff
+PIC_FADEIN &15 30
+WAIT 70
+PIC_FADEOUT &15 100
+
+HKDS	n RB @CRT TT
+HKDS	i L @LB 
+
+DOTL 
+
+PIC #4 scl_106_shower2/scl_106_shower2_1
+PIC_FADEIN #4 80
+PIC_MV2 #4 0 0 0 90 120 ZSIN
+PIC_MVA #4 -1 HANDSHAKE
+MSG	n_34 
+
+
+PIC #3 scl_106_shower2/scl_106_shower2_0
+PIC_MV #4 0 90
+PIC_FADEIN #3 80
+
+MSG	i_35 
+
+
+MSG	n_36 
+
+PIC_FADEOUT #4 50
+PIC_FADEOUT #3 50
+TL 20 #PTCST_REMOVE ui_snd_1
+WAIT 80
+
+DOTL
+HKDS	l    
+TALKER	l R   
+PIC   l l1/a0L2R1__F1__m1__b5_u3    
+
+STOP_BGM 150
+
+MSG	l_37 
+
+HKDS	n    
+TALKER	n L
+
+IF sensitive_level'>=2' {
+    PIC   n a_3/a2__F1__f3__m2__b1_u1    
+} ELSE {
+
+    PIC   n a_3_bass/a0__F1__f3__m2__b1_u1    
+}
+
+
+MSG	n_38 
+PIC_HIDE_ALL	 
+
+
+STOP_FRONT_IMAGE_ON_MSG
+DOTL 
+PIC_FILL #9 DARK
+PIC_FADEIN #9 90
+PIC_TFADE #9 DOOR_OPEN
+TL 20 SND door_wood_open
+
+WAIT 120
+
+DOTL
+CHANGE_EVENT 106/31_kodo

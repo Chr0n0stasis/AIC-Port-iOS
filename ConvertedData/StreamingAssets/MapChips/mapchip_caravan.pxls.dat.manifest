@@ -1,0 +1,20 @@
+ManifestFileVersion: 0
+CRC: 98320259
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: bad5c8c7f1246139aae1fcb76d1c763f
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 5ad585dd02dfb5016c0dad519eab8f49
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: bad5c8c7f1246139aae1fcb76d1c763f
+HashAppended: 0
+ClassTypes:
+- Class: 49
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/Editor/AssetBundlesSrc/MapChips/MapChip_caravan.pxls.bytes
+Dependencies: []

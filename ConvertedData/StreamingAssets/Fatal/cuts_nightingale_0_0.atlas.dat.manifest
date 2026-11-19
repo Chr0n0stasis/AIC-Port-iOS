@@ -1,0 +1,21 @@
+ManifestFileVersion: 0
+CRC: 651563005
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 283e0de5f062035888489ff4a0506a34
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 5ad585dd02dfb5016c0dad519eab8f49
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 283e0de5f062035888489ff4a0506a34
+HashAppended: 0
+ClassTypes:
+- Class: 49
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/Editor/AssetBundlesSrc/Fatal/cuts_nightingale_0_0.atlas.txt
+- Assets/Editor/AssetBundlesSrc/Fatal/cuts_nightingale_0_0.json
+Dependencies: []

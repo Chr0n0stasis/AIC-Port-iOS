@@ -1,0 +1,21 @@
+ManifestFileVersion: 0
+CRC: 3489880460
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: f795a1976b908cabcf1b232e583f2fec
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 5ad585dd02dfb5016c0dad519eab8f49
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: f795a1976b908cabcf1b232e583f2fec
+HashAppended: 0
+ClassTypes:
+- Class: 49
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/Editor/AssetBundlesSrc/SpineAnim/stand_bunny.atlas.txt
+- Assets/Editor/AssetBundlesSrc/SpineAnim/stand_bunny.json
+Dependencies: []

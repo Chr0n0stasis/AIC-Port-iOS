@@ -1,0 +1,21 @@
+ManifestFileVersion: 0
+CRC: 2929812233
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 83d441cf369bb4eefb6925b7c4a2bc3f
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 5ad585dd02dfb5016c0dad519eab8f49
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 83d441cf369bb4eefb6925b7c4a2bc3f
+HashAppended: 0
+ClassTypes:
+- Class: 49
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/Editor/AssetBundlesSrc/SpineAnim/cuts_layegg.json
+- Assets/Editor/AssetBundlesSrc/SpineAnim/cuts_layegg.atlas.txt
+Dependencies: []

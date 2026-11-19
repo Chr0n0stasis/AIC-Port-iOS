@@ -1,0 +1,22 @@
+ManifestFileVersion: 0
+CRC: 2565681545
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 6c9161e2518d3091f4fb77236a8fd6e8
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 2d8df09e698f722ada1caa03d3413830
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 6c9161e2518d3091f4fb77236a8fd6e8
+HashAppended: 0
+ClassTypes:
+- Class: 28
+  Script: {instanceID: 0}
+- Class: 213
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/Editor/AssetBundlesSrc/mgm_bun/mgm_bun.pxls.bytes.texture_0.png
+Dependencies: []

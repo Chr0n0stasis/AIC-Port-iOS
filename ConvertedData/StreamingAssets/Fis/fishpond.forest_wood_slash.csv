@@ -1,0 +1,8 @@
+//fish_type それぞれの餌タイプでの釣り分布 
+flounder     10 5 3 0 0 0
+cod         2 25 10 2 0 0
+eel 0 0 14 1 0 0
+seabream     0 0 2 10 5 0
+mackerel    0 0 0 6 20 15
+bonito   0 0 0 0 10 25
+tuna 0 0 0 0 0 3

@@ -1,0 +1,22 @@
+ManifestFileVersion: 0
+CRC: 640787455
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 28dc7ece6b95f759249e11b30e83c4e0
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 5ad585dd02dfb5016c0dad519eab8f49
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 28dc7ece6b95f759249e11b30e83c4e0
+HashAppended: 0
+ClassTypes:
+- Class: 49
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/Editor/AssetBundlesSrc/Fatal/fatal_nusi_0.json
+- Assets/Editor/AssetBundlesSrc/Fatal/fatal_nusi_0.atlas.txt
+- Assets/Editor/AssetBundlesSrc/Fatal/fatal_nusi_1.json
+Dependencies: []

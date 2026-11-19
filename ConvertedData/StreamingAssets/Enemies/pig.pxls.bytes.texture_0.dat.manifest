@@ -1,0 +1,20 @@
+ManifestFileVersion: 0
+CRC: 1545671276
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: acb09c6dc4abedc55543635004113a3d
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 2612ac43db082a73502ee80f2eceb73f
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: acb09c6dc4abedc55543635004113a3d
+HashAppended: 0
+ClassTypes:
+- Class: 28
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/Editor/AssetBundlesSrc/Enemies/pig.pxls.bytes.texture_0.png
+Dependencies: []

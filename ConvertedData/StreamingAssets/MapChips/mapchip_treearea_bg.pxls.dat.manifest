@@ -1,0 +1,20 @@
+ManifestFileVersion: 0
+CRC: 3346810362
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 93439c128eba03bea6020ca46d955e67
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 5ad585dd02dfb5016c0dad519eab8f49
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 93439c128eba03bea6020ca46d955e67
+HashAppended: 0
+ClassTypes:
+- Class: 49
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/Editor/AssetBundlesSrc/MapChips/MapChip_treearea_bg.pxls.bytes
+Dependencies: []

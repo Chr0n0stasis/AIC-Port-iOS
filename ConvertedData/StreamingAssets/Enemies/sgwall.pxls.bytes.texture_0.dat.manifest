@@ -1,0 +1,20 @@
+ManifestFileVersion: 0
+CRC: 528381551
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 351dcf759d39671e2d361b86b4ccfd20
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 2612ac43db082a73502ee80f2eceb73f
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 351dcf759d39671e2d361b86b4ccfd20
+HashAppended: 0
+ClassTypes:
+- Class: 28
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/Editor/AssetBundlesSrc/Enemies/sgwall.pxls.bytes.texture_0.png
+Dependencies: []

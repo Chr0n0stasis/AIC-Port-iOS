@@ -1,0 +1,20 @@
+ManifestFileVersion: 0
+CRC: 826158056
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 850a5016ab35654be54a1d57e8ed6048
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 2612ac43db082a73502ee80f2eceb73f
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 850a5016ab35654be54a1d57e8ed6048
+HashAppended: 0
+ClassTypes:
+- Class: 28
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/Editor/AssetBundlesSrc/MapChips/MapChip_house.pxls.bytes.texture_0.png
+Dependencies: []

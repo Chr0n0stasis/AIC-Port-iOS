@@ -1,0 +1,21 @@
+ManifestFileVersion: 0
+CRC: 1440350968
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 720435601f1de85a086729cc1cadd319
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 5ad585dd02dfb5016c0dad519eab8f49
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 720435601f1de85a086729cc1cadd319
+HashAppended: 0
+ClassTypes:
+- Class: 49
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/Editor/AssetBundlesSrc/SpineAnim/damage_sucknew.json
+- Assets/Editor/AssetBundlesSrc/SpineAnim/damage_sucknew.atlas.txt
+Dependencies: []

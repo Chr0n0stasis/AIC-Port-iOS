@@ -1,0 +1,3 @@
+GREETING L
+WAIT 20
+TX_BOARD *board01

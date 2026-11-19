@@ -1,0 +1,20 @@
+ManifestFileVersion: 0
+CRC: 3557198647
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: ae2ba391e059edf2d1dc8e730b1ca889
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 2612ac43db082a73502ee80f2eceb73f
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: ae2ba391e059edf2d1dc8e730b1ca889
+HashAppended: 0
+ClassTypes:
+- Class: 28
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/Editor/AssetBundlesSrc/PxlCane/cane_bermit.pxls.bytes.texture_0.png
+Dependencies: []

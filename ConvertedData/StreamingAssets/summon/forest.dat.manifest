@@ -1,0 +1,53 @@
+ManifestFileVersion: 0
+CRC: 3795850566
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 482cf82fa69cc2dc33f56cfa7c5717f9
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 5ad585dd02dfb5016c0dad519eab8f49
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 482cf82fa69cc2dc33f56cfa7c5717f9
+HashAppended: 0
+ClassTypes:
+- Class: 49
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/Editor/AssetBundlesSrc/summon/forest/forest_coroseum.summon.csv
+- Assets/Editor/AssetBundlesSrc/summon/forest/forest_nusi_coroseum.summon.csv
+- Assets/Editor/AssetBundlesSrc/summon/forest/forest_geckoland.summon.csv
+- Assets/Editor/AssetBundlesSrc/summon/forest/forest_rwood_column.summon.csv
+- Assets/Editor/AssetBundlesSrc/summon/forest/forest_senzyo2cliff.summon.csv
+- Assets/Editor/AssetBundlesSrc/summon/forest/forest_wood_slash.summon.csv
+- Assets/Editor/AssetBundlesSrc/summon/forest/forest_wood_hall.summon.csv
+- Assets/Editor/AssetBundlesSrc/summon/forest/forest_swamp.summon.csv
+- Assets/Editor/AssetBundlesSrc/summon/forest/forest_mush_coroseum.summon.csv
+- Assets/Editor/AssetBundlesSrc/summon/forest/forest_treecrack.summon.csv
+- Assets/Editor/AssetBundlesSrc/summon/forest/forest_wind_senzyo.summon.csv
+- Assets/Editor/AssetBundlesSrc/summon/forest/forest_senzyo.summon.csv
+- Assets/Editor/AssetBundlesSrc/summon/forest/forest_tomato.summon.csv
+- Assets/Editor/AssetBundlesSrc/summon/forest/_description.csv
+- Assets/Editor/AssetBundlesSrc/summon/forest/forest_darkpot.summon.csv
+- Assets/Editor/AssetBundlesSrc/summon/forest/forest_toylabo.summon.csv
+- Assets/Editor/AssetBundlesSrc/summon/forest/forest_foxhall.summon.csv
+- Assets/Editor/AssetBundlesSrc/summon/forest/forest_tutorial.summon.csv
+- Assets/Editor/AssetBundlesSrc/summon/forest/forest_mushpot2.summon.csv
+- Assets/Editor/AssetBundlesSrc/summon/forest/forest_rwood_column.csv
+- Assets/Editor/AssetBundlesSrc/summon/forest/forest_nightlake.summon.csv
+- Assets/Editor/AssetBundlesSrc/summon/forest/forest_thorn_cage.summon.csv
+- Assets/Editor/AssetBundlesSrc/summon/forest/forest_wood_right_exit.summon.csv
+- Assets/Editor/AssetBundlesSrc/summon/forest/forest_clocktower.summon.csv
+- Assets/Editor/AssetBundlesSrc/summon/forest/forest_coroseum_frog.summon.csv
+- Assets/Editor/AssetBundlesSrc/summon/forest/forest_mush_narrowroad.summon.csv
+- Assets/Editor/AssetBundlesSrc/summon/forest/forest_buibui.summon.csv
+- Assets/Editor/AssetBundlesSrc/summon/forest/forest_toybox.summon.csv
+- Assets/Editor/AssetBundlesSrc/summon/forest/forest_nightacid.summon.csv
+- Assets/Editor/AssetBundlesSrc/summon/forest/forest_tikuwar.summon.csv
+- Assets/Editor/AssetBundlesSrc/summon/forest/forest_cliff_portal.summon.csv
+- Assets/Editor/AssetBundlesSrc/summon/forest/forest_darkpotu.summon.csv
+- Assets/Editor/AssetBundlesSrc/summon/forest/forest_acid_lake.summon.csv
+- Assets/Editor/AssetBundlesSrc/summon/forest/forest_debug02.summon.csv
+Dependencies: []

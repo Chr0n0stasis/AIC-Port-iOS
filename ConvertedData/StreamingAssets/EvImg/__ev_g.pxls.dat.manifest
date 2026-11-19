@@ -1,0 +1,20 @@
+ManifestFileVersion: 0
+CRC: 3133451001
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 361122e5753c34c0e856eb0023f79f1c
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 5ad585dd02dfb5016c0dad519eab8f49
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 361122e5753c34c0e856eb0023f79f1c
+HashAppended: 0
+ClassTypes:
+- Class: 49
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/Editor/AssetBundlesSrc/EvImg/__ev_g.pxls.bytes
+Dependencies: []

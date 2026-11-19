@@ -1,0 +1,178 @@
+%CATEG IN_GAME R 
+// R は強い振動。
+//key time  level(0-100)
+jump 15 10
+foot 10 20
+
+
+
+// ========================
+//key time  level(0-100)
+%CATEG IN_GAME R
+attack_punch 10 70
+attack_shotgun 20 80
+attack_guard_bush 10 80
+attack_shield_lariat_init 80 50
+attack_wall 11 50
+attack_shotgun_fullcharge_1 80 30 
+
+evade_init 11 40
+
+
+%CATEG IN_GAME
+attack_shotgun_fullcharge_0 20 65
+
+
+// ========================
+//key time  level(0-100)
+%CATEG IN_GAME R
+magic_chanted 20 50
+magic_explode 30 60
+burst_prepare_0 20 30
+burst_prepare_1 20 50
+burst_prepare_2 70 70
+
+pr_magic_hit 15 100
+
+powerbomb_charge_0 70 55
+powerbomb_charge_1 150 90
+
+dropbomb_explode 30 50
+whitearrow_hit_mv 10 60
+mg_fireball_break 50 60
+
+shield_reflect 15 70
+
+magic_thunderbolt_init 20 40
+magic_thunderbolt_explode 60 45
+
+sneaking_noticed 15 50
+
+
+%CATEG IN_GAME
+burst_0 20 80
+burst_1 80 15
+
+powerbomb_0 20 90
+powerbomb_1 120 20 
+
+
+// ========================
+//key time  level(0-100)
+%CATEG IN_GAME
+dmg_s 25 45
+dmg_l 45 45
+dmg_absorb 20 90
+dmg_absorb_l 25 70
+dmg_hit_wall 15 60
+dmg_shield_break_0 20 80
+
+summoner_activate_suddon_0 20 90
+
+worm_egg_activate_0 35 90
+worm_egg_activate_1 75 30
+laying_egg_0 15 50
+
+gacha_countone 10 40
+
+rope_hit_1 30 25
+
+%CATEG IN_GAME R
+dmg_shield 25 50
+dmg_hit_ground 20 40
+init_absorb 15 80
+dmg_thunder 60 60
+dmg_ydrg 20 80
+dmg_shield_guard 15 100
+dmg_shield_break_1 60 80
+summoner_activate 70 55
+summoner_activate_suddon_1 60 60
+laying_egg_1 34 30
+laying_egg_s 12 80
+
+
+dmg_absorb_s 15 55
+
+dmg_gas_applied 25 70
+
+// ========================
+//key time  level(0-100)
+%CATEG IN_GAME R
+masturb_0 15 25
+masturb_1 15 40
+
+orgasm_1 110 65
+%CATEG IN_GAME
+orgasm_0 45 60
+
+// ========================
+//key time  level(0-100)
+%CATEG IN_GAME 
+ground_bump 40 80
+ground_bump_s 30 80
+noeljuice_evaporate 25 55
+getmagic_fullopen 50 60
+getmagic_charge_hit 4 45
+groundneedle 50 45
+smallshot 20 15
+
+%CATEG IN_GAME R
+nusi_ixiacharge 100 40
+ground_gogogo 120 30
+ground_gogogo_s 60 30
+ground_gogogo_ss 20 30
+bigswing 40 50
+
+getmagic_charge 4 90
+heartbeat 25 50
+
+// ========================
+//key time  level(0-100)
+%CATEG IN_GAME R
+lp_breakable_death 30 70
+lp_breakable_hit 24 50
+
+// ========================
+//key time  level(0-100)
+
+%CATEG 0
+reel_decide_1 30 40
+mg_dojo_hithand_win 12 55
+mg_dojo_loseb_0 28 70
+mg_farm_suck_new 20 55
+
+%CATEG R
+ev_trauma 80 80
+reel_decide_0 15 40
+bench_sitdown 25 40
+
+mg_dojo_hithand_same 22 40
+mg_farm_sucking_over 6 100 
+mg_dojo_loseb_1 80 90
+mg_dojo_beat 11 20
+mg_farm_sucking 4 30
+
+// ========================
+//key time  level(0-100)
+%CATEG IN_GAME 
+facility_restart 120 65
+treasure_open_opening 18 20
+lp_cannon_shot 70 70
+lp_cannon_hit 30 100
+%CATEG IN_GAME R
+lp_cannon_charge 75 35
+puzz_box_activate_once 25 40
+treasure_open_release 50 30
+error_skill_gotten 200 70
+
+
+%CATEG IN_GAME R
+mgm_fis_fish_success 90 70
+mgm_fis_fish_touch 12 28
+mgm_fis_fish_eat 15 48
+mgm_fis_fish_game_init 90 40
+%CATEG IN_GAME
+mgm_fis_throw 20 35
+mgm_fis_on_water 25 22 
+mgm_fis_fish_game_marker_hit 40 40
+

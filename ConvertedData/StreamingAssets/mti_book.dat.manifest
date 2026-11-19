@@ -1,0 +1,53 @@
+ManifestFileVersion: 0
+CRC: 3751783005
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 1f12f1db1033a631f9e7f469ce7f7044
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: fda408ca3916310f87d878166d209ea1
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 1f12f1db1033a631f9e7f469ce7f7044
+HashAppended: 0
+ClassTypes:
+- Class: 1
+  Script: {instanceID: 0}
+- Class: 4
+  Script: {instanceID: 0}
+- Class: 21
+  Script: {instanceID: 0}
+- Class: 23
+  Script: {instanceID: 0}
+- Class: 28
+  Script: {instanceID: 0}
+- Class: 33
+  Script: {instanceID: 0}
+- Class: 43
+  Script: {instanceID: 0}
+- Class: 48
+  Script: {instanceID: 0}
+- Class: 90
+  Script: {instanceID: 0}
+- Class: 95
+  Script: {instanceID: 0}
+- Class: 137
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/Editor/AssetBundlesSrc/MTI_book/AnimatedBook/Shaders/AnimatedBookStandard_BlackAndWhite.shader
+- Assets/Editor/AssetBundlesSrc/MTI_book/AnimatedBook/Shaders/AnimatedBook_Glow.shader
+- Assets/Editor/AssetBundlesSrc/MTI_book/AnimatedBook/Shaders/AnimatedBookStandard_AlphaBlend.shader
+- Assets/Editor/AssetBundlesSrc/MTI_book/AnimatedBook/Shaders/AnimatedBookStandard_RGBColor.shader
+- Assets/Editor/AssetBundlesSrc/MTI_book/AnimatedBook/Shaders/AnimatedBook_RGBColor.shader
+- Assets/Editor/AssetBundlesSrc/MTI_book/AnimatedBook/AnimatedBookStandard.shader
+- Assets/Editor/AssetBundlesSrc/MTI_book/book_aricle_dark.png
+- Assets/Editor/AssetBundlesSrc/MTI_book/Book_Aricre.png
+- Assets/Editor/AssetBundlesSrc/MTI_book/AnimatedBook/Models/book.fbx
+- Assets/Editor/AssetBundlesSrc/MTI_book/ClosedBook_HistoryOfArt.prefab
+- Assets/Editor/AssetBundlesSrc/MTI_book/Book_HistoryOfArt.prefab
+- Assets/Editor/AssetBundlesSrc/MTI_book/AnimatedBook/Shaders/AnimatedBook.shader
+- Assets/Editor/AssetBundlesSrc/MTI_book/AnimatedBook/Shaders/AnimatedBook_AlphaBlend.shader
+- Assets/Editor/AssetBundlesSrc/MTI_book/AnimatedBook/Shaders/AnimatedBook_BlackAndWhite.shader
+Dependencies: []

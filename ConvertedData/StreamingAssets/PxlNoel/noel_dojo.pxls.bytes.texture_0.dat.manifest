@@ -1,0 +1,20 @@
+ManifestFileVersion: 0
+CRC: 993021447
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: e6affe2efc27dcbc36b72402cd4e1b67
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 2612ac43db082a73502ee80f2eceb73f
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: e6affe2efc27dcbc36b72402cd4e1b67
+HashAppended: 0
+ClassTypes:
+- Class: 28
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/Editor/AssetBundlesSrc/PxlNoel/noel_dojo.pxls.bytes.texture_0.png
+Dependencies: []

@@ -1,0 +1,20 @@
+ManifestFileVersion: 0
+CRC: 3092031697
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 760213ca7f071e6b49648b7a1f4a9a69
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 2612ac43db082a73502ee80f2eceb73f
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 760213ca7f071e6b49648b7a1f4a9a69
+HashAppended: 0
+ClassTypes:
+- Class: 28
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/Editor/AssetBundlesSrc/SpineAnim/bench_torned.png
+Dependencies: []

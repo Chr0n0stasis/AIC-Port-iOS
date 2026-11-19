@@ -1,0 +1,40 @@
+<LOAD_DWARF>
+
+TALKER	n R   
+
+TALKER	a L
+TALKER_REPLACE	a  Mob 
+
+
+
+MSG	n_00 
+
+
+MSG	a_01 
+PIC_HIDE_ALL	T 
+
+
+MSG	n_02 
+
+
+WAIT 40
+
+PIC   n a_3/a0__F1__f3__m1__b2_u3    
+PIC_MOVEA	n 14 SCARY
+
+MSG	n_03 T
+
+PIC_HIDE_ALL	T 
+WAIT 40
+
+WAIT 24
+
+PIC   a p2/a1L1R1__F1__e2__uo    
+PIC_MP	a SWT 
+MSG	a_04 
+
+
+
+PIC_HIDE_ALL	T 
+WAIT 20
+CHANGE_EVENT	200/51_fallen_talk_a

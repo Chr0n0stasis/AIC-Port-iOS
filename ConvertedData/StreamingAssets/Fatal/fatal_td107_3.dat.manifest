@@ -1,0 +1,20 @@
+ManifestFileVersion: 0
+CRC: 1506629369
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 78d6a78785cb5897db8a581dc88b0ef8
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 2612ac43db082a73502ee80f2eceb73f
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 78d6a78785cb5897db8a581dc88b0ef8
+HashAppended: 0
+ClassTypes:
+- Class: 28
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/Editor/AssetBundlesSrc/Fatal/fatal_td107_3.png
+Dependencies: []

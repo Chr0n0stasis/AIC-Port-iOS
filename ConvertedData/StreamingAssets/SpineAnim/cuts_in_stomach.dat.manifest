@@ -1,0 +1,20 @@
+ManifestFileVersion: 0
+CRC: 342547316
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: de980be387bd451eb9be84a1bc15d2ec
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 2612ac43db082a73502ee80f2eceb73f
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: de980be387bd451eb9be84a1bc15d2ec
+HashAppended: 0
+ClassTypes:
+- Class: 28
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/Editor/AssetBundlesSrc/SpineAnim/cuts_in_stomach.png
+Dependencies: []

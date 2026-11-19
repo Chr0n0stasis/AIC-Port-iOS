@@ -1,0 +1,38 @@
+ManifestFileVersion: 0
+CRC: 938350541
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: aa74de8b1e45399b952ac8a4bc166330
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 5ad585dd02dfb5016c0dad519eab8f49
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: aa74de8b1e45399b952ac8a4bc166330
+HashAppended: 0
+ClassTypes:
+- Class: 49
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/Editor/AssetBundlesSrc/summon/mount/mount_mine_1.summon.csv
+- Assets/Editor/AssetBundlesSrc/summon/mount/mount_cave_honey0.summon.csv
+- Assets/Editor/AssetBundlesSrc/summon/mount/mount_windtower.summon.csv
+- Assets/Editor/AssetBundlesSrc/summon/mount/mount_honey_darkpit.summon.csv
+- Assets/Editor/AssetBundlesSrc/summon/mount/mount_cannon_senzyo.summon.csv
+- Assets/Editor/AssetBundlesSrc/summon/mount/mount_mine0.summon.csv
+- Assets/Editor/AssetBundlesSrc/summon/mount/mount_busstop.summon.csv
+- Assets/Editor/AssetBundlesSrc/summon/mount/mount_poison_cave.summon.csv
+- Assets/Editor/AssetBundlesSrc/summon/mount/mount_mine_lt.summon.csv
+- Assets/Editor/AssetBundlesSrc/summon/mount/_description.csv
+- Assets/Editor/AssetBundlesSrc/summon/mount/mount_spider_coroseum.summon.csv
+- Assets/Editor/AssetBundlesSrc/summon/mount/mount_ruinroad.summon.csv
+- Assets/Editor/AssetBundlesSrc/summon/mount/mount_trash_cr.summon.csv
+- Assets/Editor/AssetBundlesSrc/summon/mount/mount_woodslash.summon.csv
+- Assets/Editor/AssetBundlesSrc/summon/mount/mount_darkcave.summon.csv
+- Assets/Editor/AssetBundlesSrc/summon/mount/mount_sand_senzyo.summon.csv
+- Assets/Editor/AssetBundlesSrc/summon/mount/mount_poison_lake.summon.csv
+- Assets/Editor/AssetBundlesSrc/summon/mount/mount_honeypit.summon.csv
+- Assets/Editor/AssetBundlesSrc/summon/mount/mount_junk_senzyo.summon.csv
+Dependencies: []

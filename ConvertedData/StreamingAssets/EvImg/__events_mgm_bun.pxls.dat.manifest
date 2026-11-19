@@ -1,0 +1,20 @@
+ManifestFileVersion: 0
+CRC: 3643024755
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: cf4af666f03ebb0c749a28bc2cb514eb
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 5ad585dd02dfb5016c0dad519eab8f49
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: cf4af666f03ebb0c749a28bc2cb514eb
+HashAppended: 0
+ClassTypes:
+- Class: 49
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/Editor/AssetBundlesSrc/EvImg/__events_mgm_bun.pxls.bytes
+Dependencies: []

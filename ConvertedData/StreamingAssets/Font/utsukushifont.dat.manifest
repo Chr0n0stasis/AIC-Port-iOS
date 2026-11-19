@@ -1,0 +1,26 @@
+ManifestFileVersion: 0
+CRC: 1567752391
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: d536a0ed83961534057b7800ccad396c
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 9372662e05ede815898c391bbc5766da
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: d536a0ed83961534057b7800ccad396c
+HashAppended: 0
+ClassTypes:
+- Class: 21
+  Script: {instanceID: 0}
+- Class: 28
+  Script: {instanceID: 0}
+- Class: 48
+  Script: {instanceID: 0}
+- Class: 128
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/Editor/AssetBundlesSrc/Font/UtsukushiFONT.otf
+Dependencies: []

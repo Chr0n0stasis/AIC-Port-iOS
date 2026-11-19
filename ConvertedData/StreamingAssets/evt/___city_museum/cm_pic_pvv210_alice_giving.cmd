@@ -1,0 +1,6 @@
+
+TALKER	n L   
+TALKER_REPLACE	ow museum talk_mob_m2 
+HKDS	ow LB @LBOUT
+HKDS	n RB @RBOUT  
+STOP_LETTERBOX

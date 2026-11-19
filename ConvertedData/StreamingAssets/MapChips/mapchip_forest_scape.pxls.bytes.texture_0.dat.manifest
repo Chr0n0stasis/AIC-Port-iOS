@@ -1,0 +1,20 @@
+ManifestFileVersion: 0
+CRC: 1591710994
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 006c5ac771f31e2abb2e7d149e964e11
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 2612ac43db082a73502ee80f2eceb73f
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 006c5ac771f31e2abb2e7d149e964e11
+HashAppended: 0
+ClassTypes:
+- Class: 28
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/Editor/AssetBundlesSrc/MapChips/MapChip_forest_scape.pxls.bytes.texture_0.png
+Dependencies: []

@@ -1,0 +1,20 @@
+ManifestFileVersion: 0
+CRC: 649386577
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: f0d470513b86220695e108b4b6d4a71c
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 5ad585dd02dfb5016c0dad519eab8f49
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: f0d470513b86220695e108b4b6d4a71c
+HashAppended: 0
+ClassTypes:
+- Class: 49
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/Editor/AssetBundlesSrc/EvImg/__events_alchemy_coffee.pxls.bytes
+Dependencies: []

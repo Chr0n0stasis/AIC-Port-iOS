@@ -1,0 +1,21 @@
+ManifestFileVersion: 0
+CRC: 2639743467
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: ee8c418ca174b8a15ab3272c785bde77
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 5ad585dd02dfb5016c0dad519eab8f49
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: ee8c418ca174b8a15ab3272c785bde77
+HashAppended: 0
+ClassTypes:
+- Class: 49
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/Editor/AssetBundlesSrc/SpineAnim/damage_press.atlas.txt
+- Assets/Editor/AssetBundlesSrc/SpineAnim/damage_press.json
+Dependencies: []

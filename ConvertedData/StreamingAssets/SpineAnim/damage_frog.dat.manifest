@@ -1,0 +1,20 @@
+ManifestFileVersion: 0
+CRC: 326200835
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: f8b6684905a7e8f176aab45e1a5c551b
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 2612ac43db082a73502ee80f2eceb73f
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: f8b6684905a7e8f176aab45e1a5c551b
+HashAppended: 0
+ClassTypes:
+- Class: 28
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/Editor/AssetBundlesSrc/SpineAnim/damage_frog.png
+Dependencies: []

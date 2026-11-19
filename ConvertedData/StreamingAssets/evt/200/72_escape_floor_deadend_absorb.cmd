@@ -1,0 +1,47 @@
+<LOAD_DWARF>
+#SND_LOAD ev_mountain
+
+HKDS	n LT #<%> TT
+TALKER	a R
+HKDS	a  RT   
+
+TALKER_REPLACE	a  Mob 
+
+
+
+WAIT 70
+ALLOW_SKIP
+MSG n_05 A
+
+WAIT 10
+PIC_HIDE_ALL	    
+#MS_ alice '## P[run] >+[-100,0 <<0.14] P[beware] '
+
+
+MSG a_06 A
+
+WAIT 35
+SND hit_grab
+PIC_FLASH	%7  0 1 40 99:#AB3B44 
+#MS_ % '## #;'
+WAIT 10
+HKDS	n LT #<%>
+
+MSG n_07 T
+
+TL 4 SND hit_grab
+TL 4 PIC_FLASH	%7  5 1 30 99:#AB3B44 
+TL 30 SND hit_grab
+TL 30 PIC_FLASH	%7  5 1 30 99:#AB3B44
+TL 56 SND hit_grab
+TL 56 PIC_FLASH	%7  5 1 30 99:#AB3B44
+
+WAIT 90
+MSG n_08 T
+
+DENY_SKIP
+CLEARTL
+
+#< QA200_PUPPY >
+// ENEMY_ADD_TICKET 200_21_ABSORB_AFTER  200/73_escape_floor_deadend_break 
+ENEMY_ADD_TICKET 200_21_ABSORB_AFTER  200/73_escape_floor_deadend_break 

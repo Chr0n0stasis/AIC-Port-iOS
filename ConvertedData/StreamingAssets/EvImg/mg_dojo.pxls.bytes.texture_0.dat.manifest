@@ -1,0 +1,20 @@
+ManifestFileVersion: 0
+CRC: 3069537960
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 9bf895a882c16f5af2945fcb0dbf4479
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 2612ac43db082a73502ee80f2eceb73f
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 9bf895a882c16f5af2945fcb0dbf4479
+HashAppended: 0
+ClassTypes:
+- Class: 28
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/Editor/AssetBundlesSrc/EvImg/mg_dojo.pxls.bytes.texture_0.png
+Dependencies: []

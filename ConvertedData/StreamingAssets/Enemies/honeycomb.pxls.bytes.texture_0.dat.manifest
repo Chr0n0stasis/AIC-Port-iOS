@@ -1,0 +1,20 @@
+ManifestFileVersion: 0
+CRC: 4037286823
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: d75554a133d9511c6f625bb95c85ed84
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 2612ac43db082a73502ee80f2eceb73f
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: d75554a133d9511c6f625bb95c85ed84
+HashAppended: 0
+ClassTypes:
+- Class: 28
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/Editor/AssetBundlesSrc/Enemies/honeycomb.pxls.bytes.texture_0.png
+Dependencies: []

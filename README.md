@@ -1,44 +1,110 @@
-# Unity iOS AOT lab
+# Alice in Cradle (iOS Port)
 
-这个仓库用于验证 Unity 桌面发行物向 iOS 迁移的 AOT 路线。Alice in Cradle 0.30i 的 macOS 安装包是只读分析样本。仓库里的探针代码是独立自建样本。
+本项目为《Alice in Cradle》（v0.30i）移植至 iOS 平台的完整移植工程与自动化构建流水线。
 
-## 在专用 Mac 环境运行
+通过在 Windows 环境下完成全部资源转码、程序集修补与触控映射，结合 GitHub Actions（macOS 运行环境）自动拉取 Unity 2022.3.62f2 iOS 运行时，免除 Unity 商业授权限制，一键编译并打包未签名 iOS `.ipa`。
 
-准备已激活的 Unity 2022.3.62f2、对应的 iOS Build Support、Xcode 和 .NET SDK 8 或更高版本。以下命令在仓库根目录运行。根据你的安装位置设置编辑器路径。
+---
 
-```bash
-UNITY_EDITOR="/Applications/Unity/Hub/Editor/2022.3.62f2/Unity.app/Contents/MacOS/Unity"
-bash scripts/prepare-unity-probe.sh
-"$UNITY_EDITOR" -batchmode -nographics -quit -projectPath "$PWD/UnityProbe" \
-  -buildTarget iOS -executeMethod PortProbeBuild.Export \
-  -customBuildPath "$PWD/build/ProbeXcode" -logFile -
-bash scripts/build-xcode.sh "$PWD/build/ProbeXcode/Unity-iPhone.xcodeproj" \
-  "$PWD/build/unity-ios-unsigned.zip"
+## 🛠️ 移植架构与技术方案
+
+```mermaid
+flowchart TD
+    A["macOS 原包 (v0.30i)"] --> B["Windows 本地资源管线 (tools/convert_assets.py)"]
+    A --> C["Mono.Cecil 修补器 (tools/AssemblyPatcher)"]
+    
+    B -->|"DXT/BC -> RGBA32\ntarget_platform -> 9 (iOS)\nLZ4 打包"| D["ConvertedData/"]
+    C -->|"剥离 macOS 原生调用\n解锁公共反射成员\n注入常亮与60FPS"| E["PatchedManaged/"]
+    
+    F["虚拟触控摇杆与按键 (src/AICTouchOverlay.cs)"] -->|"编译为 AIC.iOS.dll"| E
+    
+    G["原生依赖 (native/)"] --> H["NanoSockets C源码\nCRIWARE ADX2 459个符号桩"]
+    
+    D --> I["GitHub Actions (macOS-14)"]
+    E --> I
+    H --> I
+    
+    I -->|"IL2CPP C++ 代码生成\nxcodebuild 编译"| J["AliceInCradle_v0.30i_iOS.ipa"]
 ```
 
-探针将预先编译的 IL DLL 作为 Unity 托管插件导入。为真机签名后，启动应显示 `IL2CPP` 和固定运算结果。通过 Xcode 打开导出的工程即可配置自己的签名团队和设备。
+### 1. 资源转换管线 (`tools/convert_assets.py`)
+- **纹理格式转码**：扫描全游戏 3081 个资源文件中的 281 张纹理，将 94 张移动端不支持的桌面压缩纹理（DXT1、DXT5、DXT1Crunched、DXT5Crunched）全自动无损转换为 `RGBA32`，保证 2D 像素画质与平滑渲染。
+- **序列化平台标识**：将所有 409 个 `.dat` AssetBundles 及核心文件（`globalgamemanagers`、`resources.assets`、`level0`~`level3`、`sharedassets0`~`3`）的 `target_platform` 与 `_m_target_platform` 完整修改为 `BuildTarget.iOS` (9)。
+- **StreamData 清理与 LZ4 压缩**：清除转码纹理的 `m_StreamData` 引用，清理冗余的 `.resS` 分离块，并启用 LZ4 压缩重新封包。
 
-## GitHub Actions
+### 2. 托管代码修补 (`tools/AssemblyPatcher`)
+- **中和 macOS 原生 P/Invoke**：
+  - `unsafeAssem.dll`：清除 `XX.MacGamepadHaptics`（震动马达 6 处调用），安全替换为托管返回值。
+  - `SFB.dll`：清除 `SFB.StandaloneFileBrowserMac`（文件选择框 6 处调用）。
+  - `CriMw.CriWare.Runtime.dll`：绕过 `CriWare.Common::CheckBinaryVersionCompatibility` 严格版本校验。
+- **游戏循环与功耗优化**：
+  - 在 `XX.IN::Awake()` 注入 `Screen.sleepTimeout = -1`（防止触屏无物理键输入时熄屏）。
+  - 解锁 `XX.IN`、`XX.KEY` 的访问权限为 `public`，供触控层直接注入指令。
 
-- 两个工作流都由 `workflow_dispatch` 手动触发。
-- **iOS ARM64 AOT probe** 在 macOS runner 上把预编译的 .NET Standard IL DLL 链进 .NET NativeAOT 动态库。工作流检查 Mach-O 的 ARM64 架构、iOS 平台标记和 C 导出符号。产物是构建验证用的原生库。它验证 CI 上的跨目标编译链，Unity 游戏的 AOT 后端是下一个工作流使用的 IL2CPP。 [Microsoft NativeAOT iOS 支持](https://learn.microsoft.com/en-us/dotnet/core/deploying/native-aot/ios-like-platforms/) · [Unity IL2CPP](https://docs.unity3d.com/cn/2022.3/Manual/IL2CPP.html)
-- **Unity iOS IL2CPP** 默认构建 `UnityProbe`，也接受仓库内另一个准备好的 Unity 项目路径。GitHub-hosted runner 使用 GameCI。通过仓库的 Actions Secrets 配置 Personal 授权后可运行，成功时上传未签名 `.app` 压缩包。专用 Mac 走上面的命令即可使用已有授权。 [GameCI 授权](https://game.ci/docs/github/activation/) · [Unity iOS 构建](https://docs.unity3d.com/cn/2022.3/Manual/iphone-BuildProcess.html)
+### 3. iOS 虚拟触控层 (`src/AICTouchOverlay.cs` -> `AIC.iOS.dll`)
+- 自动适配不同尺寸 iPhone/iPad 屏幕安全区。
+- **左侧动态摇杆**：支持多指触摸、八方向移动与死区过滤，精确注入 `XX.IN.KA`（`mvRA`、`mvLA`、`mvTA`、`mvBA`）及 `XX.IN.pd_bits`。
+- **右侧动作按键簇**：跳跃（Jump）、普攻（Z）、魔法（X）、闪避（C）、奔跑（Run）、菜单（Menu）、地图/交互（Check）。
+- **无缝自启动**：在 `RuntimeInitializeOnLoads.json` 和 `ScriptingAssemblies.json` 中注册，在场景加载首帧全自动挂载，无需侵入游戏场景元数据。
 
-## AIC 0.30i 的 AOT 检查
+### 4. 原生 C 符号与中间件 (`native/`)
+- `nanosockets`：集成开源 C 实现（`nanosockets.c` / `nanosockets.h`）。
+- `cri_ware_unity`：生成包含 459 个 C 导出符号桩的 `cri_ware_stub.c`，确保音频中间件链接无缺失符号。
 
-扫描了 25 个应用及相关中间件程序集，共 65,703 个 IL 方法体。游戏核心 `Assembly-CSharp.dll` 和 `unsafeAssem.dll` 中没有检测到直接的 `Reflection.Emit`、运行时程序集加载或 `calli` 指令。两者各有两处字符串按类型查找，需验证裁剪后的类型能否保留。静态扫描只检查可识别的 IL 调用和方法引用。
+---
 
-- 标题场景和主游戏场景都直接挂载 `CriWareInitializer`。现有 CRI 托管层声明 517 个 `cri_ware_unity` P/Invoke 入口，iOS 构建需要配套的原生库和托管层，核对回调 ABI。具体运行路径可能只用到一部分入口。
-- `unsafeAssem` 的 `MacGamepadHaptics` 有 6 个原生入口，另有两处启动桌面进程的调用。`SFB` 的文件选择器走 macOS bundle。需要按 iOS 平台适配这些桌面服务。
-- Fusion 和 Json.NET 存在反射泛型构造。保留元数据和生成所需泛型实例分别验证。初次编译使用低裁剪或明确保留实际用到的类型，运行时再检查反射路径。 [Unity AOT 限制](https://docs.unity3d.com/2022.3/Documentation/Manual/ScriptingRestrictions.html) · [Unity 代码剥离](https://docs.unity3d.com/cn/2022.3/Manual/ManagedCodeStripping.html)
+## 🚀 GitHub Actions 云端一键构建
 
-AIC 的判断顺序是先验证 Unity IL2CPP 样本能处理预编译 IL，再验证场景中的脚本绑定、标题场景 CRI 初始化和 Metal 渲染，最后验收输入、音频、存读档及内存。资源包的兼容性和 Unity 编译结果各需验证。
+无需在本地准备 Mac 或 Xcode，直接使用 GitHub 提供的免费 macOS-14 Runner 构建：
 
-## 本地审计
+1. 将本仓库推送到 GitHub：
+   ```bash
+   git push origin main
+   ```
+2. 进入 GitHub 仓库页面 -> **Actions** 标签页。
+3. 选择 **Build Alice in Cradle iOS IPA** 工作流，点击 **Run workflow**。
+4. 构建耗时约 4~6 分钟，构建完成后在 **Artifacts** 区域即可直接下载 `AliceInCradle_v0.30i_iOS`（内含已打包的未签名 `.ipa` 安装包）。
 
-```powershell
-python -m pip install -r tools/requirements.txt
-python tools/aot_audit.py "路径到 Managed" "Assembly-CSharp.dll" "unsafeAssem.dll" "CriMw*.dll"
+---
+
+## 📲 iOS 安装与侧载方式
+
+下载生成的 `.ipa` 后，可通过以下常用侧载工具安装到 iPhone / iPad：
+
+- **TrollStore（巨魔商店）**（推荐，免越狱永久签名，支持 iOS 14.0 - 16.6.1）：
+  直接分享 `.ipa` 至 TrollStore 安装即可，无 7 天证书过期限制。
+- **AltStore / Sideloadly**：
+  使用免费个人 Apple ID 进行 7 天自签名安装。
+- **Scarlet / 证书自签**：
+  使用企业证书或个人开发者证书直接在线安装。
+
+---
+
+## 📂 仓库目录结构
+
 ```
-
-输出是 JSON，含程序集引用、P/Invoke、启动或回调相关特性，以及待人工核实的反射和桌面 API 调用。
+AIC-Port-iOS/
+├── .github/
+│   └── workflows/
+│       └── build-ios.yml          # GitHub Actions 自动化编译工作流
+├── ConvertedData/                 # 已转换的 iOS 资源包与序列化配置 (850MB)
+│   ├── StreamingAssets/           # 409 个 .dat AssetBundle、音频库、地图脚本
+│   ├── globalgamemanagers         # 游戏核心运行时配置 (target_platform: 9)
+│   ├── globalgamemanagers.assets  # 全局静态资源 (Logo已转码RGBA32)
+│   ├── resources.assets           # 基础资源包
+│   ├── RuntimeInitializeOnLoads.json # 启动加载清单 (包含触控层自挂载)
+│   └── ScriptingAssemblies.json   # 托管程序集加载列表 (包含 AIC.iOS.dll)
+├── PatchedManaged/                # 143 个修补后的托管程序集 (含 AIC.iOS.dll)
+├── native/                        # iOS 原生依赖 C 源码与符号桩
+│   ├── nanosockets/               # NanoSockets 跨平台实现
+│   └── criware_stub/              # CRIWARE 459个桩函数
+├── src/                           # 触控层源码工程 (.NET Standard 2.1)
+├── tools/                         # 本地分析与转码工具
+│   ├── AssemblyPatcher/           # 基于 Mono.Cecil 的 DLL 修补工具
+│   └── convert_assets.py          # 基于 UnityPy 的多进程资源转码脚本
+├── scripts/                       # 编译构建辅助脚本
+│   ├── build-ios.sh               # macOS 云端独立构建主脚本
+│   └── build-xcode.sh             # Xcode 编译打包辅助脚本
+├── .gitignore
+└── README.md                      # 本文档
+```

@@ -1,0 +1,20 @@
+ManifestFileVersion: 0
+CRC: 2284646188
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 287eafba54c3e701296cc30ab6b3fc05
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 5ad585dd02dfb5016c0dad519eab8f49
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 287eafba54c3e701296cc30ab6b3fc05
+HashAppended: 0
+ClassTypes:
+- Class: 49
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/Editor/AssetBundlesSrc/MapChips/MapChip_ruins.pxls.bytes
+Dependencies: []

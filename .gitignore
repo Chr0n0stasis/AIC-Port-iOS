@@ -1,15 +1,32 @@
+# Build outputs & temporary caches
 bin/
 obj/
+build/
+artifacts/
+*.ipa
+*.zip
+
+# Python caches
+__pycache__/
+*.pyc
+
+# IDE & OS files
+.DS_Store
+Thumbs.db
+*.user
+*.suo
+.vs/
+.idea/
+.vscode/
+
+# Unity / iOS build caches
 Library/
 Temp/
 Logs/
 UserSettings/
-build/
-artifacts/
-__pycache__/
-*.ipa
+DerivedData/
+
+# Certificates & secrets
 *.p12
 *.mobileprovision
 *.ulf
-/UnityProbe/Assets/Generated*
-/UnityProbe/Assets/Plugins*

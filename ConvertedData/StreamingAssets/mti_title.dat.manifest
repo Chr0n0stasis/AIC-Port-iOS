@@ -1,0 +1,28 @@
+ManifestFileVersion: 0
+CRC: 622341901
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 2c3ed54fce6462d72543bb044ddd75c7
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 2612ac43db082a73502ee80f2eceb73f
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 2c3ed54fce6462d72543bb044ddd75c7
+HashAppended: 0
+ClassTypes:
+- Class: 28
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/Editor/AssetBundlesSrc/MTI_title/difficulty.png
+- Assets/Editor/AssetBundlesSrc/MTI_title/key_noel.png
+- Assets/Editor/AssetBundlesSrc/MTI_title/icon_bugreport.png
+- Assets/Editor/AssetBundlesSrc/MTI_title/title_logo.png
+- Assets/Editor/AssetBundlesSrc/MTI_title/key_bg.png
+- Assets/Editor/AssetBundlesSrc/MTI_title/icon_discord.png
+- Assets/Editor/AssetBundlesSrc/MTI_title/icon_bug.png
+- Assets/Editor/AssetBundlesSrc/MTI_title/icon_bilibili.png
+- Assets/Editor/AssetBundlesSrc/MTI_title/icon_twitter.png
+Dependencies: []

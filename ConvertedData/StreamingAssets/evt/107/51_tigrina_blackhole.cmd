@@ -1,0 +1,119 @@
+// ティグリナブラックホール
+// 1:ixia is active
+HALF_BGM 1
+DEFINENDEF 1=0
+IF $1 {
+// イクシャがいる場合
+    TALKER	i L    
+    PIC   i i/a00L5R1__F1__f1__m5__b0_u1    
+    PIC_MP i EXQ
+
+    MSG	i_01 
+    WAIT 15    
+     TALKER	n R    
+     
+} ELSE {
+    TALKER	n L   
+}
+
+PIC   n a_2/a0L3R1__F2__f2__m1__b1_u2    
+PIC_MP n SWT
+MSG	n_00  T
+
+PIC_HIDE_ALL	
+
+WAIT 40
+<LOAD>
+
+START_BLURSC_TO_BEHIND
+PIC_FLASH	#2 10 1 40 1 ff:#cccccc
+SND swing_big_2
+WAIT 10
+PIC_RADIATION  #3 ff:#cccccc
+PIC_FADEOUT #3 190
+
+PIC #1 107_td_src/so_pickup
+PIC_MOVE #1 190 480
+
+WAIT 15
+TL 14 SND tigrina_blackhole_hit0
+HKDS	so  CB @CT WIDE
+PIC_MVA #1 390 HANDSHAKE
+
+MSG	so_10 
+DOTL
+TL 15 PIC_FLASH	#4 15 1 40 1 ff:#cccccc
+WAIT 30
+PIC_RIDE #1 #0
+PIC #1 107_td_src/so_pickup
+PIC_MOVE #1 -420 -150
+PIC_FADEIN #1 30
+PIC_FADEOUT	#0 40
+PIC_MVA #1 390 HANDSHAKE
+PIC_RADIATION  #3 ff:#cccccc
+PIC_FADEOUT #3 190
+
+TL 14 SND tigrina_blackhole_hit1
+WAIT 40
+HKDS	so  R @LOUT TT3
+
+MSG	so_11 
+DOTL
+TL 15 PIC_FLASH	#4 15 1 40 1 ff:#cccccc
+WAIT 30
+
+PIC_RIDE #1 #0
+PIC #1 107_td_src/so_pickup
+PIC_MOVE #1 190 150
+PIC_FADEIN #1 30
+PIC_FADEOUT	#0 40
+PIC_MVA #1 390 HANDSHAKE
+PIC_RADIATION  #3 ff:#cccccc
+PIC_FADEOUT #3 190
+TL 14 SND tigrina_blackhole_hit2
+WAIT 40
+HKDS	so  CRB @TT TT3
+
+MSG	so_12 
+DOTL
+
+TL 15 PIC_FLASH	#4 15 1 40 1 ff:#cccccc
+WAIT 30
+
+PIC_RIDE #1 #0
+PIC #1 107_td_src/so_pickup
+PIC_MOVE #1 240 -350
+PIC_FADEIN #1 30
+PIC_FADEOUT	#0 40
+PIC_MVA #1 390 HANDSHAKE
+PIC_RADIATION  #3 ff:#cccccc
+PIC_FADEOUT #3 190
+TL 14 SND tigrina_blackhole_hit3
+WAIT 40
+HKDS	so  L @TT TT3
+MSG	so_13 
+DOTL
+TL 15 PIC_FLASH	#4 15 1 40 1 ff:#cccccc
+WAIT 30
+
+PIC_RIDE #1 #0
+PIC #1 107_td/so_whole
+PIC_MOVE2 #1 0 0 0 -260 340 ZSIN 
+
+PIC_FADEIN #1 30
+PIC_FADEOUT	#0 40
+PIC_MVA #1 390 HANDSHAKE
+PIC_RADIATION  #3 ff:#cccccc
+PIC_FADEOUT #3 190
+TL 14 SND tigrina_blackhole_hit4
+WAIT 40
+HKDS	so  RT @T ''
+
+MSG	so_14 
+DOTL
+
+HALF_BGM 0
+WAIT 45
+PIC_FADEOUT #1 50
+
+

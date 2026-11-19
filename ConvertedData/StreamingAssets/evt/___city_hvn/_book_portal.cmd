@@ -1,0 +1,12 @@
+IFNDEF 1 
+    SEEK_END
+
+#< 
+GREETING	@ -45
+
+BOOK_TITLE '' 
+
+HALF_BGM
+TL 20 HKDS	BOOK@bout C '=' '='
+MSG $1 K[bout][wide_tt]
+TITLECALL_HIDE

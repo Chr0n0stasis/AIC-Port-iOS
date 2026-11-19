@@ -289,6 +289,72 @@ class Program
             }
         }
 
+        // 4b. Patch Better.UnsafeGeneric.dll (rewrite unconstrained generic ceq/conv to EqualityComparer<T>.Default)
+        string bugPath = Path.Combine(dstDir, "Better.UnsafeGeneric.dll");
+        if (File.Exists(bugPath))
+        {
+            Console.WriteLine("[*] Patching Better.UnsafeGeneric.dll (fixing unconstrained generic comparison)...");
+            using (var asm = AssemblyDefinition.ReadAssembly(bugPath, readerParams))
+            {
+                var mod = asm.MainModule;
+                var corlib = mod.TypeSystem.Corlib;
+                var eqTypeRef = new TypeReference("System.Collections.Generic", "EqualityComparer`1", mod, corlib);
+                eqTypeRef.GenericParameters.Add(new GenericParameter("T", eqTypeRef));
+                var importedEqType = mod.ImportReference(eqTypeRef);
+
+                var targetTypes = new[] { "Int32EqualityComparer`1", "Int64EqualityComparer`1", "UInt64EqualityComparer`1" };
+                foreach (var targetName in targetTypes)
+                {
+                    var target = mod.Types.FirstOrDefault(t => t.Name == targetName);
+                    if (target != null && target.HasGenericParameters)
+                    {
+                        var tParam = target.GenericParameters[0];
+                        var genericEqType = new GenericInstanceType(importedEqType);
+                        genericEqType.GenericArguments.Add(tParam);
+
+                        var getDefault = new MethodReference("get_Default", genericEqType, genericEqType) { HasThis = false };
+                        var equalsRef = new MethodReference("Equals", mod.TypeSystem.Boolean, genericEqType)
+                        {
+                            HasThis = true,
+                            Parameters = { new ParameterDefinition(tParam), new ParameterDefinition(tParam) }
+                        };
+                        var getHashCodeRef = new MethodReference("GetHashCode", mod.TypeSystem.Int32, genericEqType)
+                        {
+                            HasThis = true,
+                            Parameters = { new ParameterDefinition(tParam) }
+                        };
+
+                        var eqMethod = target.Methods.FirstOrDefault(m => m.Name == "Equals");
+                        if (eqMethod != null)
+                        {
+                            eqMethod.Body = new MethodBody(eqMethod);
+                            var il = eqMethod.Body.GetILProcessor();
+                            il.Emit(OpCodes.Call, getDefault);
+                            il.Emit(OpCodes.Ldarg_1);
+                            il.Emit(OpCodes.Ldarg_2);
+                            il.Emit(OpCodes.Callvirt, equalsRef);
+                            il.Emit(OpCodes.Ret);
+                            Console.WriteLine($"  -> Rewrote {targetName}::Equals");
+                        }
+
+                        var hashMethod = target.Methods.FirstOrDefault(m => m.Name == "GetHashCode");
+                        if (hashMethod != null)
+                        {
+                            hashMethod.Body = new MethodBody(hashMethod);
+                            var il = hashMethod.Body.GetILProcessor();
+                            il.Emit(OpCodes.Call, getDefault);
+                            il.Emit(OpCodes.Ldarg_1);
+                            il.Emit(OpCodes.Callvirt, getHashCodeRef);
+                            il.Emit(OpCodes.Ret);
+                            Console.WriteLine($"  -> Rewrote {targetName}::GetHashCode");
+                        }
+                    }
+                }
+                asm.Write(bugPath);
+                Console.WriteLine("  [+] Better.UnsafeGeneric.dll patched & saved.");
+            }
+        }
+
         Console.WriteLine("==================================================");
         Console.WriteLine("  [*] Auditing remaining P/Invokes across all DLLs... ");
         Console.WriteLine("==================================================");

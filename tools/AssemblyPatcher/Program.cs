@@ -88,25 +88,6 @@ class Program
                         nested.IsNestedPublic = true;
                         foreach (var f in nested.Fields) f.IsPublic = true;
                     }
-
-                    var awake = inType.Methods.FirstOrDefault(m => m.Name == "Awake");
-                    if (awake != null)
-                    {
-                        Console.WriteLine("  -> Patching XX.IN::Awake for iOS targetFrameRate and screen sleep...");
-                        var il = awake.Body.GetILProcessor();
-                        var first = awake.Body.Instructions.First();
-
-                        var screenType = mod.ImportReference(new TypeReference("UnityEngine", "Screen", mod, new AssemblyNameReference("UnityEngine.CoreModule", new Version(0, 0, 0, 0))));
-                        var setSleepMethod = new MethodReference("set_sleepTimeout", mod.TypeSystem.Void, screenType)
-                        {
-                            HasThis = false,
-                            Parameters = { new ParameterDefinition(mod.TypeSystem.Int32) }
-                        };
-                        var importedSetSleep = mod.ImportReference(setSleepMethod);
-
-                        il.InsertBefore(first, il.Create(OpCodes.Ldc_I4_M1));
-                        il.InsertBefore(first, il.Create(OpCodes.Call, importedSetSleep));
-                    }
                 }
 
                 var keyType = mod.Types.FirstOrDefault(t => t.FullName == "XX.KEY");

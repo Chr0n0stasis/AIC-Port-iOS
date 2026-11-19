@@ -14,6 +14,9 @@ namespace AIC.iOS
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         public static void AutoInit()
         {
+            Screen.sleepTimeout = SleepTimeout.NeverSleep;
+            Application.targetFrameRate = 60;
+
             if (_instance == null)
             {
                 var go = new GameObject("[AIC_TouchOverlay]");

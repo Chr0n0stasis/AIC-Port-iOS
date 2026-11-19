@@ -31,9 +31,65 @@ class Program
             }
         }
 
+        // 1b. Patch mscorlib.dll for IL2CPP enum sharing types FIRST before resolving anything
+        string mscorlibPath = Path.Combine(dstDir, "mscorlib.dll");
+        if (File.Exists(mscorlibPath))
+        {
+            Console.WriteLine("[*] Checking mscorlib.dll for IL2CPP enum sharing types...");
+            var corlibParams = new ReaderParameters { InMemory = true };
+            using (var asm = AssemblyDefinition.ReadAssembly(mscorlibPath, corlibParams))
+            {
+                var mod = asm.MainModule;
+                var enumBase = mod.Types.FirstOrDefault(t => t.FullName == "System.Enum");
+                if (enumBase != null)
+                {
+                    var enumSpecs = new (string Name, TypeReference Underlying)[]
+                    {
+                        ("SByteEnum", mod.TypeSystem.SByte),
+                        ("Int16Enum", mod.TypeSystem.Int16),
+                        ("Int32Enum", mod.TypeSystem.Int32),
+                        ("Int64Enum", mod.TypeSystem.Int64),
+                        ("ByteEnum", mod.TypeSystem.Byte),
+                        ("UInt16Enum", mod.TypeSystem.UInt16),
+                        ("UInt32Enum", mod.TypeSystem.UInt32),
+                        ("UInt64Enum", mod.TypeSystem.UInt64),
+                    };
+
+                    bool modified = false;
+                    foreach (var (name, underlying) in enumSpecs)
+                    {
+                        if (!mod.Types.Any(t => t.FullName == $"System.{name}"))
+                        {
+                            var enumType = new TypeDefinition(
+                                "System",
+                                name,
+                                TypeAttributes.Public | TypeAttributes.Sealed | TypeAttributes.AnsiClass | TypeAttributes.AutoClass,
+                                enumBase
+                            );
+                            var valField = new FieldDefinition(
+                                "value__",
+                                FieldAttributes.Public | FieldAttributes.SpecialName | FieldAttributes.RTSpecialName,
+                                underlying
+                            );
+                            enumType.Fields.Add(valField);
+                            mod.Types.Add(enumType);
+                            Console.WriteLine($"  -> Injected System.{name} (underlying: {underlying.Name})");
+                            modified = true;
+                        }
+                    }
+
+                    if (modified)
+                    {
+                        asm.Write(mscorlibPath);
+                        Console.WriteLine("  [+] mscorlib.dll patched with IL2CPP shared enum types.");
+                    }
+                }
+            }
+        }
+
         var resolver = new DefaultAssemblyResolver();
         resolver.AddSearchDirectory(dstDir);
-        var readerParams = new ReaderParameters { AssemblyResolver = resolver, ReadWrite = true };
+        var readerParams = new ReaderParameters { AssemblyResolver = resolver, InMemory = true };
 
         // 2. Patch unsafeAssem.dll
         string unsafeAssemPath = Path.Combine(dstDir, "unsafeAssem.dll");
@@ -98,7 +154,7 @@ class Program
                     foreach (var m in keyType.Methods) m.IsPublic = true;
                 }
 
-                asm.Write();
+                asm.Write(unsafeAssemPath);
                 Console.WriteLine("  [+] unsafeAssem.dll patched & saved.");
             }
         }
@@ -141,7 +197,7 @@ class Program
                         Console.WriteLine($"     Patched {m.Name}");
                     }
                 }
-                asm.Write();
+                asm.Write(sfbPath);
                 Console.WriteLine("  [+] SFB.dll patched & saved.");
             }
         }
@@ -166,7 +222,7 @@ class Program
                         il.Emit(OpCodes.Ret);
                     }
                 }
-                asm.Write();
+                asm.Write(criPath);
                 Console.WriteLine("  [+] CriMw.CriWare.Runtime.dll patched & saved.");
             }
         }

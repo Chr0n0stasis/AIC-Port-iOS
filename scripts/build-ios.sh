@@ -145,16 +145,24 @@ EOF
   cp -f "${XCODE_DIR}/Classes/pch-cpp.hpp" "${IL2CPP_OUT}/pch-cpp.hpp"
 fi
 
-echo "[*] Injecting Unity version macros into Prefix.pch and UnityTrampolineConfigure.h..."
+echo "[*] Injecting Unity version and baselib macros into Prefix.pch, UnityTrampolineConfigure.h, and pch headers..."
 cat << 'EOF' > /tmp/unity_version_prefix.h
 #ifndef UNITY_VERSION_VER
 #define UNITY_VERSION_VER 2022
 #define UNITY_VERSION_MAJ 3
 #define UNITY_VERSION_MIN 62
 #endif
+#ifndef BASELIB_INLINE_NAMESPACE
+#define BASELIB_INLINE_NAMESPACE il2cpp_baselib
+#endif
 EOF
 
-for header in "${XCODE_DIR}/Classes/Prefix.pch" "${XCODE_DIR}/Classes/UnityTrampolineConfigure.h"; do
+for header in "${XCODE_DIR}/Classes/Prefix.pch" \
+              "${XCODE_DIR}/Classes/UnityTrampolineConfigure.h" \
+              "${XCODE_DIR}/Classes/pch-cpp.hpp" \
+              "${IL2CPP_OUT}/pch-cpp.hpp" \
+              "${XCODE_DIR}/Il2CppOutputProject/IL2CPP/libil2cpp/il2cpp-config.h" \
+              "${XCODE_DIR}/Il2CppOutputProject/IL2CPP/libil2cpp/pch/pch-cpp.hpp"; do
   if [[ -f "${header}" ]]; then
     cat /tmp/unity_version_prefix.h "${header}" > "${header}.tmp" && mv "${header}.tmp" "${header}"
   fi
@@ -199,9 +207,10 @@ base_name=$(basename "${src}" .cpp)
 hash_val=$(echo "${src}" | cksum | cut -d' ' -f1)
 obj="${obj_dir}/${base_name}_${hash_val}.o"
 
-xcrun --sdk iphoneos clang++ -c -Os -arch arm64 -isysroot "${sdk_path}" -miphoneos-version-min=12.0 \
+if ! xcrun --sdk iphoneos clang++ -c -Os -arch arm64 -isysroot "${sdk_path}" -miphoneos-version-min=12.0 \
   -std=c++14 -fPIC -fvisibility=hidden -fexceptions -Wno-everything \
   -DUNITY_VERSION_VER=2022 -DUNITY_VERSION_MAJ=3 -DUNITY_VERSION_MIN=62 \
+  -DBASELIB_INLINE_NAMESPACE=il2cpp_baselib \
   -DNET_4_0 -DUNITY_AOT -DIL2CPP_TARGET_IOS=1 -DIL2CPP_ENABLE_ARM64=1 \
   -I"${il2cpp_out}" \
   -I"${xcode_dir}/Classes" \
@@ -210,18 +219,22 @@ xcrun --sdk iphoneos clang++ -c -Os -arch arm64 -isysroot "${sdk_path}" -miphone
   -I"${xcode_dir}/Il2CppOutputProject/IL2CPP/external/baselib/Include" \
   -I"${xcode_dir}/Il2CppOutputProject/IL2CPP/external/baselib/Platforms/OSX/Include" \
   -I"${xcode_dir}/Il2CppOutputProject/IL2CPP/external/baselib/Platforms/iOS/Include" \
-  "${src}" -o "${obj}"
+  "${src}" -o "${obj}"; then
+  echo "::error::Clang failed on ${src}"
+  exit 255
+fi
 EOF
 chmod +x /tmp/compile_worker.sh
 
 # Compile generated game logic C++ sources in parallel
-echo "[*] Compiling generated game logic C++ sources in parallel..."
+NPROC=$(sysctl -n hw.ncpu 2>/dev/null || nproc 2>/dev/null || echo 4)
+echo "[*] Compiling generated game logic C++ sources in parallel using ${NPROC} workers..."
 find "${IL2CPP_OUT}" -name "*.cpp" -print0 | \
-  xargs -0 -P 4 -n 1 /tmp/compile_worker.sh "${OBJ_DIR}" "${SDK_PATH}" "${XCODE_DIR}" "${IL2CPP_OUT}"
+  xargs -0 -P "${NPROC}" -n 1 /tmp/compile_worker.sh "${OBJ_DIR}" "${SDK_PATH}" "${XCODE_DIR}" "${IL2CPP_OUT}"
 
 NUM_OBJS=$(find "${OBJ_DIR}" -name "*.o" | wc -l | tr -d ' ')
 echo "[*] Packaging ${NUM_OBJS} object files into ${GAMEASSEMBLY_LIB}..."
-ar rcs "${GAMEASSEMBLY_LIB}" "${OBJ_DIR}"/*.o
+find "${OBJ_DIR}" -name "*.o" -print0 | xargs -0 ar rcs "${GAMEASSEMBLY_LIB}"
 ranlib "${GAMEASSEMBLY_LIB}"
 cp -f "${GAMEASSEMBLY_LIB}" "${DERIVED_DATA}/Build/Products/Release-iphoneos/libGameAssembly.a"
 echo "[+] libGameAssembly.a created: $(ls -lh "${GAMEASSEMBLY_LIB}")"
@@ -232,6 +245,9 @@ if [[ -f "${INFO_PLIST}" ]]; then
   echo "[*] Configuring Info.plist for Alice in Cradle..."
   /usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName 'Alice in Cradle'" "${INFO_PLIST}" 2>/dev/null || \
   /usr/libexec/PlistBuddy -c "Add :CFBundleDisplayName string 'Alice in Cradle'" "${INFO_PLIST}"
+  
+  /usr/libexec/PlistBuddy -c "Set :CFBundleName 'Alice in Cradle'" "${INFO_PLIST}" 2>/dev/null || \
+  /usr/libexec/PlistBuddy -c "Add :CFBundleName string 'Alice in Cradle'" "${INFO_PLIST}"
   
   /usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier 'com.NanameHacha.AliceInCradle'" "${INFO_PLIST}" 2>/dev/null || \
   /usr/libexec/PlistBuddy -c "Add :CFBundleIdentifier string 'com.NanameHacha.AliceInCradle'" "${INFO_PLIST}"
@@ -285,6 +301,7 @@ if os.path.exists(pbx_path):
 				UNITY_VERSION_VER = 2022;
 				UNITY_VERSION_MAJ = 3;
 				UNITY_VERSION_MIN = 62;
+				BASELIB_INLINE_NAMESPACE = il2cpp_baselib;
 				ENABLE_BITCODE = NO;
 				CODE_SIGNING_ALLOWED = NO;
 				CODE_SIGNING_REQUIRED = NO;
@@ -313,7 +330,7 @@ xcodebuild -project "${XCODE_DIR}/Unity-iPhone.xcodeproj" \
   -sdk iphoneos \
   -configuration Release \
   -derivedDataPath "${DERIVED_DATA}" \
-  GCC_PREPROCESSOR_DEFINITIONS="\$(inherited) UNITY_VERSION_VER=2022 UNITY_VERSION_MAJ=3 UNITY_VERSION_MIN=62" \
+  GCC_PREPROCESSOR_DEFINITIONS="\$(inherited) UNITY_VERSION_VER=2022 UNITY_VERSION_MAJ=3 UNITY_VERSION_MIN=62 BASELIB_INLINE_NAMESPACE=il2cpp_baselib" \
   HEADER_SEARCH_PATHS="\$(inherited) ${XCODE_DIR}/Classes ${IL2CPP_OUT} ${IL2CPP_INCS}" \
   USER_HEADER_SEARCH_PATHS="\$(inherited) ${XCODE_DIR}/Classes ${IL2CPP_OUT} ${IL2CPP_INCS}" \
   LIBRARY_SEARCH_PATHS="\$(inherited) ${XCODE_DIR}/Libraries ${DERIVED_DATA}/Build/Products/Release-iphoneos" \
@@ -343,11 +360,10 @@ rm -rf "${PAYLOAD_DIR}"
 mkdir -p "${PAYLOAD_DIR}"
 cp -R "${APP_BUNDLE}" "${PAYLOAD_DIR}/Alice in Cradle.app"
 
-# Ensure Data directory is inside .app bundle
-if [[ ! -d "${PAYLOAD_DIR}/Alice in Cradle.app/Data" ]]; then
-  echo "[*] Copying Data directory into Alice in Cradle.app bundle..."
-  cp -R "${DATA_OUT}" "${PAYLOAD_DIR}/Alice in Cradle.app/Data"
-fi
+# Ensure Data directory is inside .app bundle with all converted assets
+echo "[*] Ensuring all game Data assets are inside Alice in Cradle.app bundle..."
+mkdir -p "${PAYLOAD_DIR}/Alice in Cradle.app/Data"
+cp -R "${DATA_OUT}/"* "${PAYLOAD_DIR}/Alice in Cradle.app/Data/"
 
 IPA_NAME="AliceInCradle_v0.30i_iOS_Unsigned.ipa"
 IPA_PATH="${OUTPUT_DIR}/${IPA_NAME}"

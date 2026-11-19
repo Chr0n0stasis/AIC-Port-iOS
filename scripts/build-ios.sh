@@ -175,20 +175,34 @@ mkdir -p "${DATA_OUT}/Managed"
 cp -f "${ROOT_DIR}/ConvertedData/RuntimeInitializeOnLoads.json" "${DATA_OUT}/Managed/" 2>/dev/null || true
 cp -f "${ROOT_DIR}/ConvertedData/ScriptingAssemblies.json" "${DATA_OUT}/Managed/" 2>/dev/null || true
 
-# 6. Compile native C plugins (NanoSockets & CRIWARE stub) into static library
-echo "[*] Compiling native plugins (NanoSockets & CRIWARE stub) into static library..."
+# 6. Compile native C plugins and engine registration stubs into static library
+echo "[*] Compiling native plugins and engine registration stubs into static library..."
+cat << 'EOF' > "${XCODE_DIR}/Classes/RegisterMonoModules.cpp"
+#include <stddef.h>
+
+// Unity Engine Class & Module Registration Stubs for IL2CPP
+void RegisterAllClasses() {}
+void RegisterAllStrippedInternalCalls() {}
+extern "C" void RegisterStaticallyLinkedModulesGranular() {}
+void InvokeRegisterStaticallyLinkedModuleClasses() {}
+EOF
+
 SDK_PATH=$(xcrun --sdk iphoneos --show-sdk-path)
+clang++ -c -O3 -arch arm64 -isysroot "${SDK_PATH}" -miphoneos-version-min=12.0 \
+  -std=c++14 -fPIC \
+  "${XCODE_DIR}/Classes/RegisterMonoModules.cpp" -o RegisterMonoModules.o
+
 clang -c -O3 -arch arm64 -isysroot "${SDK_PATH}" -miphoneos-version-min=12.0 \
   -Wno-deprecated-non-prototype -Wno-strict-prototypes \
   -I"${ROOT_DIR}/native/nanosockets" \
   "${ROOT_DIR}/native/nanosockets/nanosockets.c" \
   "${ROOT_DIR}/native/criware_stub/cri_ware_stub.c"
 
-ar rcs "${XCODE_DIR}/Libraries/libNativePlugins.a" nanosockets.o cri_ware_stub.o
-rm -f nanosockets.o cri_ware_stub.o
+ar rcs "${XCODE_DIR}/Libraries/libNativePlugins.a" nanosockets.o cri_ware_stub.o RegisterMonoModules.o
+rm -f nanosockets.o cri_ware_stub.o RegisterMonoModules.o
 
-# 6b. Compile IL2CPP generated C++ sources into libGameAssembly.a
-echo "[*] Compiling IL2CPP generated C++ sources into libGameAssembly.a..."
+# 6b. Compile IL2CPP generated C++ sources and runtime into libGameAssembly.a
+echo "[*] Preparing IL2CPP compilation and static library packaging..."
 GAMEASSEMBLY_LIB="${XCODE_DIR}/Libraries/libGameAssembly.a"
 OBJ_DIR="${WORK_DIR}/obj_gameassembly"
 rm -rf "${OBJ_DIR}"
@@ -203,15 +217,25 @@ xcode_dir="$3"
 il2cpp_out="$4"
 src="$5"
 
-base_name=$(basename "${src}" .cpp)
+base_name=$(basename "${src}" | sed 's/\.[^.]*$//')
 hash_val=$(echo "${src}" | cksum | cut -d' ' -f1)
 obj="${obj_dir}/${base_name}_${hash_val}.o"
 
-if ! xcrun --sdk iphoneos clang++ -c -Os -arch arm64 -isysroot "${sdk_path}" -miphoneos-version-min=12.0 \
-  -std=c++14 -fPIC -fvisibility=hidden -fexceptions -Wno-everything \
+ext="${src##*.}"
+if [[ "${ext}" == "c" ]]; then
+  COMPILER="clang"
+  STD_FLAG=""
+else
+  COMPILER="clang++"
+  STD_FLAG="-std=c++14"
+fi
+
+if ! xcrun --sdk iphoneos ${COMPILER} -c -Os -arch arm64 -isysroot "${sdk_path}" -miphoneos-version-min=12.0 \
+  ${STD_FLAG} -fPIC -fvisibility=hidden -fexceptions -Wno-everything \
   -DUNITY_VERSION_VER=2022 -DUNITY_VERSION_MAJ=3 -DUNITY_VERSION_MIN=62 \
   -DBASELIB_INLINE_NAMESPACE=il2cpp_baselib \
   -DNET_4_0 -DUNITY_AOT -DIL2CPP_TARGET_IOS=1 -DIL2CPP_ENABLE_ARM64=1 \
+  -DGC_NOT_DLL -DALL_INTERIOR_POINTERS -DNO_EXECUTE_PERMISSION -DIL2CPP_ENABLE_WRITE_BARRIERS=1 \
   -I"${il2cpp_out}" \
   -I"${xcode_dir}/Classes" \
   -I"${xcode_dir}/Il2CppOutputProject/IL2CPP/libil2cpp" \
@@ -219,6 +243,9 @@ if ! xcrun --sdk iphoneos clang++ -c -Os -arch arm64 -isysroot "${sdk_path}" -mi
   -I"${xcode_dir}/Il2CppOutputProject/IL2CPP/external/baselib/Include" \
   -I"${xcode_dir}/Il2CppOutputProject/IL2CPP/external/baselib/Platforms/OSX/Include" \
   -I"${xcode_dir}/Il2CppOutputProject/IL2CPP/external/baselib/Platforms/iOS/Include" \
+  -I"${xcode_dir}/Il2CppOutputProject/IL2CPP/external/bdwgc/include" \
+  -I"${xcode_dir}/Il2CppOutputProject/IL2CPP/external/xxHash" \
+  -I"${xcode_dir}/Il2CppOutputProject/IL2CPP/libil2cpp/os/ClassLibraryPAL/brotli/include" \
   "${src}" -o "${obj}"; then
   echo "::error::Clang failed on ${src}"
   exit 255
@@ -226,11 +253,53 @@ fi
 EOF
 chmod +x /tmp/compile_worker.sh
 
-# Compile generated game logic C++ sources in parallel
 NPROC=$(sysctl -n hw.ncpu 2>/dev/null || nproc 2>/dev/null || echo 4)
+
+# Compile generated game logic C++ sources in parallel
 echo "[*] Compiling generated game logic C++ sources in parallel using ${NPROC} workers..."
 find "${IL2CPP_OUT}" -name "*.cpp" -print0 | \
   xargs -0 -P "${NPROC}" -n 1 /tmp/compile_worker.sh "${OBJ_DIR}" "${SDK_PATH}" "${XCODE_DIR}" "${IL2CPP_OUT}"
+
+# Check for precompiled libil2cpp or compile from source
+echo "[*] Checking for precompiled IL2CPP static libraries in Playback Engine..."
+PRECOMPILED_IL2CPP=$(find "${EXTRACT_DIR}" -type f \( -name "libil2cpp*.a" -o -name "il2cpp*.a" \) 2>/dev/null | grep -i -v "simulator" | head -n 1 || true)
+if [[ -n "${PRECOMPILED_IL2CPP}" && -f "${PRECOMPILED_IL2CPP}" ]]; then
+  echo "[+] Found precompiled IL2CPP runtime library: ${PRECOMPILED_IL2CPP}"
+  cp -f "${PRECOMPILED_IL2CPP}" "${XCODE_DIR}/Libraries/libil2cpp.a"
+  (cd "${OBJ_DIR}" && ar -x "${PRECOMPILED_IL2CPP}")
+else
+  echo "[*] Compiling libil2cpp runtime from source into libGameAssembly.a..."
+  IL2CPP_SRC_DIR="${XCODE_DIR}/Il2CppOutputProject/IL2CPP"
+  find "${IL2CPP_SRC_DIR}/libil2cpp" -type f -name "*.cpp" \
+    ! -path "*/os/Win32/*" \
+    ! -path "*/os/WindowsGames/*" \
+    ! -path "*/os/Android/*" \
+    ! -path "*/os/Lumin/*" \
+    ! -path "*/os/Switch/*" \
+    ! -path "*/os/XboxOne/*" \
+    ! -path "*/os/PS4/*" \
+    ! -path "*/os/PS5/*" \
+    ! -path "*/os/Emscripten/*" \
+    ! -path "*/os/QNX/*" \
+    -print0 | \
+    xargs -0 -P "${NPROC}" -n 1 /tmp/compile_worker.sh "${OBJ_DIR}" "${SDK_PATH}" "${XCODE_DIR}" "${IL2CPP_OUT}"
+
+  # Also compile Boehm GC if present
+  if [[ -f "${IL2CPP_SRC_DIR}/external/bdwgc/extra/gc.c" ]]; then
+    echo "[*] Compiling Boehm GC (extra/gc.c)..."
+    xcrun --sdk iphoneos clang -c -Os -arch arm64 -isysroot "${SDK_PATH}" -miphoneos-version-min=12.0 \
+      -fPIC -fvisibility=hidden -Wno-everything \
+      -DGC_NOT_DLL -DALL_INTERIOR_POINTERS -DNO_EXECUTE_PERMISSION \
+      -I"${IL2CPP_SRC_DIR}/external/bdwgc/include" \
+      "${IL2CPP_SRC_DIR}/external/bdwgc/extra/gc.c" \
+      -o "${OBJ_DIR}/bdwgc_gc.o"
+  elif [[ -d "${IL2CPP_SRC_DIR}/external/bdwgc/src" ]]; then
+    echo "[*] Compiling Boehm GC sources..."
+    find "${IL2CPP_SRC_DIR}/external/bdwgc/src" -type f -name "*.c" \
+      ! -name "win32_*.c" ! -name "wince_*.c" -print0 | \
+      xargs -0 -P "${NPROC}" -n 1 /tmp/compile_worker.sh "${OBJ_DIR}" "${SDK_PATH}" "${XCODE_DIR}" "${IL2CPP_OUT}"
+  fi
+fi
 
 NUM_OBJS=$(find "${OBJ_DIR}" -name "*.o" | wc -l | tr -d ' ')
 echo "[*] Packaging ${NUM_OBJS} object files into ${GAMEASSEMBLY_LIB}..."
@@ -269,10 +338,10 @@ fi
 
 # 7b. Inspect and patch Xcode project build settings
 echo "[*] Inspecting and patching Xcode project build settings..."
-python3 - << PYEOF
+XCODE_DIR="${XCODE_DIR}" python3 - << 'PYEOF'
 import os, re
 
-xcode_dir = "${XCODE_DIR}"
+xcode_dir = os.environ.get("XCODE_DIR", "")
 pbx_path = os.path.join(xcode_dir, "Unity-iPhone.xcodeproj", "project.pbxproj")
 
 if os.path.exists(pbx_path):
@@ -280,21 +349,6 @@ if os.path.exists(pbx_path):
         content = f.read()
 
     print(f"[*] Read {pbx_path} ({len(content)} bytes)")
-    
-    # Check for targets and shell scripts
-    targets = re.findall(r'(\w+ /\* Begin PBXNativeTarget section \*/.*?/\* End PBXNativeTarget section \*/)', content, re.DOTALL)
-    if targets:
-        print("Targets found in project:")
-        for tname in re.findall(r'name = (.*?);', targets[0]):
-            print(f"  - {tname}")
-
-    scripts = re.findall(r'shellScript = "(.*?)";', content, re.DOTALL)
-    for i, s in enumerate(scripts):
-        try:
-            clean_s = bytes(s, "utf-8").decode("unicode_escape")
-            print(f"Shell script {i}:\n{clean_s}\n---")
-        except Exception:
-            pass
 
     # Inject version macros and disable bitcode/signing into all buildSettings blocks
     version_block = """buildSettings = {
@@ -308,6 +362,7 @@ if os.path.exists(pbx_path):
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(SRCROOT)/Libraries",
+					"$(PROJECT_DIR)/Libraries",
 				);"""
     content = content.replace("buildSettings = {", version_block)
 
@@ -325,6 +380,11 @@ echo "[*] Building Xcode project with xcodebuild (target: iphoneos)..."
 # Collect all IL2CPP include directories
 IL2CPP_INCS=$(find "${XCODE_DIR}/Il2CppOutputProject/IL2CPP" -type d \( -name "Include" -o -name "include" -o -name "libil2cpp" -o -name "pch" \) 2>/dev/null | tr '\n' ' ')
 
+LDFLAGS_EXTRA="-force_load ${XCODE_DIR}/Libraries/libNativePlugins.a"
+if [[ -f "${XCODE_DIR}/Libraries/libil2cpp.a" ]]; then
+  LDFLAGS_EXTRA="${LDFLAGS_EXTRA} -force_load ${XCODE_DIR}/Libraries/libil2cpp.a"
+fi
+
 xcodebuild -project "${XCODE_DIR}/Unity-iPhone.xcodeproj" \
   -scheme Unity-iPhone \
   -sdk iphoneos \
@@ -334,7 +394,7 @@ xcodebuild -project "${XCODE_DIR}/Unity-iPhone.xcodeproj" \
   HEADER_SEARCH_PATHS="\$(inherited) ${XCODE_DIR}/Classes ${IL2CPP_OUT} ${IL2CPP_INCS}" \
   USER_HEADER_SEARCH_PATHS="\$(inherited) ${XCODE_DIR}/Classes ${IL2CPP_OUT} ${IL2CPP_INCS}" \
   LIBRARY_SEARCH_PATHS="\$(inherited) ${XCODE_DIR}/Libraries ${DERIVED_DATA}/Build/Products/Release-iphoneos" \
-  OTHER_LDFLAGS="\$(inherited) -force_load ${XCODE_DIR}/Libraries/libNativePlugins.a" \
+  OTHER_LDFLAGS="\$(inherited) ${LDFLAGS_EXTRA}" \
   CODE_SIGNING_ALLOWED=NO \
   CODE_SIGNING_REQUIRED=NO \
   CODE_SIGN_IDENTITY="" \

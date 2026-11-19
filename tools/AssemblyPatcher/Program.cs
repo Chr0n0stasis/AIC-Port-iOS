@@ -144,12 +144,13 @@ class Program
 
                         if (m.ReturnType.FullName == "System.IntPtr")
                         {
-                            il.Emit(OpCodes.Ldsfld, mod.ImportReference(typeof(IntPtr).GetField("Zero")));
+                            il.Emit(OpCodes.Ldc_I4_0);
+                            il.Emit(OpCodes.Conv_I);
                             il.Emit(OpCodes.Ret);
                         }
                         else if (m.ReturnType.FullName == "System.String")
                         {
-                            il.Emit(OpCodes.Ldsfld, mod.ImportReference(typeof(string).GetField("Empty")));
+                            il.Emit(OpCodes.Ldstr, "");
                             il.Emit(OpCodes.Ret);
                         }
                         else

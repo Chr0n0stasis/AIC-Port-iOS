@@ -1,0 +1,15 @@
+bin/
+obj/
+Library/
+Temp/
+Logs/
+UserSettings/
+build/
+artifacts/
+__pycache__/
+*.ipa
+*.p12
+*.mobileprovision
+*.ulf
+/UnityProbe/Assets/Generated*
+/UnityProbe/Assets/Plugins*

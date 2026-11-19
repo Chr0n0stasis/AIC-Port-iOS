@@ -1,0 +1,41 @@
+name: iOS ARM64 AOT probe
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: macos-26
+    timeout-minutes: 15
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.6.app/Contents/Developer
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '10.0.401'
+      - name: Show toolchain
+        run: |
+          dotnet --version
+          xcodebuild -version
+          xcrun --sdk iphoneos --show-sdk-version
+      - name: Compile the input IL assembly
+        run: dotnet build probe/Kernel/Kernel.csproj -c Release
+      - name: Compile IL to iOS ARM64 native code
+        run: dotnet publish probe/Native/Native.csproj -c Release -r ios-arm64 -o artifacts
+      - name: Verify iOS platform and C export
+        run: |
+          binary=artifacts/PortProbe.Native.dylib
+          xcrun lipo -verify_arch arm64 "$binary"
+          xcrun vtool -show-build "$binary" | tee artifacts/platform.txt
+          grep -Eq '^[[:space:]]*platform[[:space:]]+IOS[[:space:]]*$' artifacts/platform.txt
+          xcrun nm -gU "$binary" > artifacts/exports.txt
+          grep -Eq '[[:space:]]_port_probe_mix$' artifacts/exports.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ios-arm64-native-aot-probe
+          path: artifacts/
+          if-no-files-found: error

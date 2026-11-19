@@ -8,7 +8,8 @@ echo "================================================================="
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 WORK_DIR="/tmp/aic_ios_build"
 OUTPUT_DIR="${ROOT_DIR}/artifacts"
-mkdir -p "${WORK_DIR}" "${OUTPUT_DIR}"
+DERIVED_DATA="${WORK_DIR}/DerivedData"
+mkdir -p "${WORK_DIR}" "${OUTPUT_DIR}" "${DERIVED_DATA}"
 
 UNITY_VERSION="2022.3.62f2"
 CHANGESET="7670c08855a9"
@@ -178,6 +179,61 @@ clang -c -O3 -arch arm64 -isysroot "${SDK_PATH}" -miphoneos-version-min=12.0 \
 ar rcs "${XCODE_DIR}/Libraries/libNativePlugins.a" nanosockets.o cri_ware_stub.o
 rm -f nanosockets.o cri_ware_stub.o
 
+# 6b. Compile IL2CPP generated C++ sources into libGameAssembly.a
+echo "[*] Compiling IL2CPP generated C++ sources into libGameAssembly.a..."
+GAMEASSEMBLY_LIB="${XCODE_DIR}/Libraries/libGameAssembly.a"
+OBJ_DIR="${WORK_DIR}/obj_gameassembly"
+rm -rf "${OBJ_DIR}"
+mkdir -p "${OBJ_DIR}" "${DERIVED_DATA}/Build/Products/Release-iphoneos"
+
+cat << 'EOF' > /tmp/compile_worker.sh
+#!/usr/bin/env bash
+set -e
+obj_dir="$1"
+sdk_path="$2"
+xcode_dir="$3"
+il2cpp_out="$4"
+src="$5"
+
+base_name=$(basename "${src}" .cpp)
+hash_val=$(echo "${src}" | cksum | cut -d' ' -f1)
+obj="${obj_dir}/${base_name}_${hash_val}.o"
+
+xcrun --sdk iphoneos clang++ -c -Os -arch arm64 -isysroot "${sdk_path}" -miphoneos-version-min=12.0 \
+  -std=c++14 -fPIC -fvisibility=hidden -fexceptions -Wno-everything \
+  -DUNITY_VERSION_VER=2022 -DUNITY_VERSION_MAJ=3 -DUNITY_VERSION_MIN=62 \
+  -DNET_4_0 -DUNITY_AOT -DIL2CPP_TARGET_IOS=1 -DIL2CPP_ENABLE_ARM64=1 \
+  -I"${il2cpp_out}" \
+  -I"${xcode_dir}/Classes" \
+  -I"${xcode_dir}/Il2CppOutputProject/IL2CPP/libil2cpp" \
+  -I"${xcode_dir}/Il2CppOutputProject/IL2CPP/libil2cpp/pch" \
+  -I"${xcode_dir}/Il2CppOutputProject/IL2CPP/external/baselib/Include" \
+  -I"${xcode_dir}/Il2CppOutputProject/IL2CPP/external/baselib/Platforms/OSX/Include" \
+  -I"${xcode_dir}/Il2CppOutputProject/IL2CPP/external/baselib/Platforms/iOS/Include" \
+  "${src}" -o "${obj}"
+EOF
+chmod +x /tmp/compile_worker.sh
+
+# Check if libiPhone-lib.a contains il2cpp runtime
+if nm -g "${LIB_IPHONE_SRC}" 2>/dev/null | grep -q "il2cpp_init"; then
+  echo "[+] libiPhone-lib.a contains IL2CPP runtime symbols (skipping libil2cpp source compile)."
+else
+  echo "[*] libiPhone-lib.a does not contain il2cpp_init, compiling libil2cpp runtime..."
+  find "${XCODE_DIR}/Il2CppOutputProject/IL2CPP/libil2cpp" -name "*.cpp" -print0 | \
+    xargs -0 -P 4 -n 1 /tmp/compile_worker.sh "${OBJ_DIR}" "${SDK_PATH}" "${XCODE_DIR}" "${IL2CPP_OUT}"
+fi
+
+echo "[*] Compiling generated game logic C++ sources in parallel..."
+find "${IL2CPP_OUT}" -name "*.cpp" -print0 | \
+  xargs -0 -P 4 -n 1 /tmp/compile_worker.sh "${OBJ_DIR}" "${SDK_PATH}" "${XCODE_DIR}" "${IL2CPP_OUT}"
+
+NUM_OBJS=$(find "${OBJ_DIR}" -name "*.o" | wc -l | tr -d ' ')
+echo "[*] Packaging ${NUM_OBJS} object files into ${GAMEASSEMBLY_LIB}..."
+ar rcs "${GAMEASSEMBLY_LIB}" "${OBJ_DIR}"/*.o
+ranlib "${GAMEASSEMBLY_LIB}"
+cp -f "${GAMEASSEMBLY_LIB}" "${DERIVED_DATA}/Build/Products/Release-iphoneos/libGameAssembly.a"
+echo "[+] libGameAssembly.a created: $(ls -lh "${GAMEASSEMBLY_LIB}")"
+
 # 7. Configure Info.plist for landscape and metadata
 INFO_PLIST=$(find "${XCODE_DIR}" -name "Info.plist" | head -n 1)
 if [[ -f "${INFO_PLIST}" ]]; then
@@ -239,7 +295,11 @@ if os.path.exists(pbx_path):
 				UNITY_VERSION_MIN = 62;
 				ENABLE_BITCODE = NO;
 				CODE_SIGNING_ALLOWED = NO;
-				CODE_SIGNING_REQUIRED = NO;"""
+				CODE_SIGNING_REQUIRED = NO;
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(SRCROOT)/Libraries",
+				);"""
     content = content.replace("buildSettings = {", version_block)
 
     with open(pbx_path, "w", encoding="utf-8") as f:
@@ -252,7 +312,6 @@ echo "[*] Available schemes in Xcode project:"
 xcodebuild -list -project "${XCODE_DIR}/Unity-iPhone.xcodeproj" || true
 
 echo "[*] Building Xcode project with xcodebuild (target: iphoneos)..."
-DERIVED_DATA="${WORK_DIR}/DerivedData"
 
 # Collect all IL2CPP include directories
 IL2CPP_INCS=$(find "${XCODE_DIR}/Il2CppOutputProject/IL2CPP" -type d \( -name "Include" -o -name "include" -o -name "libil2cpp" -o -name "pch" \) 2>/dev/null | tr '\n' ' ')
@@ -265,6 +324,7 @@ xcodebuild -project "${XCODE_DIR}/Unity-iPhone.xcodeproj" \
   GCC_PREPROCESSOR_DEFINITIONS="\$(inherited) UNITY_VERSION_VER=2022 UNITY_VERSION_MAJ=3 UNITY_VERSION_MIN=62" \
   HEADER_SEARCH_PATHS="\$(inherited) ${XCODE_DIR}/Classes ${IL2CPP_OUT} ${IL2CPP_INCS}" \
   USER_HEADER_SEARCH_PATHS="\$(inherited) ${XCODE_DIR}/Classes ${IL2CPP_OUT} ${IL2CPP_INCS}" \
+  LIBRARY_SEARCH_PATHS="\$(inherited) ${XCODE_DIR}/Libraries ${DERIVED_DATA}/Build/Products/Release-iphoneos" \
   OTHER_LDFLAGS="\$(inherited) -force_load ${XCODE_DIR}/Libraries/libNativePlugins.a" \
   CODE_SIGNING_ALLOWED=NO \
   CODE_SIGNING_REQUIRED=NO \

@@ -16,6 +16,7 @@ PKG_URL="https://download.unity3d.com/download_unity/${CHANGESET}/MacEditorTarge
 
 echo "[*] Working directory: ${WORK_DIR}"
 echo "[*] Target Unity version: ${UNITY_VERSION} (${CHANGESET})"
+echo "[*] Host architecture: $(uname -m)"
 
 # 1. Download & Extract Unity iOS Support Playback Engine
 PKG_FILE="${WORK_DIR}/UnitySetup-iOS-Support.pkg"
@@ -40,11 +41,25 @@ else
   echo "[+] Reusing existing extracted Playback Engine."
 fi
 
-# 2. Locate components inside Playback Engine
+# Ensure all binaries and dylibs have execution permissions
+chmod -R +x "${EXTRACT_DIR}"
+
+# 2. Locate components inside Playback Engine matching host architecture
 echo "[*] Locating Trampoline, IL2CPP compiler, and iOS runtime..."
 TRAMPOLINE_SRC=$(find "${EXTRACT_DIR}" -type d -name "Trampoline" | head -n 1)
 LIB_IPHONE_SRC=$(find "${EXTRACT_DIR}" -type f -name "libiPhone-lib.a" | head -n 1)
-IL2CPP_DLL=$(find "${EXTRACT_DIR}" -type f -name "il2cpp.dll" | head -n 1)
+
+HOST_ARCH=$(uname -m)
+if [[ "${HOST_ARCH}" == "arm64" ]]; then
+  IL2CPP_DLL=$(find "${EXTRACT_DIR}" -path "*/deploy_arm64/il2cpp.dll" | head -n 1)
+else
+  IL2CPP_DLL=$(find "${EXTRACT_DIR}" -path "*/deploy_x86_64/il2cpp.dll" | head -n 1)
+fi
+
+if [[ -z "${IL2CPP_DLL}" ]]; then
+  # Fallback to any il2cpp.dll
+  IL2CPP_DLL=$(find "${EXTRACT_DIR}" -type f -name "il2cpp.dll" | head -n 1)
+fi
 
 echo "  -> Trampoline template: ${TRAMPOLINE_SRC}"
 echo "  -> libiPhone-lib.a:     ${LIB_IPHONE_SRC}"
@@ -94,6 +109,7 @@ cp -R "${ROOT_DIR}/ConvertedData/"* "${DATA_OUT}/"
 echo "[*] Compiling native plugins (NanoSockets & CRIWARE stub) into static library..."
 SDK_PATH=$(xcrun --sdk iphoneos --show-sdk-path)
 clang -c -O3 -arch arm64 -isysroot "${SDK_PATH}" -miphoneos-version-min=12.0 \
+  -Wno-deprecated-non-prototype -Wno-strict-prototypes \
   -I"${ROOT_DIR}/native/nanosockets" \
   "${ROOT_DIR}/native/nanosockets/nanosockets.c" \
   "${ROOT_DIR}/native/criware_stub/cri_ware_stub.c"

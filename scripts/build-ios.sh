@@ -107,14 +107,16 @@ MANAGED_IN="${XCODE_DIR}/ManagedInput"
 mkdir -p "${IL2CPP_OUT}" "${DATA_OUT}" "${MANAGED_IN}"
 cp -R "${ROOT_DIR}/PatchedManaged/." "${MANAGED_IN}/"
 
-# The native iOS AudioSettings proxy invokes mobile-only methods at startup.
-IOS_AUDIO_MODULE=$(find "${EXTRACT_DIR}" -type f \
-  -path '*/Variations/il2cpp/Releasearm64_managed/UnityEngine.AudioModule.dll' -print -quit)
-if [[ -z "${IOS_AUDIO_MODULE}" ]]; then
-  echo "::error::Missing the Release ARM64 iOS UnityEngine.AudioModule.dll"
+# Use the device audio module and its matching web-request modules. The
+# desktop web-request modules reference MovieTexture, which is absent on iOS.
+IOS_MANAGED=$(find "${EXTRACT_DIR}" -type d -path '*/Variations/il2cpp/Releasearm64_managed' -print -quit)
+if [[ -z "${IOS_MANAGED}" ]]; then
+  echo "::error::Missing the Release ARM64 iOS managed assemblies"
   exit 1
 fi
-cp -f "${IOS_AUDIO_MODULE}" "${MANAGED_IN}/UnityEngine.AudioModule.dll"
+for module in AudioModule UnityWebRequestAudioModule UnityWebRequestWWWModule; do
+  cp -f "${IOS_MANAGED}/UnityEngine.${module}.dll" "${MANAGED_IN}/"
+done
 dotnet run --configuration Release --project "${ROOT_DIR}/tools/AssemblyPatcher/AssemblyPatcher.csproj" \
   -- --ios-startup "${MANAGED_IN}"
 

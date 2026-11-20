@@ -155,6 +155,9 @@ cat << 'EOF' > /tmp/unity_version_prefix.h
 #ifndef BASELIB_INLINE_NAMESPACE
 #define BASELIB_INLINE_NAMESPACE il2cpp_baselib
 #endif
+#ifndef RUNTIME_IL2CPP
+#define RUNTIME_IL2CPP 1
+#endif
 EOF
 
 for header in "${XCODE_DIR}/Classes/Prefix.pch" \
@@ -179,17 +182,109 @@ cp -f "${ROOT_DIR}/ConvertedData/ScriptingAssemblies.json" "${DATA_OUT}/Managed/
 echo "[*] Compiling native plugins and engine registration stubs into static library..."
 cat << 'EOF' > "${XCODE_DIR}/Classes/RegisterMonoModules.cpp"
 #include <stddef.h>
+#include <stdint.h>
+#include <dlfcn.h>
+#include <sched.h>
+#include <pthread.h>
+#include <mach/mach.h>
+#include <mach/semaphore.h>
 
 // Unity Engine Class & Module Registration Stubs for IL2CPP
 void RegisterAllClasses() {}
 void RegisterAllStrippedInternalCalls() {}
 extern "C" void RegisterStaticallyLinkedModulesGranular() {}
 void InvokeRegisterStaticallyLinkedModuleClasses() {}
+
+// Fallback for IL2CPP Codegen Registration symbol
+typedef void (*CodegenRegistrationFunction)();
+extern "C" {
+    __attribute__((weak)) void s_Il2CppCodegenRegistration_Fallback() {}
+    __attribute__((weak)) CodegenRegistrationFunction g_CodegenRegistration = s_Il2CppCodegenRegistration_Fallback;
+}
+
+// Baselib Posix / Darwin Implementation Stubs under il2cpp_baselib namespace
+namespace il2cpp_baselib {
+
+struct Baselib_DynamicLibrary_Handle {
+    uintptr_t handle;
+};
+
+struct Baselib_SystemSemaphore_Handle {
+    uintptr_t handle;
+};
+
+typedef uint64_t Baselib_Thread_Id;
+
+void Baselib_DynamicLibrary_Close(Baselib_DynamicLibrary_Handle handle) {
+    if (handle.handle != 0) {
+        ::dlclose((void*)handle.handle);
+    }
+}
+
+void Baselib_Thread_YieldExecution() {
+    sched_yield();
+}
+
+Baselib_Thread_Id Baselib_Thread_GetCurrentThreadId() {
+    uint64_t tid = 0;
+    pthread_threadid_np(NULL, &tid);
+    return tid;
+}
+
+Baselib_SystemSemaphore_Handle Baselib_SystemSemaphore_CreateInplace(void* memoryBlock) {
+    semaphore_t sem = 0;
+    kern_return_t ret = semaphore_create(mach_task_self(), &sem, SYNC_POLICY_FIFO, 0);
+    Baselib_SystemSemaphore_Handle handle;
+    handle.handle = (ret == KERN_SUCCESS) ? (uintptr_t)sem : 0;
+    if (memoryBlock) {
+        *(Baselib_SystemSemaphore_Handle*)memoryBlock = handle;
+    }
+    return handle;
+}
+
+void Baselib_SystemSemaphore_Acquire(Baselib_SystemSemaphore_Handle handle) {
+    if (handle.handle != 0) {
+        semaphore_wait((semaphore_t)handle.handle);
+    }
+}
+
+bool Baselib_SystemSemaphore_TryAcquire(Baselib_SystemSemaphore_Handle handle) {
+    if (handle.handle == 0) return false;
+    mach_timespec_t ts = {0, 0};
+    kern_return_t ret = semaphore_timedwait((semaphore_t)handle.handle, ts);
+    return (ret == KERN_SUCCESS);
+}
+
+bool Baselib_SystemSemaphore_TryTimedAcquire(Baselib_SystemSemaphore_Handle handle, unsigned int timeoutInMilliseconds) {
+    if (handle.handle == 0) return false;
+    mach_timespec_t ts;
+    ts.tv_sec = timeoutInMilliseconds / 1000;
+    ts.tv_nsec = (clock_res_t)((timeoutInMilliseconds % 1000) * 1000000);
+    kern_return_t ret = semaphore_timedwait((semaphore_t)handle.handle, ts);
+    return (ret == KERN_SUCCESS);
+}
+
+void Baselib_SystemSemaphore_Release(Baselib_SystemSemaphore_Handle handle, unsigned int count) {
+    if (handle.handle != 0) {
+        for (unsigned int i = 0; i < count; ++i) {
+            semaphore_signal((semaphore_t)handle.handle);
+        }
+    }
+}
+
+void Baselib_SystemSemaphore_FreeInplace(Baselib_SystemSemaphore_Handle handle) {
+    if (handle.handle != 0) {
+        semaphore_destroy(mach_task_self(), (semaphore_t)handle.handle);
+    }
+}
+
+} // namespace il2cpp_baselib
 EOF
 
 SDK_PATH=$(xcrun --sdk iphoneos --show-sdk-path)
 clang++ -c -O3 -arch arm64 -isysroot "${SDK_PATH}" -miphoneos-version-min=12.0 \
   -std=c++14 -fPIC \
+  -DBASELIB_INLINE_NAMESPACE=il2cpp_baselib -DRUNTIME_IL2CPP=1 \
   "${XCODE_DIR}/Classes/RegisterMonoModules.cpp" -o RegisterMonoModules.o
 
 clang -c -O3 -arch arm64 -isysroot "${SDK_PATH}" -miphoneos-version-min=12.0 \
@@ -234,6 +329,7 @@ if ! xcrun --sdk iphoneos ${COMPILER} -c -Os -arch arm64 -isysroot "${sdk_path}"
   ${STD_FLAG} -fPIC -fvisibility=hidden -fexceptions -Wno-everything \
   -DUNITY_VERSION_VER=2022 -DUNITY_VERSION_MAJ=3 -DUNITY_VERSION_MIN=62 \
   -DBASELIB_INLINE_NAMESPACE=il2cpp_baselib \
+  -DRUNTIME_IL2CPP=1 \
   -DNET_4_0 -DUNITY_AOT -DIL2CPP_TARGET_IOS=1 -DIL2CPP_ENABLE_ARM64=1 \
   -DGC_NOT_DLL -DALL_INTERIOR_POINTERS -DNO_EXECUTE_PERMISSION -DIL2CPP_ENABLE_WRITE_BARRIERS=1 \
   -I"${il2cpp_out}" \
@@ -263,13 +359,17 @@ find "${IL2CPP_OUT}" -name "*.cpp" -print0 | \
 # Check for precompiled ARM64 libil2cpp or compile from source
 echo "[*] Checking for precompiled ARM64 IL2CPP static libraries in Playback Engine..."
 PRECOMPILED_IL2CPP=""
-for cand in $(find "${EXTRACT_DIR}" -type f \( -name "libil2cpp*.a" -o -name "il2cpp*.a" \) 2>/dev/null); do
+for cand in $(find "${EXTRACT_DIR}" -type f \( -name "libil2cpp*.a" -o -name "il2cpp*.a" \) 2>/dev/null | sort); do
   if [[ "${cand}" =~ sim|x64|x86 ]]; then
     continue
   fi
   if lipo -archs "${cand}" 2>/dev/null | grep -qw "arm64"; then
-    PRECOMPILED_IL2CPP="${cand}"
-    break
+    if [[ ! "${cand}" =~ dev && ! "${cand}" =~ debug ]]; then
+      PRECOMPILED_IL2CPP="${cand}"
+      break
+    elif [[ -z "${PRECOMPILED_IL2CPP}" ]]; then
+      PRECOMPILED_IL2CPP="${cand}"
+    fi
   fi
 done
 
@@ -385,6 +485,7 @@ if os.path.exists(pbx_path):
 				UNITY_VERSION_MAJ = 3;
 				UNITY_VERSION_MIN = 62;
 				BASELIB_INLINE_NAMESPACE = il2cpp_baselib;
+				RUNTIME_IL2CPP = 1;
 				ENABLE_BITCODE = NO;
 				CODE_SIGNING_ALLOWED = NO;
 				CODE_SIGNING_REQUIRED = NO;
@@ -411,7 +512,7 @@ IL2CPP_INCS=$(find "${XCODE_DIR}/Il2CppOutputProject/IL2CPP" -type d \( -name "I
 
 LDFLAGS_EXTRA="-force_load ${XCODE_DIR}/Libraries/libNativePlugins.a"
 if [[ -f "${XCODE_DIR}/Libraries/libil2cpp.a" ]]; then
-  LDFLAGS_EXTRA="${LDFLAGS_EXTRA} -force_load ${XCODE_DIR}/Libraries/libil2cpp.a"
+  LDFLAGS_EXTRA="${LDFLAGS_EXTRA} ${XCODE_DIR}/Libraries/libil2cpp.a"
 fi
 
 xcodebuild -project "${XCODE_DIR}/Unity-iPhone.xcodeproj" \
@@ -419,7 +520,7 @@ xcodebuild -project "${XCODE_DIR}/Unity-iPhone.xcodeproj" \
   -sdk iphoneos \
   -configuration Release \
   -derivedDataPath "${DERIVED_DATA}" \
-  GCC_PREPROCESSOR_DEFINITIONS="\$(inherited) UNITY_VERSION_VER=2022 UNITY_VERSION_MAJ=3 UNITY_VERSION_MIN=62 BASELIB_INLINE_NAMESPACE=il2cpp_baselib" \
+  GCC_PREPROCESSOR_DEFINITIONS="\$(inherited) UNITY_VERSION_VER=2022 UNITY_VERSION_MAJ=3 UNITY_VERSION_MIN=62 BASELIB_INLINE_NAMESPACE=il2cpp_baselib RUNTIME_IL2CPP=1" \
   HEADER_SEARCH_PATHS="\$(inherited) ${XCODE_DIR}/Classes ${IL2CPP_OUT} ${IL2CPP_INCS}" \
   USER_HEADER_SEARCH_PATHS="\$(inherited) ${XCODE_DIR}/Classes ${IL2CPP_OUT} ${IL2CPP_INCS}" \
   LIBRARY_SEARCH_PATHS="\$(inherited) ${XCODE_DIR}/Libraries ${DERIVED_DATA}/Build/Products/Release-iphoneos" \

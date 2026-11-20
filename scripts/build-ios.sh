@@ -465,7 +465,58 @@ if [[ -f "${INFO_PLIST}" ]]; then
   /usr/libexec/PlistBuddy -c "Add :UISupportedInterfaceOrientations:1 string UIInterfaceOrientationLandscapeLeft" "${INFO_PLIST}" 2>/dev/null || true
 fi
 
-# 7b. Inspect and patch Xcode project build settings
+# 7b. Generate default AppIcon and Images.xcassets catalog
+echo "[*] Generating default AppIcon asset catalog for Alice in Cradle..."
+XCODE_DIR="${XCODE_DIR}" python3 - << 'PYEOF'
+import os, struct, zlib
+
+def create_png(width, height, color):
+    r, g, b = color
+    raw_row = bytes([0] + [r, g, b] * width)
+    compressed = zlib.compress(raw_row * height)
+    png = b'\x89PNG\r\n\x1a\n'
+    ihdr_data = struct.pack('>IIBBBBB', width, height, 8, 2, 0, 0, 0)
+    ihdr_crc = zlib.crc32(b'IHDR' + ihdr_data)
+    png += struct.pack('>I', len(ihdr_data)) + b'IHDR' + ihdr_data + struct.pack('>I', ihdr_crc)
+    idat_crc = zlib.crc32(b'IDAT' + compressed)
+    png += struct.pack('>I', len(compressed)) + b'IDAT' + compressed + struct.pack('>I', idat_crc)
+    iend_crc = zlib.crc32(b'IEND')
+    png += struct.pack('>I', 0) + b'IEND' + struct.pack('>I', iend_crc)
+    return png
+
+xcode_dir = os.environ.get("XCODE_DIR", "")
+icon_png = create_png(1024, 1024, (244, 143, 177))
+
+for rel in ["Unity-iPhone/Images.xcassets", "Images.xcassets"]:
+    assets_dir = os.path.join(xcode_dir, rel)
+    iconset_dir = os.path.join(assets_dir, "AppIcon.appiconset")
+    os.makedirs(iconset_dir, exist_ok=True)
+    
+    with open(os.path.join(assets_dir, "Contents.json"), "w") as f:
+        f.write('{"info":{"author":"xcode","version":1}}\n')
+        
+    with open(os.path.join(iconset_dir, "Contents.json"), "w") as f:
+        f.write('''{
+  "images" : [
+    {
+      "filename" : "Icon-1024.png",
+      "idiom" : "universal",
+      "platform" : "ios",
+      "size" : "1024x1024"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}''')
+    
+    with open(os.path.join(iconset_dir, "Icon-1024.png"), "wb") as f:
+        f.write(icon_png)
+    print(f"[+] Created AppIcon in {iconset_dir}")
+PYEOF
+
+# 7c. Inspect and patch Xcode project build settings
 echo "[*] Inspecting and patching Xcode project build settings..."
 XCODE_DIR="${XCODE_DIR}" python3 - << 'PYEOF'
 import os, re
@@ -486,6 +537,7 @@ if os.path.exists(pbx_path):
 				UNITY_VERSION_MIN = 62;
 				BASELIB_INLINE_NAMESPACE = il2cpp_baselib;
 				RUNTIME_IL2CPP = 1;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ENABLE_BITCODE = NO;
 				CODE_SIGNING_ALLOWED = NO;
 				CODE_SIGNING_REQUIRED = NO;
@@ -525,6 +577,7 @@ xcodebuild -project "${XCODE_DIR}/Unity-iPhone.xcodeproj" \
   USER_HEADER_SEARCH_PATHS="\$(inherited) ${XCODE_DIR}/Classes ${IL2CPP_OUT} ${IL2CPP_INCS}" \
   LIBRARY_SEARCH_PATHS="\$(inherited) ${XCODE_DIR}/Libraries ${DERIVED_DATA}/Build/Products/Release-iphoneos" \
   OTHER_LDFLAGS="\$(inherited) ${LDFLAGS_EXTRA}" \
+  ASSETCATALOG_COMPILER_APPICON_NAME="AppIcon" \
   CODE_SIGNING_ALLOWED=NO \
   CODE_SIGNING_REQUIRED=NO \
   CODE_SIGN_IDENTITY="" \

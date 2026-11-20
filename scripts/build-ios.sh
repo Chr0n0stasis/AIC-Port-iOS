@@ -174,9 +174,12 @@ done
 # 5. Copy converted game data into Data/
 echo "[*] Installing converted game assets into Data/..."
 cp -R "${ROOT_DIR}/ConvertedData/"* "${DATA_OUT}/"
-mkdir -p "${DATA_OUT}/Managed"
+mkdir -p "${DATA_OUT}/Managed" "${DATA_OUT}/Managed/Metadata"
 cp -f "${ROOT_DIR}/ConvertedData/RuntimeInitializeOnLoads.json" "${DATA_OUT}/Managed/" 2>/dev/null || true
 cp -f "${ROOT_DIR}/ConvertedData/ScriptingAssemblies.json" "${DATA_OUT}/Managed/" 2>/dev/null || true
+if [[ -f "${DATA_OUT}/Metadata/global-metadata.dat" ]]; then
+  cp -f "${DATA_OUT}/Metadata/global-metadata.dat" "${DATA_OUT}/Managed/Metadata/"
+fi
 
 # 6. Compile native C plugins and engine registration stubs into static library
 echo "[*] Compiling native plugins and engine registration stubs into static library..."

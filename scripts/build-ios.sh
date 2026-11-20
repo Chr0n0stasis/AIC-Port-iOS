@@ -260,6 +260,13 @@ OBJ_DIR="${WORK_DIR}/obj_gameassembly"
 rm -rf "${OBJ_DIR}"
 mkdir -p "${OBJ_DIR}" "${DERIVED_DATA}/Build/Products/Release-iphoneos"
 
+if [[ "${AIC_USE_CCACHE:-0}" == 1 ]]; then
+  AIC_CLANG=$(xcrun --sdk iphoneos --find clang)
+  AIC_CLANGXX=$(xcrun --sdk iphoneos --find clang++)
+  export AIC_CLANG AIC_CLANGXX
+  ccache --zero-stats
+fi
+
 cat << 'EOF' > /tmp/compile_worker.sh
 #!/usr/bin/env bash
 set -e
@@ -276,13 +283,21 @@ obj="${obj_dir}/${base_name}_${hash_val}.o"
 ext="${src##*.}"
 if [[ "${ext}" == "c" ]]; then
   COMPILER="clang"
+  CACHED_COMPILER="${AIC_CLANG:-}"
   STD_FLAG=""
 else
   COMPILER="clang++"
+  CACHED_COMPILER="${AIC_CLANGXX:-}"
   STD_FLAG="-std=c++14"
 fi
 
-if ! xcrun --sdk iphoneos ${COMPILER} -c -Os -arch arm64 -isysroot "${sdk_path}" -miphoneos-version-min=12.0 \
+if [[ "${AIC_USE_CCACHE:-0}" == 1 ]]; then
+  compile=(ccache "${CACHED_COMPILER}")
+else
+  compile=(xcrun --sdk iphoneos "${COMPILER}")
+fi
+
+if ! "${compile[@]}" -c -Os -arch arm64 -isysroot "${sdk_path}" -miphoneos-version-min=12.0 \
   ${STD_FLAG} -fPIC -fexceptions -Wno-everything \
   -DUNITY_VERSION_VER=2022 -DUNITY_VERSION_MAJ=3 -DUNITY_VERSION_MIN=62 \
   -DBASELIB_INLINE_NAMESPACE=il2cpp_baselib \
@@ -384,6 +399,10 @@ else
       "${IL2CPP_SRC_DIR}/external/xxHash/xxhash.c" \
       -o "${OBJ_DIR}/xxhash.o"
   fi
+fi
+
+if [[ "${AIC_USE_CCACHE:-0}" == 1 ]]; then
+  ccache --show-stats
 fi
 
 NUM_OBJS=$(find "${OBJ_DIR}" -name "*.o" | wc -l | tr -d ' ')

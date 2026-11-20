@@ -31,6 +31,39 @@ jobs:
           path: /tmp/aic_ios_build/playback_engine
           key: unity-ios-engine-2022.3.62f2-7670c08855a9
 
+      - name: Configure IL2CPP compiler cache
+        id: compiler-cache
+        shell: bash
+        run: |
+          if ! command -v ccache >/dev/null && ! HOMEBREW_NO_AUTO_UPDATE=1 brew install ccache; then
+            echo "::warning::ccache is unavailable; using uncached compilation."
+            exit 0
+          fi
+
+          clang=$(xcrun --sdk iphoneos --find clang)
+          clangxx=$(xcrun --sdk iphoneos --find clang++)
+          toolchain=$(
+            { xcodebuild -version
+              xcrun --sdk iphoneos --show-sdk-build-version
+              shasum -a 256 "$clang" "$clangxx"
+            } | shasum -a 256 | cut -d ' ' -f 1
+          )
+          echo "toolchain=$toolchain" >> "$GITHUB_OUTPUT"
+          {
+            echo "AIC_USE_CCACHE=1"
+            echo "CCACHE_DIR=/tmp/aic_ios_build/ccache"
+            echo "CCACHE_MAXSIZE=1G"
+            echo "CCACHE_COMPILERCHECK=string:$toolchain"
+          } >> "$GITHUB_ENV"
+
+      - name: Cache generated IL2CPP object files
+        if: steps.compiler-cache.outputs.toolchain != ''
+        uses: actions/cache@v4
+        with:
+          path: /tmp/aic_ios_build/ccache
+          key: aic-il2cpp-ccache-v1-${{ runner.arch }}-${{ steps.compiler-cache.outputs.toolchain }}-${{ hashFiles('PatchedManaged/**', 'tools/AssemblyPatcher/*.cs', 'tools/AssemblyPatcher/*.csproj', 'scripts/build-ios.sh') }}
+          restore-keys: aic-il2cpp-ccache-v1-${{ runner.arch }}-${{ steps.compiler-cache.outputs.toolchain }}-
+
       - name: Make scripts executable
         run: chmod +x scripts/*.sh
 

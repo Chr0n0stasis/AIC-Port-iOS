@@ -10,6 +10,37 @@ import subprocess
 import re
 import argparse
 
+
+CPP_REGISTRAR = re.compile(r"__Z([0-9]+)(Register_[A-Za-z0-9_]+)v")
+C_REGISTRAR = re.compile(r"_(Register_[A-Za-z0-9_]+)")
+REQUIRED_STARTUP_REGISTRARS = {
+    "Register_UnityEngine_ScriptableObject_CreateScriptableObject",
+    "Register_UnityEngine_Shader_PropertyToID",
+    "Register_Unity_Jobs_LowLevel_Unsafe_JobsUtility_set_JobCompilerEnabled",
+    "Register_Unity_Burst_LowLevel_BurstCompilerService_GetOrCreateSharedMemory",
+    "Register_Unity_Profiling_LowLevel_Unsafe_ProfilerUnsafeUtility_CreateMarker",
+    "Register_UnityEngine_Experimental_Rendering_BuiltinRuntimeReflectionSystem_BuiltinUpdate",
+}
+
+
+def find_registrars(nm_output):
+    registrars = {}
+    for line in nm_output.splitlines():
+        fields = line.split()
+        if len(fields) < 2 or fields[-2] != "T":
+            continue
+        symbol = fields[-1]
+        c_symbol = C_REGISTRAR.fullmatch(symbol)
+        if c_symbol:
+            registrars.setdefault(c_symbol[1], "C")
+            continue
+        cpp_symbol = CPP_REGISTRAR.fullmatch(symbol)
+        if cpp_symbol and int(cpp_symbol[1]) == len(cpp_symbol[2]):
+            # Declare with C++ linkage to match the Mach-O Itanium name.
+            registrars[cpp_symbol[2]] = "C++"
+    return registrars
+
+
 def main():
     parser = argparse.ArgumentParser(description="Generate Unity icall registration source from libiPhone-lib.a")
     parser.add_argument("--lib", required=True, help="Path to libiPhone-lib.a")
@@ -55,23 +86,16 @@ def main():
         print(f"::error::Failed to extract symbols from {lib_path} using {nm_bin}", file=sys.stderr)
         sys.exit(1)
 
-    symbols = set()
-    for line in raw_output.splitlines():
-        parts = line.strip().split()
-        if len(parts) >= 2 and parts[-2] in ("T", "t"):
-            sym = parts[-1]
-            if sym.startswith("_Register_") and re.match(r"^_Register_[A-Za-z0-9_]+$", sym):
-                func_name = sym[1:]
-                symbols.add(func_name)
-
-    sorted_funcs = sorted(list(symbols))
+    registrars = find_registrars(raw_output)
+    sorted_funcs = sorted(registrars)
     print(f"[+] Found {len(sorted_funcs)} internal call registration symbols in {os.path.basename(lib_path)}")
 
-    if len(sorted_funcs) == 0:
-        print("::warning::No _Register_ symbols matched! Internal call dispatch may be incomplete.")
+    missing = REQUIRED_STARTUP_REGISTRARS - registrars.keys()
+    if missing:
+        sys.exit(f"::error::The iOS player is missing required startup registrars: {', '.join(sorted(missing))}")
 
     chunk_size = 200
-    num_chunks = (len(sorted_funcs) + chunk_size - 1) // chunk_size if sorted_funcs else 1
+    num_chunks = (len(sorted_funcs) + chunk_size - 1) // chunk_size
 
     lines = []
     lines.append("// ============================================================================")
@@ -81,10 +105,10 @@ def main():
     lines.append("// ============================================================================\n")
     lines.append("#include <stddef.h>\n")
 
-    lines.append('extern "C" {')
     for func in sorted_funcs:
-        lines.append(f"    void {func}();")
-    lines.append("}\n")
+        linkage = 'extern "C" ' if registrars[func] == "C" else ""
+        lines.append(f"{linkage}void {func}();")
+    lines.append("")
 
     for chunk_idx in range(num_chunks):
         chunk_funcs = sorted_funcs[chunk_idx * chunk_size : (chunk_idx + 1) * chunk_size]

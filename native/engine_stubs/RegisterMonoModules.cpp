@@ -143,6 +143,7 @@ class CubemapArray; template <> void RegisterUnityClass<CubemapArray>(const char
 class RenderTexture; template <> void RegisterUnityClass<RenderTexture>(const char*);
 class LowerResBlitTexture; template <> void RegisterUnityClass<LowerResBlitTexture>(const char*);
 class Shader; template <> void RegisterUnityClass<Shader>(const char*);
+class ShaderNameRegistry; template <> void RegisterUnityClass<ShaderNameRegistry>(const char*);
 class ComputeShader; template <> void RegisterUnityClass<ComputeShader>(const char*);
 class TextAsset; template <> void RegisterUnityClass<TextAsset>(const char*);
 class Sprite; template <> void RegisterUnityClass<Sprite>(const char*);
@@ -269,6 +270,9 @@ void RegisterAllClasses()
     RegisterUnityClass<RenderTexture>("Core");
     RegisterUnityClass<LowerResBlitTexture>("Core");
     RegisterUnityClass<Shader>("Core");
+    // The serialized ShaderNameRegistry manager (class ID 94) must be
+    // registered before globalgamemanagers is loaded for the first render.
+    RegisterUnityClass<ShaderNameRegistry>("Core");
     RegisterUnityClass<ComputeShader>("Core");
     RegisterUnityClass<TextAsset>("Core");
     RegisterUnityClass<Sprite>("Core");

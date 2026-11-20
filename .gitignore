@@ -30,3 +30,5 @@ DerivedData/
 *.p12
 *.mobileprovision
 *.ulf
+cert/
+tools/

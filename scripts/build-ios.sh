@@ -198,13 +198,6 @@ void RegisterAllStrippedInternalCalls() {}
 extern "C" void RegisterStaticallyLinkedModulesGranular() {}
 void InvokeRegisterStaticallyLinkedModuleClasses() {}
 
-// Fallback for IL2CPP Codegen Registration symbol
-typedef void (*CodegenRegistrationFunction)();
-extern "C" {
-    __attribute__((weak)) void s_Il2CppCodegenRegistration_Fallback() {}
-    __attribute__((weak)) CodegenRegistrationFunction g_CodegenRegistration = s_Il2CppCodegenRegistration_Fallback;
-}
-
 // Baselib Posix / Darwin Implementation Stubs under il2cpp_baselib namespace
 namespace il2cpp_baselib {
 
@@ -566,8 +559,11 @@ echo "[*] Building Xcode project with xcodebuild (target: iphoneos)..."
 IL2CPP_INCS=$(find "${XCODE_DIR}/Il2CppOutputProject/IL2CPP" -type d \( -name "Include" -o -name "include" -o -name "libil2cpp" -o -name "pch" \) 2>/dev/null | tr '\n' ' ')
 
 LDFLAGS_EXTRA="-force_load ${XCODE_DIR}/Libraries/libNativePlugins.a"
+if [[ -f "${GAMEASSEMBLY_LIB}" ]]; then
+  LDFLAGS_EXTRA="${LDFLAGS_EXTRA} -force_load ${GAMEASSEMBLY_LIB}"
+fi
 if [[ -f "${XCODE_DIR}/Libraries/libil2cpp.a" ]]; then
-  LDFLAGS_EXTRA="${LDFLAGS_EXTRA} ${XCODE_DIR}/Libraries/libil2cpp.a"
+  LDFLAGS_EXTRA="${LDFLAGS_EXTRA} -force_load ${XCODE_DIR}/Libraries/libil2cpp.a"
 fi
 
 xcodebuild -project "${XCODE_DIR}/Unity-iPhone.xcodeproj" \

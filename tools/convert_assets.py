@@ -12,20 +12,92 @@ import sys
 import shutil
 import time
 import json
+from pathlib import Path, PurePosixPath
 from concurrent.futures import ProcessPoolExecutor, as_completed
 import UnityPy
 from UnityPy.enums import BuildTarget, TextureFormat
 
 UNSUPPORTED_FORMATS = {
-    10: "DXT1",
-    12: "DXT5",
-    28: "DXT1Crunched",
-    29: "DXT5Crunched",
-    62: "BC7",
-    63: "BC6H",
-    64: "BC4",
-    65: "BC5",
+    TextureFormat.DXT1, TextureFormat.DXT3, TextureFormat.DXT5,
+    TextureFormat.DXT1Crunched, TextureFormat.DXT5Crunched,
+    TextureFormat.BC4, TextureFormat.BC5, TextureFormat.BC6H, TextureFormat.BC7,
 }
+
+
+def repair_ios_texture_bundle(source, destination):
+    import astc_encoder
+    from PIL import Image
+    from UnityPy.streams import EndianBinaryReader
+
+    with source.open("rb") as stream:
+        if not stream.read(8).startswith(b"UnityFS"):
+            return False
+
+    env = UnityPy.load(str(source))
+    bundle = env.file
+    changed = False
+    for obj in env.objects:
+        if obj.type.name != "Texture2D":
+            continue
+        tex = obj.read()
+        if tex.m_TextureFormat != TextureFormat.BC7:
+            continue
+        if tex.m_MipCount != 1 or tex.m_PlatformBlob:
+            raise ValueError(f"Unexpected BC7 texture layout: {source}:{tex.m_Name}")
+
+        # BC7 and ASTC 4x4 both use a 16-byte block. Keep the same stream offsets
+        # and alpha channels, including textures used as inputs to the map atlas.
+        image = tex.image.transpose(Image.Transpose.FLIP_TOP_BOTTOM).convert("RGBA")
+        image_data = astc_encoder.ASTCImage(
+            astc_encoder.ASTCType.U8, tex.m_Width, tex.m_Height, 1, image.tobytes()
+        )
+        config = astc_encoder.ASTCConfig(
+            astc_encoder.ASTCProfile.LDR, 4, 4, 1,
+            quality=astc_encoder.ASTCQualityPreset.FAST,
+        )
+        data = astc_encoder.ASTCContext(config).compress(
+            image_data, astc_encoder.ASTCSwizzle.from_str("RGBA")
+        )
+        if len(data) != len(tex.get_image_data()):
+            raise ValueError(f"ASTC stream size differs from BC7: {source}:{tex.m_Name}")
+
+        stream = tex.m_StreamData
+        if stream is not None and stream.path and stream.size:
+            name = PurePosixPath(stream.path).name
+            resource = bundle.files[name]
+            original = resource.bytes
+            end = stream.offset + stream.size
+            if stream.size != len(data) or end > len(original):
+                raise ValueError(f"Invalid texture stream: {source}:{tex.m_Name}")
+            replacement = EndianBinaryReader(original[:stream.offset] + data + original[end:])
+            replacement.flags = resource.flags
+            bundle.files[name] = replacement
+        else:
+            tex.image_data = data
+        tex.m_TextureFormat = TextureFormat.ASTC_RGBA_4x4
+        tex.save()
+        changed = True
+
+    if changed:
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        destination.write_bytes(bundle.save(packer="lz4"))
+    return changed
+
+
+def repair_ios_textures(source, output):
+    files = sorted(source.rglob("*.dat"))
+    if not files:
+        raise ValueError(f"No asset bundles found in {source}")
+    with ProcessPoolExecutor(max_workers=min(3, os.cpu_count() or 1)) as executor:
+        tasks = {
+            executor.submit(repair_ios_texture_bundle, path, output / path.relative_to(source)): path
+            for path in files
+        }
+        for task in as_completed(tasks):
+            if task.result():
+                print(f"[+] Converted BC7 to ASTC: {tasks[task].relative_to(source)}", flush=True)
+    output.mkdir(parents=True, exist_ok=True)
+    (output / ".complete").touch()
 
 def convert_single_file(src_path, dst_path):
     """
@@ -267,6 +339,10 @@ def convert_directory(src_dir, dst_dir, max_workers=8):
 
 
 if __name__ == "__main__":
+    if len(sys.argv) == 4 and sys.argv[1] == "--repair-ios-textures":
+        repair_ios_textures(Path(sys.argv[2]), Path(sys.argv[3]))
+        sys.exit(0)
+
     default_src = r"d:\Users\Chr0n0s\Documents\Gits\OAfV727f_aic_installer_030i\Alice in Cradle\Alice in Cradle.app\Contents\Resources\Data"
     default_dst = r"d:\Users\Chr0n0s\Documents\Gits\AIC-Port-iOS\ConvertedData"
 

@@ -11,6 +11,7 @@ class Program
         if (args is ["--ios-startup", var managedDir])
         {
             IosStartupPatcher.PatchInputSystem(managedDir);
+            IosStartupPatcher.InstallMobileInputUpdate(managedDir);
             IosStartupPatcher.PatchCriErrorCallback(managedDir);
             return 0;
         }

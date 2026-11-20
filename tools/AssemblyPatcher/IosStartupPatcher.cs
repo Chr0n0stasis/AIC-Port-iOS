@@ -88,6 +88,32 @@ internal static class IosStartupPatcher
         Console.WriteLine("[+] Bound CRI error callbacks to the static iOS audio fallback");
     }
 
+    internal static void InstallMobileInputUpdate(string managedDirectory)
+    {
+        var path = Path.Combine(managedDirectory, "unsafeAssem.dll");
+        using var resolver = new DefaultAssemblyResolver();
+        resolver.AddSearchDirectory(managedDirectory);
+        using var game = AssemblyDefinition.ReadAssembly(path, new ReaderParameters
+        {
+            InMemory = true,
+            AssemblyResolver = resolver,
+        });
+        using var overlay = AssemblyDefinition.ReadAssembly(Path.Combine(managedDirectory, "AIC.iOS.dll"));
+        var update = overlay.MainModule.GetType("AIC.iOS.AICTouchOverlay").Methods.Single(method =>
+            method.Name == "UpdateInputSystem" && method.IsStatic && !method.HasParameters);
+        var run = game.MainModule.GetType("XX.IN").Methods.Single(method =>
+            method.Name == "run" && method.IsStatic && method.Parameters.Count == 1 &&
+            method.Parameters[0].ParameterType.MetadataType == MetadataType.Single);
+        var originalUpdate = run.Body.Instructions.Single(instruction => instruction.OpCode == OpCodes.Call &&
+            instruction.Operand is MethodReference method &&
+            method.DeclaringType.FullName == "UnityEngine.InputSystem.InputSystem" &&
+            method.Name == "Update" && !method.HasParameters);
+
+        originalUpdate.Operand = game.MainModule.ImportReference(update);
+        WriteStagedAssembly(game, path);
+        Console.WriteLine("[+] Installed the iOS gamepad input provider before game input dispatch");
+    }
+
     private static void WriteStagedAssembly(AssemblyDefinition assembly, string path)
     {
         var staged = path + ".tmp";

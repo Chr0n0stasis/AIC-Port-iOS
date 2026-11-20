@@ -24,6 +24,17 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
+      - name: Set up Python for texture conversion
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Cache converted iOS textures
+        uses: actions/cache@v4
+        with:
+          path: /tmp/aic_ios_build/texture-overlay
+          key: aic-ios-textures-${{ runner.arch }}-${{ hashFiles('ConvertedData/StreamingAssets/**/*.dat', 'tools/convert_assets.py') }}
+
       - name: Cache Unity iOS Playback Engine
         uses: actions/cache@v4
         id: cache-playback-engine
@@ -61,7 +72,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: /tmp/aic_ios_build/ccache
-          key: aic-il2cpp-ccache-v1-${{ runner.arch }}-${{ steps.compiler-cache.outputs.toolchain }}-${{ hashFiles('PatchedManaged/**', 'tools/AssemblyPatcher/*.cs', 'tools/AssemblyPatcher/*.csproj', 'scripts/build-ios.sh') }}
+          key: aic-il2cpp-ccache-v1-${{ runner.arch }}-${{ steps.compiler-cache.outputs.toolchain }}-${{ hashFiles('PatchedManaged/**', 'tools/AssemblyPatcher/*.cs', 'tools/AssemblyPatcher/*.csproj', 'src/*.cs', 'src/*.csproj', 'scripts/build-ios.sh') }}
           restore-keys: aic-il2cpp-ccache-v1-${{ runner.arch }}-${{ steps.compiler-cache.outputs.toolchain }}-
 
       - name: Make scripts executable
@@ -69,6 +80,8 @@ jobs:
 
       - name: Execute iOS Port Build Pipeline
         id: build
+        env:
+          AIC_TEXTURE_OVERLAY: /tmp/aic_ios_build/texture-overlay
         run: bash scripts/build-ios.sh
 
       - name: Upload iOS IPA Artifact

@@ -1,15 +1,55 @@
 using System;
+using System.Runtime.InteropServices;
 using UnityEngine;
+using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.LowLevel;
+using TouchPhase = UnityEngine.TouchPhase;
 
 namespace AIC.iOS
 {
     /// <summary>
     /// AIC On-Screen Touch Controller for iOS
-    /// Automatically injects virtual thumbstick and action buttons into XX.IN / XX.KEY.
+    /// Sends touch controls and Apple's physical gamepads through the game input actions.
     /// </summary>
     public class AICTouchOverlay : MonoBehaviour
     {
         private static AICTouchOverlay _instance;
+        private Gamepad bridgePad;
+        private PlayerInput player;
+        private bool reportedInputError;
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct AppleGamepadState
+        {
+            public float LeftX, LeftY, RightX, RightY, LeftTrigger, RightTrigger;
+            public uint Buttons;
+        }
+
+        [DllImport("__Internal", EntryPoint = "AICPollGameController")]
+        private static extern void PollGameController(out AppleGamepadState state);
+
+        // Called at the original InputSystem.Update site in XX.IN.run, before
+        // KEY.updatePressing consumes button edges and rebuilds the press bits.
+        public static void UpdateInputSystem()
+        {
+            if (_instance != null)
+            {
+                try
+                {
+                    _instance.ReadTouches();
+                    _instance.QueueGamepadState();
+                }
+                catch (Exception error)
+                {
+                    if (!_instance.reportedInputError)
+                    {
+                        _instance.reportedInputError = true;
+                        Debug.LogException(error);
+                    }
+                }
+            }
+            InputSystem.Update();
+        }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         public static void AutoInit()
@@ -71,7 +111,7 @@ namespace AIC.iOS
             btnMap = new Rect(40f * scale, 30f * scale, topBtnSize, topBtnSize);
         }
 
-        void Update()
+        private void ReadTouches()
         {
             // Reset button states
             pressedJump = false;
@@ -89,21 +129,15 @@ namespace AIC.iOS
             for (int i = 0; i < touchCount; i++)
             {
                 Touch t = Input.GetTouch(i);
+                if (t.phase == TouchPhase.Ended || t.phase == TouchPhase.Canceled)
+                    continue;
                 Vector2 screenPos = new Vector2(t.position.x, Screen.height - t.position.y); // Flip Y for GUI
 
                 // Check Left Joystick
                 if (t.fingerId == stickFingerId)
                 {
-                    if (t.phase == TouchPhase.Moved || t.phase == TouchPhase.Stationary)
-                    {
-                        stickCurrent = screenPos;
-                        stickStillActive = true;
-                    }
-                    else if (t.phase == TouchPhase.Ended || t.phase == TouchPhase.Canceled)
-                    {
-                        stickFingerId = -1;
-                        isStickActive = false;
-                    }
+                    stickCurrent = screenPos;
+                    stickStillActive = true;
                 }
                 else if (leftStickArea.Contains(screenPos) && !isStickActive && t.phase == TouchPhase.Began)
                 {
@@ -129,61 +163,59 @@ namespace AIC.iOS
                 isStickActive = false;
                 stickFingerId = -1;
             }
-
-            // Feed into XX.IN / XX.KEY
-            ApplyInputToGame();
         }
 
-        private void ApplyInputToGame()
+        private void QueueGamepadState()
         {
-            try
+            PollGameController(out var hardware);
+            var state = new GamepadState
             {
-                if (XX.IN.KA == null) return;
+                leftStick = new Vector2(hardware.LeftX, hardware.LeftY),
+                rightStick = new Vector2(hardware.RightX, hardware.RightY),
+                leftTrigger = hardware.LeftTrigger,
+                rightTrigger = hardware.RightTrigger,
+                buttons = hardware.Buttons,
+            };
 
-                // 1. Directional Vector from Stick
-                if (isStickActive)
-                {
-                    Vector2 delta = stickCurrent - stickOrigin;
-                    float threshold = 25f * scale;
-                    if (delta.magnitude > threshold)
-                    {
-                        Vector2 dir = delta.normalized;
-                        if (dir.x > 0.35f)
-                        {
-                            XX.IN.KA.mvRA = Mathf.Max(XX.IN.KA.mvRA, 1f);
-                            XX.IN.pd_bits |= XX.IN.PB.R;
-                        }
-                        if (dir.x < -0.35f)
-                        {
-                            XX.IN.KA.mvLA = Mathf.Max(XX.IN.KA.mvLA, 1f);
-                            XX.IN.pd_bits |= XX.IN.PB.L;
-                        }
-                        if (dir.y < -0.35f) // Up on screen
-                        {
-                            XX.IN.KA.mvTA = Mathf.Max(XX.IN.KA.mvTA, 1f);
-                            XX.IN.pd_bits |= XX.IN.PB.T;
-                        }
-                        if (dir.y > 0.35f) // Down on screen
-                        {
-                            XX.IN.KA.mvBA = Mathf.Max(XX.IN.KA.mvBA, 1f);
-                            XX.IN.pd_bits |= XX.IN.PB.B;
-                        }
-                    }
-                }
-
-                // 2. Action Buttons
-                if (pressedJump) XX.IN.KA.mvJUMP = Mathf.Max(XX.IN.KA.mvJUMP, 1f);
-                if (pressedAtk) XX.IN.KA.mvZ = Mathf.Max(XX.IN.KA.mvZ, 1f);
-                if (pressedMagic) XX.IN.KA.mvX = Mathf.Max(XX.IN.KA.mvX, 1f);
-                if (pressedEvade) XX.IN.KA.mvC = Mathf.Max(XX.IN.KA.mvC, 1f);
-                if (pressedRun) XX.IN.KA.mvRUN = Mathf.Max(XX.IN.KA.mvRUN, 1f);
-                if (pressedMenu) XX.IN.KA.mvMENU = Mathf.Max(XX.IN.KA.mvMENU, 1f);
-                if (pressedMap) XX.IN.KA.mvCHECK = Mathf.Max(XX.IN.KA.mvCHECK, 1f);
-            }
-            catch
+            if (isStickActive)
             {
-                // Safety guard during scene transition
+                Vector2 delta = stickCurrent - stickOrigin;
+                if (delta.magnitude > 25f * scale)
+                    state.leftStick = new Vector2(delta.x, -delta.y).normalized;
             }
+
+            if (pressedJump || pressedMap) state = state.WithButton(GamepadButton.South);
+            if (pressedAtk) state = state.WithButton(GamepadButton.West);
+            if (pressedMagic) state = state.WithButton(GamepadButton.East);
+            if (pressedEvade) state = state.WithButton(GamepadButton.North);
+            if (pressedRun) state = state.WithButton(GamepadButton.LeftStick);
+            if (pressedMenu) state = state.WithButton(GamepadButton.Start);
+
+            bool active = state.buttons != 0 || state.leftStick.sqrMagnitude > 0.02f ||
+                state.rightStick.sqrMagnitude > 0.02f || state.leftTrigger > 0.2f || state.rightTrigger > 0.2f;
+            if (active)
+            {
+                if (bridgePad == null)
+                    bridgePad = InputSystem.AddDevice<Gamepad>("AIC Mobile Gamepad");
+                if (player == null)
+                    player = FindObjectOfType<PlayerInput>();
+                PairBridgePad();
+            }
+
+            if (bridgePad != null)
+                InputSystem.QueueStateEvent(bridgePad, state);
+        }
+
+        private void PairBridgePad()
+        {
+            if (player == null)
+                return;
+            foreach (var device in player.devices)
+            {
+                if (device == bridgePad)
+                    return;
+            }
+            player.SwitchCurrentControlScheme("Gamepad", bridgePad);
         }
 
         void OnGUI()
@@ -210,10 +242,10 @@ namespace AIC.iOS
             GUI.Box(btnAtk, "ATK\n(X)");
 
             GUI.color = pressedMagic ? new Color(0.8f, 0.4f, 1f, 0.8f) : new Color(1f, 1f, 1f, 0.45f);
-            GUI.Box(btnMagic, "MAGIC\n(Y)");
+            GUI.Box(btnMagic, "MAGIC\n(B)");
 
             GUI.color = pressedEvade ? new Color(0.3f, 1f, 0.5f, 0.8f) : new Color(1f, 1f, 1f, 0.45f);
-            GUI.Box(btnEvade, "DASH\n(B)");
+            GUI.Box(btnEvade, "DASH\n(Y)");
 
             GUI.color = pressedRun ? new Color(1f, 0.6f, 0.2f, 0.8f) : new Color(1f, 1f, 1f, 0.45f);
             GUI.Box(btnRun, "RUN");

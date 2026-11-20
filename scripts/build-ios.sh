@@ -124,6 +124,8 @@ fi
 for module in AudioModule UnityWebRequestAudioModule UnityWebRequestWWWModule; do
   cp -f "${IOS_MANAGED}/UnityEngine.${module}.dll" "${MANAGED_IN}/"
 done
+dotnet build "${ROOT_DIR}/src/AIC.iOS.csproj" --configuration Release --output "${WORK_DIR}/ios-controls"
+cp -f "${WORK_DIR}/ios-controls/AIC.iOS.dll" "${MANAGED_IN}/"
 dotnet run --configuration Release --project "${ROOT_DIR}/tools/AssemblyPatcher/AssemblyPatcher.csproj" \
   -- --ios-startup "${MANAGED_IN}"
 
@@ -223,6 +225,14 @@ echo "[*] Installing converted game assets into Data/..."
 cp -R "${ROOT_DIR}/ConvertedData/"* "${DATA_OUT}/"
 # The iOS player resolves Application.streamingAssetsPath to Data/Raw.
 mv "${DATA_OUT}/StreamingAssets" "${DATA_OUT}/Raw"
+TEXTURE_OVERLAY="${AIC_TEXTURE_OVERLAY:-${XCODE_DIR}/TextureOverlay}"
+if [[ ! -f "${TEXTURE_OVERLAY}/.complete" ]]; then
+  python3 -m venv "${WORK_DIR}/texture-venv"
+  "${WORK_DIR}/texture-venv/bin/python" -m pip install --disable-pip-version-check UnityPy==1.25.3
+  "${WORK_DIR}/texture-venv/bin/python" "${ROOT_DIR}/tools/convert_assets.py" --repair-ios-textures \
+    "${ROOT_DIR}/ConvertedData/StreamingAssets" "${TEXTURE_OVERLAY}"
+fi
+rsync -a --exclude=.complete "${TEXTURE_OVERLAY}/" "${DATA_OUT}/Raw/"
 mkdir -p "${DATA_OUT}/Managed" "${DATA_OUT}/Managed/Metadata"
 cp -f "${ROOT_DIR}/ConvertedData/RuntimeInitializeOnLoads.json" "${DATA_OUT}/Managed/" 2>/dev/null || true
 cp -f "${ROOT_DIR}/ConvertedData/ScriptingAssemblies.json" "${DATA_OUT}/Managed/" 2>/dev/null || true
@@ -257,8 +267,12 @@ clang -c -O3 -arch arm64 -isysroot "${SDK_PATH}" -miphoneos-version-min=12.0 \
   "${ROOT_DIR}/native/nanosockets/nanosockets.c" \
   "${ROOT_DIR}/native/criware_stub/cri_ware_stub.c"
 
-ar rcs "${XCODE_DIR}/Libraries/libNativePlugins.a" nanosockets.o cri_ware_stub.o RegisterMonoModules.o UnityICallRegistration.o
-rm -f nanosockets.o cri_ware_stub.o RegisterMonoModules.o UnityICallRegistration.o
+clang -c -O3 -arch arm64 -isysroot "${SDK_PATH}" -miphoneos-version-min=12.0 \
+  -fobjc-arc "${ROOT_DIR}/native/ios/GameControllerBridge.m" -o GameControllerBridge.o
+
+NATIVE_OBJECTS=(nanosockets.o cri_ware_stub.o RegisterMonoModules.o UnityICallRegistration.o GameControllerBridge.o)
+ar rcs "${XCODE_DIR}/Libraries/libNativePlugins.a" "${NATIVE_OBJECTS[@]}"
+rm -f "${NATIVE_OBJECTS[@]}"
 
 # 6b. Compile IL2CPP generated C++ sources and runtime into libGameAssembly.a
 echo "[*] Preparing IL2CPP compilation and static library packaging..."
@@ -443,7 +457,7 @@ if [[ -f "${INFO_PLIST}" ]]; then
   /usr/libexec/PlistBuddy -c "Add :UIStatusBarHidden bool true" "${INFO_PLIST}"
 
   # Unity's iOS persistentDataPath is the app's Documents directory.
-  for key in UIFileSharingEnabled LSSupportsOpeningDocumentsInPlace; do
+  for key in UIFileSharingEnabled LSSupportsOpeningDocumentsInPlace LSSupportsGameMode GCSupportsControllerUserInteraction; do
     /usr/libexec/PlistBuddy -c "Set :${key} true" "${INFO_PLIST}" 2>/dev/null ||
     /usr/libexec/PlistBuddy -c "Add :${key} bool true" "${INFO_PLIST}"
   done
@@ -539,7 +553,7 @@ echo "[*] Building Xcode project with xcodebuild (target: iphoneos)..."
 # Collect all IL2CPP include directories
 IL2CPP_INCS=$(find "${XCODE_DIR}/Il2CppOutputProject/IL2CPP" -type d \( -name "Include" -o -name "include" -o -name "libil2cpp" -o -name "pch" \) 2>/dev/null | tr '\n' ' ')
 
-LDFLAGS_EXTRA="-force_load ${XCODE_DIR}/Libraries/libNativePlugins.a"
+LDFLAGS_EXTRA="-force_load ${XCODE_DIR}/Libraries/libNativePlugins.a -framework GameController"
 if [[ -f "${GAMEASSEMBLY_LIB}" ]]; then
   LDFLAGS_EXTRA="${LDFLAGS_EXTRA} -force_load ${GAMEASSEMBLY_LIB}"
 fi

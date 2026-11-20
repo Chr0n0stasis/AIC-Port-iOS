@@ -18,9 +18,8 @@ void InvokeRegisterStaticallyLinkedModuleClasses()
     // In stripped AOT mode, granular static linkage is used instead.
 }
 
-void RegisterAllStrippedInternalCalls()
-{
-}
+// RegisterAllStrippedInternalCalls() is generated dynamically from libiPhone-lib.a
+// in UnityICallRegistration.cpp to ensure all engine internal calls (icalls) are available.
 
 extern "C" void RegisterStaticallyLinkedModulesGranular()
 {

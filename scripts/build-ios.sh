@@ -210,11 +210,22 @@ fi
 echo "[*] Compiling native plugins and engine registration stubs into static library..."
 cp -f "${ROOT_DIR}/native/engine_stubs/RegisterMonoModules.cpp" "${XCODE_DIR}/Classes/RegisterMonoModules.cpp"
 
+# Generate complete Unity internal call (icall) registration from libiPhone-lib.a
+echo "[*] Generating Unity internal call registration from libiPhone-lib.a..."
+python3 "${ROOT_DIR}/scripts/generate_icall_registration.py" \
+  --lib "${LIB_IPHONE_SRC}" \
+  --out "${XCODE_DIR}/Classes/UnityICallRegistration.cpp" \
+  --verbose
+
 SDK_PATH=$(xcrun --sdk iphoneos --show-sdk-path)
 clang++ -c -O3 -arch arm64 -isysroot "${SDK_PATH}" -miphoneos-version-min=12.0 \
   -std=c++14 -fPIC \
   -DBASELIB_INLINE_NAMESPACE=il2cpp_baselib -DRUNTIME_IL2CPP=1 \
   "${XCODE_DIR}/Classes/RegisterMonoModules.cpp" -o RegisterMonoModules.o
+
+clang++ -c -O3 -arch arm64 -isysroot "${SDK_PATH}" -miphoneos-version-min=12.0 \
+  -std=c++14 -fPIC \
+  "${XCODE_DIR}/Classes/UnityICallRegistration.cpp" -o UnityICallRegistration.o
 
 clang -c -O3 -arch arm64 -isysroot "${SDK_PATH}" -miphoneos-version-min=12.0 \
   -Wno-deprecated-non-prototype -Wno-strict-prototypes \
@@ -222,8 +233,8 @@ clang -c -O3 -arch arm64 -isysroot "${SDK_PATH}" -miphoneos-version-min=12.0 \
   "${ROOT_DIR}/native/nanosockets/nanosockets.c" \
   "${ROOT_DIR}/native/criware_stub/cri_ware_stub.c"
 
-ar rcs "${XCODE_DIR}/Libraries/libNativePlugins.a" nanosockets.o cri_ware_stub.o RegisterMonoModules.o
-rm -f nanosockets.o cri_ware_stub.o RegisterMonoModules.o
+ar rcs "${XCODE_DIR}/Libraries/libNativePlugins.a" nanosockets.o cri_ware_stub.o RegisterMonoModules.o UnityICallRegistration.o
+rm -f nanosockets.o cri_ware_stub.o RegisterMonoModules.o UnityICallRegistration.o
 
 # 6b. Compile IL2CPP generated C++ sources and runtime into libGameAssembly.a
 echo "[*] Preparing IL2CPP compilation and static library packaging..."

@@ -1,0 +1,40 @@
+name: Inspect iOS player bindings
+
+on:
+  push:
+    branches: [fix/ios-startup-bindings]
+    paths: [.github/workflows/inspect-ios-bindings.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: macos-latest
+    timeout-minutes: 10
+    steps:
+      - name: Restore exact Unity iOS playback engine
+        uses: actions/cache/restore@v4
+        with:
+          path: /tmp/aic_ios_build/playback_engine
+          key: unity-ios-engine-2022.3.62f2-7670c08855a9
+          fail-on-cache-miss: true
+      - name: Extract defined names from the ARM64 player library
+        run: |
+          root=/tmp/aic_ios_build/playback_engine
+          lib="$(find "$root" -path '*/Trampoline/Libraries/libiPhone-lib.a' -type f -print -quit)"
+          test -n "$lib"
+          mkdir -p bindings-inspection
+          xcrun nm -arch arm64 -U "$lib" > "$RUNNER_TEMP/ios-player-nm.txt"
+          grep -E 'Register_|RegisterAll.*InternalCalls|Export.*Bindings|RegisterModule_|ScriptableObject|PropertyToID|JobCompilerEnabled|GetOrCreateSharedMemory|ProfilerUnsafeUtility|BuiltinUpdate|ShaderNameRegistry|RegisterGlobal' \
+            "$RUNNER_TEMP/ios-player-nm.txt" > bindings-inspection/names.txt
+          grep -Ec 'Register_|Export.*Bindings' bindings-inspection/names.txt || true
+          grep -E 'CreateScriptableObject|PropertyToID|JobCompilerEnabled|GetOrCreateSharedMemory|BuiltinUpdate|RegisterAll.*InternalCalls' \
+            bindings-inspection/names.txt | head -80 || true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ios-player-binding-names
+          path: bindings-inspection/names.txt
+          if-no-files-found: error
+          retention-days: 3

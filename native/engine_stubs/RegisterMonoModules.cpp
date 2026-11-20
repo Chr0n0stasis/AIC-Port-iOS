@@ -54,9 +54,6 @@ extern "C" void RegisterStaticallyLinkedModulesGranular()
     void RegisterModule_TextRendering();
     RegisterModule_TextRendering();
 
-    void RegisterModule_TextCore();
-    RegisterModule_TextCore();
-
     void RegisterModule_UI();
     RegisterModule_UI();
 
@@ -168,7 +165,6 @@ class BuildSettings; template <> void RegisterUnityClass<BuildSettings>(const ch
 class PlayerSettings; template <> void RegisterUnityClass<PlayerSettings>(const char*);
 class ResourceManager; template <> void RegisterUnityClass<ResourceManager>(const char*);
 class RuntimeInitializeOnLoadManager; template <> void RegisterUnityClass<RuntimeInitializeOnLoadManager>(const char*);
-class ScriptMapper; template <> void RegisterUnityClass<ScriptMapper>(const char*);
 class MonoScript; template <> void RegisterUnityClass<MonoScript>(const char*);
 class MonoBehaviour; template <> void RegisterUnityClass<MonoBehaviour>(const char*);
 class MonoManager; template <> void RegisterUnityClass<MonoManager>(const char*);
@@ -238,9 +234,6 @@ class VideoClip; template <> void RegisterUnityClass<VideoClip>(const char*);
 // AssetBundle & Engine Services
 class AssetBundle; template <> void RegisterUnityClass<AssetBundle>(const char*);
 class UnityConnectSettings; template <> void RegisterUnityClass<UnityConnectSettings>(const char*);
-class UnityAnalyticsManager; template <> void RegisterUnityClass<UnityAnalyticsManager>(const char*);
-class CloudWebServicesManager; template <> void RegisterUnityClass<CloudWebServicesManager>(const char*);
-class PerformanceReportingManager; template <> void RegisterUnityClass<PerformanceReportingManager>(const char*);
 class VFXManager; template <> void RegisterUnityClass<VFXManager>(const char*);
 class NavMeshSettings; template <> void RegisterUnityClass<NavMeshSettings>(const char*);
 class NavMeshProjectSettings; template <> void RegisterUnityClass<NavMeshProjectSettings>(const char*);
@@ -298,7 +291,6 @@ void RegisterAllClasses()
     RegisterUnityClass<PlayerSettings>("Core");
     RegisterUnityClass<ResourceManager>("Core");
     RegisterUnityClass<RuntimeInitializeOnLoadManager>("Core");
-    RegisterUnityClass<ScriptMapper>("Core");
     RegisterUnityClass<MonoScript>("Core");
     RegisterUnityClass<MonoBehaviour>("Core");
     RegisterUnityClass<MonoManager>("Core");
@@ -368,9 +360,6 @@ void RegisterAllClasses()
     // AssetBundle & Engine Services
     RegisterUnityClass<AssetBundle>("AssetBundle");
     RegisterUnityClass<UnityConnectSettings>("UnityConnect");
-    RegisterUnityClass<UnityAnalyticsManager>("UnityAnalytics");
-    RegisterUnityClass<CloudWebServicesManager>("CloudWebServices");
-    RegisterUnityClass<PerformanceReportingManager>("PerformanceReporting");
     RegisterUnityClass<VFXManager>("VFX");
     RegisterUnityClass<NavMeshSettings>("AI");
     RegisterUnityClass<NavMeshProjectSettings>("AI");

@@ -21,6 +21,8 @@ void InvokeRegisterStaticallyLinkedModuleClasses()
 // RegisterAllStrippedInternalCalls() is generated dynamically from libiPhone-lib.a
 // in UnityICallRegistration.cpp to ensure all engine internal calls (icalls) are available.
 
+extern "C" void RegisterModule_AssetBundle();
+
 extern "C" void RegisterStaticallyLinkedModulesGranular()
 {
     void RegisterModule_SharedInternals();
@@ -28,6 +30,9 @@ extern "C" void RegisterStaticallyLinkedModulesGranular()
 
     void RegisterModule_Core();
     RegisterModule_Core();
+
+    // Register the callbacks that initialize the AssetBundle filesystem interface.
+    RegisterModule_AssetBundle();
 
     void RegisterModule_Animation();
     RegisterModule_Animation();

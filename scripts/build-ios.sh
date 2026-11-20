@@ -214,6 +214,8 @@ done
 # 5. Copy converted game data into Data/
 echo "[*] Installing converted game assets into Data/..."
 cp -R "${ROOT_DIR}/ConvertedData/"* "${DATA_OUT}/"
+# The iOS player resolves Application.streamingAssetsPath to Data/Raw.
+mv "${DATA_OUT}/StreamingAssets" "${DATA_OUT}/Raw"
 mkdir -p "${DATA_OUT}/Managed" "${DATA_OUT}/Managed/Metadata"
 cp -f "${ROOT_DIR}/ConvertedData/RuntimeInitializeOnLoads.json" "${DATA_OUT}/Managed/" 2>/dev/null || true
 cp -f "${ROOT_DIR}/ConvertedData/ScriptingAssemblies.json" "${DATA_OUT}/Managed/" 2>/dev/null || true
@@ -413,33 +415,28 @@ if [[ -f "${INFO_PLIST}" ]]; then
   /usr/libexec/PlistBuddy -c "Set :UIStatusBarHidden bool true" "${INFO_PLIST}" 2>/dev/null || \
   /usr/libexec/PlistBuddy -c "Add :UIStatusBarHidden bool true" "${INFO_PLIST}"
 
+  # Unity's iOS persistentDataPath is the app's Documents directory.
+  for key in UIFileSharingEnabled LSSupportsOpeningDocumentsInPlace; do
+    /usr/libexec/PlistBuddy -c "Set :${key} true" "${INFO_PLIST}" 2>/dev/null ||
+    /usr/libexec/PlistBuddy -c "Add :${key} bool true" "${INFO_PLIST}"
+  done
+
   /usr/libexec/PlistBuddy -c "Delete :UISupportedInterfaceOrientations" "${INFO_PLIST}" 2>/dev/null || true
   /usr/libexec/PlistBuddy -c "Add :UISupportedInterfaceOrientations array" "${INFO_PLIST}" 2>/dev/null || true
   /usr/libexec/PlistBuddy -c "Add :UISupportedInterfaceOrientations:0 string UIInterfaceOrientationLandscapeRight" "${INFO_PLIST}" 2>/dev/null || true
   /usr/libexec/PlistBuddy -c "Add :UISupportedInterfaceOrientations:1 string UIInterfaceOrientationLandscapeLeft" "${INFO_PLIST}" 2>/dev/null || true
 fi
 
-# 7b. Generate default AppIcon and Images.xcassets catalog
-echo "[*] Generating default AppIcon asset catalog for Alice in Cradle..."
-XCODE_DIR="${XCODE_DIR}" python3 - << 'PYEOF'
-import os, struct, zlib
+# 7b. Create the AppIcon asset catalog from the supplied artwork
+echo "[*] Preparing the Alice in Cradle AppIcon asset catalog..."
+ICON_SOURCE="${ROOT_DIR}/resources/icon/AIC_icon_512x512.png"
+ICON_PNG="${XCODE_DIR}/Icon-1024.png"
+sips -z 1024 1024 "${ICON_SOURCE}" --out "${ICON_PNG}"
+XCODE_DIR="${XCODE_DIR}" ICON_PNG="${ICON_PNG}" python3 - << 'PYEOF'
+import os
+import shutil
 
-def create_png(width, height, color):
-    r, g, b = color
-    raw_row = bytes([0] + [r, g, b] * width)
-    compressed = zlib.compress(raw_row * height)
-    png = b'\x89PNG\r\n\x1a\n'
-    ihdr_data = struct.pack('>IIBBBBB', width, height, 8, 2, 0, 0, 0)
-    ihdr_crc = zlib.crc32(b'IHDR' + ihdr_data)
-    png += struct.pack('>I', len(ihdr_data)) + b'IHDR' + ihdr_data + struct.pack('>I', ihdr_crc)
-    idat_crc = zlib.crc32(b'IDAT' + compressed)
-    png += struct.pack('>I', len(compressed)) + b'IDAT' + compressed + struct.pack('>I', idat_crc)
-    iend_crc = zlib.crc32(b'IEND')
-    png += struct.pack('>I', 0) + b'IEND' + struct.pack('>I', iend_crc)
-    return png
-
-xcode_dir = os.environ.get("XCODE_DIR", "")
-icon_png = create_png(1024, 1024, (244, 143, 177))
+xcode_dir = os.environ["XCODE_DIR"]
 
 for rel in ["Unity-iPhone/Images.xcassets", "Images.xcassets"]:
     assets_dir = os.path.join(xcode_dir, rel)
@@ -465,8 +462,7 @@ for rel in ["Unity-iPhone/Images.xcassets", "Images.xcassets"]:
   }
 }''')
     
-    with open(os.path.join(iconset_dir, "Icon-1024.png"), "wb") as f:
-        f.write(icon_png)
+    shutil.copyfile(os.environ["ICON_PNG"], os.path.join(iconset_dir, "Icon-1024.png"))
     print(f"[+] Created AppIcon in {iconset_dir}")
 PYEOF
 

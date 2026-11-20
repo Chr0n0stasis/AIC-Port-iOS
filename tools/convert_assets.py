@@ -89,14 +89,26 @@ def convert_single_file(src_path, dst_path):
             shutil.copyfile(src_path, dst_path)
             return ("copied", 0, os.path.getsize(dst_path))
 
-    # Check if file is a Unity asset or bundle
-    is_unity_candidate = (
-        fname.endswith(".dat") or
-        fname.endswith(".assets") or
-        fname in ("globalgamemanagers", "level0", "level1", "level2", "level3")
-    )
+    # For standalone SerializedFiles (globalgamemanagers, level*, *.assets),
+    # patch the target_platform at offset 0x3c from StandaloneOSX (2) to iOS (9) in-place
+    # without UnityPy re-serialization to avoid header and type-tree corruption.
+    if fname.endswith(".assets") or fname in ("globalgamemanagers", "level0", "level1", "level2", "level3"):
+        try:
+            with open(src_path, "rb") as fp:
+                data = bytearray(fp.read())
+            if len(data) > 0x40 and data[0x30:0x3c] == b"2022.3.62f2\0":
+                data[0x3c:0x40] = (9).to_bytes(4, "little")
+            with open(dst_path, "wb") as fp:
+                fp.write(data)
+            return ("binary_patched", 0, len(data))
+        except Exception:
+            shutil.copyfile(src_path, dst_path)
+            return ("copied", 0, os.path.getsize(dst_path))
 
-    if not is_unity_candidate:
+    # Only AssetBundles (.dat) need texture transcoding and bundle header patch.
+    is_bundle_candidate = fname.endswith(".dat")
+
+    if not is_bundle_candidate:
         shutil.copyfile(src_path, dst_path)
         return ("copied", 0, os.path.getsize(dst_path))
 

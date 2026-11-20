@@ -208,142 +208,7 @@ fi
 
 # 6. Compile native C plugins and engine registration stubs into static library
 echo "[*] Compiling native plugins and engine registration stubs into static library..."
-cat << 'EOF' > "${XCODE_DIR}/Classes/RegisterMonoModules.cpp"
-#include <stddef.h>
-#include <stdint.h>
-#include <dlfcn.h>
-#include <sched.h>
-#include <pthread.h>
-#include <mach/mach.h>
-#include <mach/semaphore.h>
-
-// Unity Engine Class & Module Registration Stubs for IL2CPP
-void RegisterAllClasses() {}
-void RegisterAllStrippedInternalCalls() {}
-extern "C" void RegisterStaticallyLinkedModulesGranular() {}
-void InvokeRegisterStaticallyLinkedModuleClasses() {}
-
-// Baselib Posix / Darwin Implementation Stubs under il2cpp_baselib namespace
-namespace il2cpp_baselib {
-
-struct Baselib_DynamicLibrary_Handle {
-    uintptr_t handle;
-};
-
-struct Baselib_SystemSemaphore_Handle {
-    uintptr_t handle;
-};
-
-struct Baselib_ErrorState {};
-
-enum Baselib_ErrorState_ExplainVerbosity {
-    Baselib_ErrorState_ExplainVerbosity_ErrorType = 0,
-    Baselib_ErrorState_ExplainVerbosity_ErrorType_SourceLocation_Explanation = 1
-};
-
-typedef uint64_t Baselib_Thread_Id;
-
-uint32_t Baselib_ErrorState_Explain(
-    const Baselib_ErrorState* errorState,
-    char* buffer,
-    uint32_t bufferLen,
-    Baselib_ErrorState_ExplainVerbosity verbosity) {
-    if (buffer && bufferLen > 0) {
-        buffer[0] = '\0';
-    }
-    return 1;
-}
-
-Baselib_DynamicLibrary_Handle Baselib_DynamicLibrary_OpenUtf8(
-    const char* pathnameUtf8,
-    Baselib_ErrorState* errorState) {
-    void* h = pathnameUtf8 ? ::dlopen(pathnameUtf8, RTLD_LAZY | RTLD_LOCAL) : NULL;
-    Baselib_DynamicLibrary_Handle handle;
-    handle.handle = (uintptr_t)h;
-    return handle;
-}
-
-Baselib_DynamicLibrary_Handle Baselib_DynamicLibrary_OpenProgramHandle(
-    Baselib_ErrorState* errorState) {
-    void* h = ::dlopen(NULL, RTLD_LAZY | RTLD_LOCAL);
-    Baselib_DynamicLibrary_Handle handle;
-    handle.handle = (uintptr_t)h;
-    return handle;
-}
-
-void* Baselib_DynamicLibrary_GetFunction(
-    Baselib_DynamicLibrary_Handle handle,
-    const char* functionName,
-    Baselib_ErrorState* errorState) {
-    if (handle.handle == 0 || functionName == NULL) return NULL;
-    return ::dlsym((void*)handle.handle, functionName);
-}
-
-void Baselib_DynamicLibrary_Close(Baselib_DynamicLibrary_Handle handle) {
-    if (handle.handle != 0) {
-        ::dlclose((void*)handle.handle);
-    }
-}
-
-void Baselib_Thread_YieldExecution() {
-    sched_yield();
-}
-
-Baselib_Thread_Id Baselib_Thread_GetCurrentThreadId() {
-    uint64_t tid = 0;
-    pthread_threadid_np(NULL, &tid);
-    return tid;
-}
-
-Baselib_SystemSemaphore_Handle Baselib_SystemSemaphore_CreateInplace(void* memoryBlock) {
-    semaphore_t sem = 0;
-    kern_return_t ret = semaphore_create(mach_task_self(), &sem, SYNC_POLICY_FIFO, 0);
-    Baselib_SystemSemaphore_Handle handle;
-    handle.handle = (ret == KERN_SUCCESS) ? (uintptr_t)sem : 0;
-    if (memoryBlock) {
-        *(Baselib_SystemSemaphore_Handle*)memoryBlock = handle;
-    }
-    return handle;
-}
-
-void Baselib_SystemSemaphore_Acquire(Baselib_SystemSemaphore_Handle handle) {
-    if (handle.handle != 0) {
-        semaphore_wait((semaphore_t)handle.handle);
-    }
-}
-
-bool Baselib_SystemSemaphore_TryAcquire(Baselib_SystemSemaphore_Handle handle) {
-    if (handle.handle == 0) return false;
-    mach_timespec_t ts = {0, 0};
-    kern_return_t ret = semaphore_timedwait((semaphore_t)handle.handle, ts);
-    return (ret == KERN_SUCCESS);
-}
-
-bool Baselib_SystemSemaphore_TryTimedAcquire(Baselib_SystemSemaphore_Handle handle, unsigned int timeoutInMilliseconds) {
-    if (handle.handle == 0) return false;
-    mach_timespec_t ts;
-    ts.tv_sec = timeoutInMilliseconds / 1000;
-    ts.tv_nsec = (clock_res_t)((timeoutInMilliseconds % 1000) * 1000000);
-    kern_return_t ret = semaphore_timedwait((semaphore_t)handle.handle, ts);
-    return (ret == KERN_SUCCESS);
-}
-
-void Baselib_SystemSemaphore_Release(Baselib_SystemSemaphore_Handle handle, unsigned int count) {
-    if (handle.handle != 0) {
-        for (unsigned int i = 0; i < count; ++i) {
-            semaphore_signal((semaphore_t)handle.handle);
-        }
-    }
-}
-
-void Baselib_SystemSemaphore_FreeInplace(Baselib_SystemSemaphore_Handle handle) {
-    if (handle.handle != 0) {
-        semaphore_destroy(mach_task_self(), (semaphore_t)handle.handle);
-    }
-}
-
-} // namespace il2cpp_baselib
-EOF
+cp -f "${ROOT_DIR}/native/engine_stubs/RegisterMonoModules.cpp" "${XCODE_DIR}/Classes/RegisterMonoModules.cpp"
 
 SDK_PATH=$(xcrun --sdk iphoneos --show-sdk-path)
 clang++ -c -O3 -arch arm64 -isysroot "${SDK_PATH}" -miphoneos-version-min=12.0 \
@@ -668,6 +533,36 @@ PAYLOAD_DIR="${WORK_DIR}/Payload"
 rm -rf "${PAYLOAD_DIR}"
 mkdir -p "${PAYLOAD_DIR}"
 cp -R "${APP_BUNDLE}" "${PAYLOAD_DIR}/Alice in Cradle.app"
+
+# 9b. Patch UnityFramework build target platform checks dynamically
+echo "[*] Applying runtime compatibility patches to UnityFramework..."
+PAYLOAD_DIR="${PAYLOAD_DIR}" python3 - << 'PYEOF'
+import os, glob
+
+app_dir = os.path.join(os.environ.get("PAYLOAD_DIR", "/tmp/aic_ios_build/Payload"), "Alice in Cradle.app")
+uf_paths = glob.glob(f"{app_dir}/**/UnityFramework", recursive=True)
+for uf_path in uf_paths:
+    if os.path.isfile(uf_path) and not os.path.islink(uf_path):
+        print(f"  Checking {uf_path}...")
+        with open(uf_path, "rb") as f:
+            data = bytearray(f.read())
+        pat1 = bytes.fromhex("5f250071")
+        pat2 = bytes.fromhex("0c20a1527f010c6b")
+        pos2 = data.find(pat2)
+        if pos2 != -1:
+            pos1 = data.rfind(pat1, 0, pos2)
+            if pos1 != -1 and (pos2 - pos1) < 0x2000:
+                nop = bytes.fromhex("1f2003d5")
+                data[pos1+4:pos1+8] = nop
+                data[pos2+8:pos2+12] = nop
+                with open(uf_path, "wb") as f:
+                    f.write(data)
+                print(f"[+] Successfully patched UnityFramework platform checks at 0x{pos1+4:x} and 0x{pos2+8:x}!")
+            else:
+                print(f"[!] Warning: pat1 not found within 8KB before pat2 (pos2=0x{pos2:x})")
+        else:
+            print(f"[!] Warning: pat2 not found in {uf_path}")
+PYEOF
 
 # Ensure Data directory is inside .app bundle with all converted assets
 echo "[*] Ensuring all game Data assets are inside Alice in Cradle.app bundle..."

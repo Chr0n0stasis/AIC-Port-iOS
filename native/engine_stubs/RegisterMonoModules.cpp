@@ -226,6 +226,7 @@ class Rigidbody2D; template <> void RegisterUnityClass<Rigidbody2D>(const char*)
 class Collider2D; template <> void RegisterUnityClass<Collider2D>(const char*);
 class BoxCollider2D; template <> void RegisterUnityClass<BoxCollider2D>(const char*);
 class CircleCollider2D; template <> void RegisterUnityClass<CircleCollider2D>(const char*);
+class PolygonCollider2D; template <> void RegisterUnityClass<PolygonCollider2D>(const char*);
 class PhysicsMaterial2D; template <> void RegisterUnityClass<PhysicsMaterial2D>(const char*);
 
 // Particle System Module
@@ -355,6 +356,8 @@ void RegisterAllClasses()
     RegisterUnityClass<Collider2D>("Physics2D");
     RegisterUnityClass<BoxCollider2D>("Physics2D");
     RegisterUnityClass<CircleCollider2D>("Physics2D");
+    // Map2d.open creates this component before it enables the map update path.
+    RegisterUnityClass<PolygonCollider2D>("Physics2D");
     RegisterUnityClass<PhysicsMaterial2D>("Physics2D");
 
     // Particle System

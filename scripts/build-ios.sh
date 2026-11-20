@@ -234,7 +234,50 @@ struct Baselib_SystemSemaphore_Handle {
     uintptr_t handle;
 };
 
+struct Baselib_ErrorState {};
+
+enum Baselib_ErrorState_ExplainVerbosity {
+    Baselib_ErrorState_ExplainVerbosity_ErrorType = 0,
+    Baselib_ErrorState_ExplainVerbosity_ErrorType_SourceLocation_Explanation = 1
+};
+
 typedef uint64_t Baselib_Thread_Id;
+
+uint32_t Baselib_ErrorState_Explain(
+    const Baselib_ErrorState* errorState,
+    char* buffer,
+    uint32_t bufferLen,
+    Baselib_ErrorState_ExplainVerbosity verbosity) {
+    if (buffer && bufferLen > 0) {
+        buffer[0] = '\0';
+    }
+    return 1;
+}
+
+Baselib_DynamicLibrary_Handle Baselib_DynamicLibrary_OpenUtf8(
+    const char* pathnameUtf8,
+    Baselib_ErrorState* errorState) {
+    void* h = pathnameUtf8 ? ::dlopen(pathnameUtf8, RTLD_LAZY | RTLD_LOCAL) : NULL;
+    Baselib_DynamicLibrary_Handle handle;
+    handle.handle = (uintptr_t)h;
+    return handle;
+}
+
+Baselib_DynamicLibrary_Handle Baselib_DynamicLibrary_OpenProgramHandle(
+    Baselib_ErrorState* errorState) {
+    void* h = ::dlopen(NULL, RTLD_LAZY | RTLD_LOCAL);
+    Baselib_DynamicLibrary_Handle handle;
+    handle.handle = (uintptr_t)h;
+    return handle;
+}
+
+void* Baselib_DynamicLibrary_GetFunction(
+    Baselib_DynamicLibrary_Handle handle,
+    const char* functionName,
+    Baselib_ErrorState* errorState) {
+    if (handle.handle == 0 || functionName == NULL) return NULL;
+    return ::dlsym((void*)handle.handle, functionName);
+}
 
 void Baselib_DynamicLibrary_Close(Baselib_DynamicLibrary_Handle handle) {
     if (handle.handle != 0) {

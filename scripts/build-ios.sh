@@ -121,8 +121,8 @@ dotnet "${IL2CPP_DLL}" \
 
 echo "[+] IL2CPP compilation complete! Generated C++ source and metadata."
 
-# 4b. Locate and stage pch-cpp.hpp and inject Unity version macros
-echo "[*] Locating and staging pch-cpp.hpp..."
+# 4b. Locate and stage pch-cpp.hpp and pch-c.h and inject Unity version macros
+echo "[*] Locating and staging pch-cpp.hpp and pch-c.h..."
 PCH_SRC=""
 if [[ -f "${IL2CPP_OUT}/pch-cpp.hpp" ]]; then
   PCH_SRC="${IL2CPP_OUT}/pch-cpp.hpp"
@@ -145,6 +145,28 @@ EOF
   cp -f "${XCODE_DIR}/Classes/pch-cpp.hpp" "${IL2CPP_OUT}/pch-cpp.hpp"
 fi
 
+PCH_C_SRC=""
+if [[ -f "${IL2CPP_OUT}/pch-c.h" ]]; then
+  PCH_C_SRC="${IL2CPP_OUT}/pch-c.h"
+elif [[ -f "${XCODE_DIR}/Il2CppOutputProject/IL2CPP/libil2cpp/pch/pch-c.h" ]]; then
+  PCH_C_SRC="${XCODE_DIR}/Il2CppOutputProject/IL2CPP/libil2cpp/pch/pch-c.h"
+else
+  PCH_C_SRC=$(find "${EXTRACT_DIR}" -name "pch-c.h" | head -n 1)
+fi
+
+if [[ -n "${PCH_C_SRC}" && -f "${PCH_C_SRC}" ]]; then
+  echo "  -> Found pch-c.h at: ${PCH_C_SRC}"
+  cp -f "${PCH_C_SRC}" "${XCODE_DIR}/Classes/pch-c.h"
+  cp -f "${PCH_C_SRC}" "${IL2CPP_OUT}/pch-c.h" 2>/dev/null || true
+else
+  echo "[!] Creating default pch-c.h in Classes and IL2CPP output..."
+  cat << 'EOF' > "${XCODE_DIR}/Classes/pch-c.h"
+#pragma once
+#include "il2cpp-config.h"
+EOF
+  cp -f "${XCODE_DIR}/Classes/pch-c.h" "${IL2CPP_OUT}/pch-c.h"
+fi
+
 echo "[*] Injecting Unity version and baselib macros into Prefix.pch, UnityTrampolineConfigure.h, and pch headers..."
 cat << 'EOF' > /tmp/unity_version_prefix.h
 #ifndef UNITY_VERSION_VER
@@ -164,7 +186,10 @@ for header in "${XCODE_DIR}/Classes/Prefix.pch" \
               "${XCODE_DIR}/Classes/UnityTrampolineConfigure.h" \
               "${XCODE_DIR}/Classes/pch-cpp.hpp" \
               "${IL2CPP_OUT}/pch-cpp.hpp" \
+              "${XCODE_DIR}/Classes/pch-c.h" \
+              "${IL2CPP_OUT}/pch-c.h" \
               "${XCODE_DIR}/Il2CppOutputProject/IL2CPP/libil2cpp/il2cpp-config.h" \
+              "${XCODE_DIR}/Il2CppOutputProject/IL2CPP/libil2cpp/pch/pch-c.h" \
               "${XCODE_DIR}/Il2CppOutputProject/IL2CPP/libil2cpp/pch/pch-cpp.hpp"; do
   if [[ -f "${header}" ]]; then
     cat /tmp/unity_version_prefix.h "${header}" > "${header}.tmp" && mv "${header}.tmp" "${header}"
@@ -322,7 +347,7 @@ else
 fi
 
 if ! xcrun --sdk iphoneos ${COMPILER} -c -Os -arch arm64 -isysroot "${sdk_path}" -miphoneos-version-min=12.0 \
-  ${STD_FLAG} -fPIC -fvisibility=hidden -fexceptions -Wno-everything \
+  ${STD_FLAG} -fPIC -fexceptions -Wno-everything \
   -DUNITY_VERSION_VER=2022 -DUNITY_VERSION_MAJ=3 -DUNITY_VERSION_MIN=62 \
   -DBASELIB_INLINE_NAMESPACE=il2cpp_baselib \
   -DRUNTIME_IL2CPP=1 \
@@ -347,9 +372,9 @@ chmod +x /tmp/compile_worker.sh
 
 NPROC=$(sysctl -n hw.ncpu 2>/dev/null || nproc 2>/dev/null || echo 4)
 
-# Compile generated game logic C++ sources in parallel
-echo "[*] Compiling generated game logic C++ sources in parallel using ${NPROC} workers..."
-find "${IL2CPP_OUT}" -name "*.cpp" -print0 | \
+# Compile generated game logic C and C++ sources in parallel
+echo "[*] Compiling generated game logic C/C++ sources in parallel using ${NPROC} workers..."
+find "${IL2CPP_OUT}" -type f \( -name "*.cpp" -o -name "*.c" \) -print0 | \
   xargs -0 -P "${NPROC}" -n 1 /tmp/compile_worker.sh "${OBJ_DIR}" "${SDK_PATH}" "${XCODE_DIR}" "${IL2CPP_OUT}"
 
 # Check for precompiled ARM64 libil2cpp or compile from source
@@ -372,7 +397,6 @@ done
 if [[ -n "${PRECOMPILED_IL2CPP}" && -f "${PRECOMPILED_IL2CPP}" ]]; then
   echo "[+] Found precompiled ARM64 IL2CPP runtime library: ${PRECOMPILED_IL2CPP}"
   cp -f "${PRECOMPILED_IL2CPP}" "${XCODE_DIR}/Libraries/libil2cpp.a"
-  (cd "${OBJ_DIR}" && ar -x "${PRECOMPILED_IL2CPP}")
 else
   echo "[*] No precompiled ARM64 libil2cpp found. Compiling libil2cpp runtime from source into libGameAssembly.a..."
   IL2CPP_SRC_DIR="${XCODE_DIR}/Il2CppOutputProject/IL2CPP"

@@ -39,10 +39,60 @@ internal static class IosStartupPatcher
         getSimpleName.OpCode = OpCodes.Ldstr;
         getSimpleName.Operand = assembly.Name.Name;
 
+        WriteStagedAssembly(assembly, path);
+        Console.WriteLine($"[+] Resolved the InputSystem startup assembly name to {assembly.Name.Name}");
+    }
+
+    internal static void PatchCriErrorCallback(string managedDirectory)
+    {
+        var path = Path.Combine(managedDirectory, "CriMw.CriWare.Runtime.dll");
+        using var resolver = new DefaultAssemblyResolver();
+        resolver.AddSearchDirectory(managedDirectory);
+        using var assembly = AssemblyDefinition.ReadAssembly(path, new ReaderParameters
+        {
+            InMemory = true,
+            AssemblyResolver = resolver,
+        });
+        var module = assembly.MainModule;
+        var notifier = module.GetType("CriWare.CriErrorNotifier");
+        var nativeMethods = notifier.NestedTypes.Single(type => type.Name == "NativeMethod");
+        var callbacks = nativeMethods.Methods.Where(method =>
+            method.PInvokeInfo?.Module.Name == "cri_ware_unity" &&
+            method.PInvokeInfo.EntryPoint == "criErr_SetCallback" &&
+            method.Parameters.Count == 1 && method.ReturnType.MetadataType == MetadataType.Void).ToArray();
+        if (callbacks.Length != 2 ||
+            callbacks.Count(method => method.Parameters[0].ParameterType.MetadataType == MetadataType.IntPtr) != 1)
+        {
+            throw new InvalidOperationException("Unexpected CRI error callback P/Invoke signatures.");
+        }
+
+        var internalModule = module.ModuleReferences.SingleOrDefault(reference => reference.Name == "__Internal");
+        if (internalModule == null)
+        {
+            internalModule = new ModuleReference("__Internal");
+            module.ModuleReferences.Add(internalModule);
+        }
+
+        // IL2CPP emits direct C declarations for __Internal imports.
+        // Give the delegate and raw-pointer overloads distinct declarations.
+        foreach (var callback in callbacks)
+        {
+            callback.PInvokeInfo.Module = internalModule;
+            if (callback.Parameters[0].ParameterType.MetadataType == MetadataType.IntPtr)
+            {
+                callback.PInvokeInfo.EntryPoint = "aic_criErr_SetCallbackPointer";
+            }
+        }
+
+        WriteStagedAssembly(assembly, path);
+        Console.WriteLine("[+] Bound CRI error callbacks to the static iOS audio fallback");
+    }
+
+    private static void WriteStagedAssembly(AssemblyDefinition assembly, string path)
+    {
         var staged = path + ".tmp";
         assembly.Write(staged);
         File.Move(staged, path, overwrite: true);
-        Console.WriteLine($"[+] Resolved the InputSystem startup assembly name to {assembly.Name.Name}");
     }
 
     private static bool Calls(Instruction? instruction, string type, string name)

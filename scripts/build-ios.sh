@@ -304,7 +304,8 @@ else
   compile=(xcrun --sdk iphoneos "${COMPILER}")
 fi
 
-if ! "${compile[@]}" -c -Os -arch arm64 -isysroot "${sdk_path}" -miphoneos-version-min=12.0 \
+# Unchecked CIL integer arithmetic must wrap even when emitted as signed C++.
+if ! "${compile[@]}" -c -Os -fwrapv -arch arm64 -isysroot "${sdk_path}" -miphoneos-version-min=12.0 \
   ${STD_FLAG} -fPIC -fexceptions -Wno-everything \
   -DUNITY_VERSION_VER=2022 -DUNITY_VERSION_MAJ=3 -DUNITY_VERSION_MIN=62 \
   -DBASELIB_INLINE_NAMESPACE=il2cpp_baselib \

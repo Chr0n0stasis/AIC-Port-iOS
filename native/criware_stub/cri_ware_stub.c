@@ -7,6 +7,7 @@
 
 // The muted fallback has no CRI errors to forward to the managed callback.
 EXPORT void criErr_SetCallback(void *callback) { (void)callback; }
+EXPORT void aic_criErr_SetCallbackPointer(intptr_t callback) { (void)callback; }
 
 EXPORT void criFsUnity_SetConfigParameters() { }
 EXPORT void criFsUnity_Initialize() { }

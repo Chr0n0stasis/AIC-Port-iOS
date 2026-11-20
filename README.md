@@ -67,6 +67,17 @@ flowchart TD
 
 本地构建可用 `AIC_BUILD_VERSION=42.2 bash scripts/build-ios.sh` 指定构建号。
 
+### 带 CRI 音频的本地构建
+
+在装有 Xcode 的 Mac 上，将官方 CRI ADX LE Unity SDK ZIP 放在仓库外，并指定它的路径。
+
+```bash
+AIC_CRI_SDK_ZIP="/path/to/criadx2le_sdk_unity_v3_14_00_01_smartphone_j.zip" \
+  AIC_BUILD_VERSION=42.2 bash scripts/build-ios.sh
+```
+
+构建使用同一 SDK 的托管源码和 iOS ARM64 音频库，并检查游戏引用的 API 和原生导出。公开 CI 的默认配置使用静音回退。SDK 的使用和分发条件见 [CRI ADX LE 官网](https://game.criware.jp/en/products/adx-le_zh/)。
+
 ---
 
 ## 📲 iOS 安装与侧载方式

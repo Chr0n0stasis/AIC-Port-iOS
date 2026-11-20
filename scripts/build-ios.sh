@@ -126,8 +126,20 @@ for module in AudioModule UnityWebRequestAudioModule UnityWebRequestWWWModule; d
 done
 dotnet build "${ROOT_DIR}/src/AIC.iOS.csproj" --configuration Release --output "${WORK_DIR}/ios-controls"
 cp -f "${WORK_DIR}/ios-controls/AIC.iOS.dll" "${MANAGED_IN}/"
+PATCH_ARGS=(--ios-startup "${MANAGED_IN}")
+CRI_SDK_LIBRARY=""
+if [[ -n "${AIC_CRI_SDK_ZIP:-}" ]]; then
+  CRI_SDK_STAGE="${XCODE_DIR}/CriSdk"
+  python3 "${ROOT_DIR}/scripts/stage-cri-ios-sdk.py" "${AIC_CRI_SDK_ZIP}" "${CRI_SDK_STAGE}" "${MANAGED_IN}"
+  CRI_SDK_LIBRARY="${CRI_SDK_STAGE}/libcri_ware_unity.a"
+  xcrun lipo -verify_arch arm64 "${CRI_SDK_LIBRARY}"
+  xcrun nm -arch arm64 -gUj "${CRI_SDK_LIBRARY}" > "${CRI_SDK_STAGE}/exports.txt"
+  dotnet build "${CRI_SDK_STAGE}/CriRuntime.csproj" --configuration Release --output "${CRI_SDK_STAGE}/Managed"
+  cp -f "${CRI_SDK_STAGE}/Managed/CriMw.CriWare.Runtime.dll" "${MANAGED_IN}/"
+  PATCH_ARGS+=(--cri-sdk-exports "${CRI_SDK_STAGE}/exports.txt")
+fi
 dotnet run --configuration Release --project "${ROOT_DIR}/tools/AssemblyPatcher/AssemblyPatcher.csproj" \
-  -- --ios-startup "${MANAGED_IN}"
+  -- "${PATCH_ARGS[@]}"
 
 echo "[*] Running IL2CPP ahead-of-time compilation on patched assemblies..."
 dotnet "${IL2CPP_DLL}" \
@@ -233,6 +245,9 @@ if [[ ! -f "${TEXTURE_OVERLAY}/.complete" ]]; then
     "${ROOT_DIR}/ConvertedData/StreamingAssets" "${TEXTURE_OVERLAY}"
 fi
 rsync -a --exclude=.complete "${TEXTURE_OVERLAY}/" "${DATA_OUT}/Raw/"
+if [[ -n "${CRI_SDK_LIBRARY}" ]]; then
+  cp "${CRI_SDK_STAGE}/CRI_ADX_LE_End_User_License_Agreement.txt" "${DATA_OUT}/Raw/"
+fi
 mkdir -p "${DATA_OUT}/Managed" "${DATA_OUT}/Managed/Metadata"
 cp -f "${ROOT_DIR}/ConvertedData/RuntimeInitializeOnLoads.json" "${DATA_OUT}/Managed/" 2>/dev/null || true
 cp -f "${ROOT_DIR}/ConvertedData/ScriptingAssemblies.json" "${DATA_OUT}/Managed/" 2>/dev/null || true
@@ -262,15 +277,19 @@ clang++ -c -O3 -arch arm64 -isysroot "${SDK_PATH}" -miphoneos-version-min=12.0 \
   "${XCODE_DIR}/Classes/UnityICallRegistration.cpp" -o UnityICallRegistration.o
 
 clang -c -O3 -arch arm64 -isysroot "${SDK_PATH}" -miphoneos-version-min=12.0 \
-  -Wno-deprecated-non-prototype -Wno-strict-prototypes \
   -I"${ROOT_DIR}/native/nanosockets" \
-  "${ROOT_DIR}/native/nanosockets/nanosockets.c" \
-  "${ROOT_DIR}/native/criware_stub/cri_ware_stub.c"
+  "${ROOT_DIR}/native/nanosockets/nanosockets.c"
 
 clang -c -O3 -arch arm64 -isysroot "${SDK_PATH}" -miphoneos-version-min=12.0 \
   -fobjc-arc "${ROOT_DIR}/native/ios/GameControllerBridge.m" -o GameControllerBridge.o
 
-NATIVE_OBJECTS=(nanosockets.o cri_ware_stub.o RegisterMonoModules.o UnityICallRegistration.o GameControllerBridge.o)
+NATIVE_OBJECTS=(nanosockets.o RegisterMonoModules.o UnityICallRegistration.o GameControllerBridge.o)
+if [[ -z "${CRI_SDK_LIBRARY}" ]]; then
+  clang -c -O3 -arch arm64 -isysroot "${SDK_PATH}" -miphoneos-version-min=12.0 \
+    -Wno-deprecated-non-prototype -Wno-strict-prototypes \
+    "${ROOT_DIR}/native/criware_stub/cri_ware_stub.c"
+  NATIVE_OBJECTS+=(cri_ware_stub.o)
+fi
 ar rcs "${XCODE_DIR}/Libraries/libNativePlugins.a" "${NATIVE_OBJECTS[@]}"
 rm -f "${NATIVE_OBJECTS[@]}"
 
@@ -554,6 +573,9 @@ echo "[*] Building Xcode project with xcodebuild (target: iphoneos)..."
 IL2CPP_INCS=$(find "${XCODE_DIR}/Il2CppOutputProject/IL2CPP" -type d \( -name "Include" -o -name "include" -o -name "libil2cpp" -o -name "pch" \) 2>/dev/null | tr '\n' ' ')
 
 LDFLAGS_EXTRA="-force_load ${XCODE_DIR}/Libraries/libNativePlugins.a -framework GameController"
+if [[ -n "${CRI_SDK_LIBRARY}" ]]; then
+  LDFLAGS_EXTRA="${LDFLAGS_EXTRA} -force_load ${CRI_SDK_LIBRARY} -framework AVFoundation -framework AudioToolbox -framework CoreAudio -framework CFNetwork"
+fi
 if [[ -f "${GAMEASSEMBLY_LIB}" ]]; then
   LDFLAGS_EXTRA="${LDFLAGS_EXTRA} -force_load ${GAMEASSEMBLY_LIB}"
 fi

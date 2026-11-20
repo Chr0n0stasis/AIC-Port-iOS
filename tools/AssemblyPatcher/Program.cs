@@ -8,11 +8,17 @@ class Program
 {
     static int Main(string[] args)
     {
-        if (args is ["--ios-startup", var managedDir])
+        if (args.Length >= 2 && args[0] == "--ios-startup")
         {
+            var managedDir = args[1];
             IosStartupPatcher.PatchInputSystem(managedDir);
             IosStartupPatcher.InstallMobileInputUpdate(managedDir);
-            IosStartupPatcher.PatchCriErrorCallback(managedDir);
+            if (args is ["--ios-startup", _, "--cri-sdk-exports", var exportsPath])
+                CriSdkVerifier.Verify(managedDir, exportsPath);
+            else if (args.Length == 2)
+                IosStartupPatcher.PatchCriErrorCallback(managedDir);
+            else
+                throw new ArgumentException("Expected --ios-startup <managed> [--cri-sdk-exports <path>].");
             return 0;
         }
 

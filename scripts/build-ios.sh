@@ -103,7 +103,20 @@ fi
 # 4. Run IL2CPP on PatchedManaged assemblies
 IL2CPP_OUT="${XCODE_DIR}/Il2CppOutputProject/Source/il2cppOutput"
 DATA_OUT="${XCODE_DIR}/Data"
-mkdir -p "${IL2CPP_OUT}" "${DATA_OUT}"
+MANAGED_IN="${XCODE_DIR}/ManagedInput"
+mkdir -p "${IL2CPP_OUT}" "${DATA_OUT}" "${MANAGED_IN}"
+cp -R "${ROOT_DIR}/PatchedManaged/." "${MANAGED_IN}/"
+
+# The native iOS AudioSettings proxy invokes mobile-only methods at startup.
+IOS_AUDIO_MODULE=$(find "${EXTRACT_DIR}" -type f \
+  -path '*/Variations/il2cpp/Releasearm64_managed/UnityEngine.AudioModule.dll' -print -quit)
+if [[ -z "${IOS_AUDIO_MODULE}" ]]; then
+  echo "::error::Missing the Release ARM64 iOS UnityEngine.AudioModule.dll"
+  exit 1
+fi
+cp -f "${IOS_AUDIO_MODULE}" "${MANAGED_IN}/UnityEngine.AudioModule.dll"
+dotnet run --configuration Release --project "${ROOT_DIR}/tools/AssemblyPatcher/AssemblyPatcher.csproj" \
+  -- --ios-startup "${MANAGED_IN}"
 
 echo "[*] Running IL2CPP ahead-of-time compilation on patched assemblies..."
 dotnet "${IL2CPP_DLL}" \
@@ -111,7 +124,7 @@ dotnet "${IL2CPP_DLL}" \
   --platform=iOS \
   --architecture=ARM64 \
   --dotnetprofile="unityaot-macos" \
-  --directory="${ROOT_DIR}/PatchedManaged" \
+  --directory="${MANAGED_IN}" \
   --generatedcppdir="${IL2CPP_OUT}" \
   --data-folder="${DATA_OUT}" \
   --configuration=Release \

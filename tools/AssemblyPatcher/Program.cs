@@ -8,6 +8,12 @@ class Program
 {
     static int Main(string[] args)
     {
+        if (args is ["--ios-startup", var managedDir])
+        {
+            IosStartupPatcher.PatchInputSystem(managedDir);
+            return 0;
+        }
+
         string defaultSrc = @"d:\Users\Chr0n0s\Documents\Gits\OAfV727f_aic_installer_030i\Alice in Cradle\Alice in Cradle.app\Contents\Resources\Data\Managed";
         string defaultDst = @"d:\Users\Chr0n0s\Documents\Gits\AIC-Port-iOS\PatchedManaged";
 

@@ -9,6 +9,13 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 WORK_DIR="/tmp/aic_ios_build"
 OUTPUT_DIR="${ROOT_DIR}/artifacts"
 DERIVED_DATA="${WORK_DIR}/DerivedData"
+GAME_VERSION="0.30i"
+BUILD_VERSION="${AIC_BUILD_VERSION:-${GITHUB_RUN_NUMBER:-1}.${GITHUB_RUN_ATTEMPT:-0}}"
+if [[ ! "${BUILD_VERSION}" =~ ^[1-9][0-9]*(\.[0-9]+){0,2}$ ]]; then
+  echo "Invalid build version: ${BUILD_VERSION}. Expected one to three dot-separated integers." >&2
+  exit 1
+fi
+ARTIFACT_NAME="AliceInCradle_v${GAME_VERSION}_iOS_b${BUILD_VERSION}"
 mkdir -p "${WORK_DIR}" "${OUTPUT_DIR}" "${DERIVED_DATA}"
 
 UNITY_VERSION="2022.3.62f2"
@@ -425,8 +432,8 @@ if [[ -f "${INFO_PLIST}" ]]; then
   /usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier 'com.NanameHacha.AliceInCradle'" "${INFO_PLIST}" 2>/dev/null || \
   /usr/libexec/PlistBuddy -c "Add :CFBundleIdentifier string 'com.NanameHacha.AliceInCradle'" "${INFO_PLIST}"
   
-  /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString '0.30i'" "${INFO_PLIST}" 2>/dev/null || \
-  /usr/libexec/PlistBuddy -c "Add :CFBundleShortVersionString string '0.30i'" "${INFO_PLIST}"
+  /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString '${GAME_VERSION}'" "${INFO_PLIST}" 2>/dev/null || \
+  /usr/libexec/PlistBuddy -c "Add :CFBundleShortVersionString string '${GAME_VERSION}'" "${INFO_PLIST}"
 
   /usr/libexec/PlistBuddy -c "Set :UIRequiresFullScreen bool true" "${INFO_PLIST}" 2>/dev/null || \
   /usr/libexec/PlistBuddy -c "Add :UIRequiresFullScreen bool true" "${INFO_PLIST}"
@@ -575,6 +582,10 @@ rm -rf "${PAYLOAD_DIR}"
 mkdir -p "${PAYLOAD_DIR}"
 cp -R "${APP_BUNDLE}" "${PAYLOAD_DIR}/Alice in Cradle.app"
 
+BUNDLE_PLIST="${PAYLOAD_DIR}/Alice in Cradle.app/Info.plist"
+/usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${BUILD_VERSION}" "${BUNDLE_PLIST}" 2>/dev/null ||
+/usr/libexec/PlistBuddy -c "Add :CFBundleVersion string ${BUILD_VERSION}" "${BUNDLE_PLIST}"
+
 # 9b. Patch UnityFramework build target platform checks dynamically
 echo "[*] Applying runtime compatibility patches to UnityFramework..."
 PAYLOAD_DIR="${PAYLOAD_DIR}" python3 - << 'PYEOF'
@@ -610,12 +621,16 @@ echo "[*] Ensuring all game Data assets are inside Alice in Cradle.app bundle...
 mkdir -p "${PAYLOAD_DIR}/Alice in Cradle.app/Data"
 cp -R "${DATA_OUT}/"* "${PAYLOAD_DIR}/Alice in Cradle.app/Data/"
 
-IPA_NAME="AliceInCradle_v0.30i_iOS_Unsigned.ipa"
+IPA_NAME="${ARTIFACT_NAME}_Unsigned.ipa"
 IPA_PATH="${OUTPUT_DIR}/${IPA_NAME}"
 (cd "${WORK_DIR}" && zip -r -9 "${IPA_PATH}" Payload)
 
+if [[ -n "${GITHUB_OUTPUT:-}" ]]; then
+  printf 'artifact_name=%s\nipa_path=%s\n' "${ARTIFACT_NAME}" "${IPA_PATH}" >> "${GITHUB_OUTPUT}"
+fi
+
 echo "================================================================="
-echo "[+] SUCCESS! iOS IPA Package created:"
+echo "[+] SUCCESS! iOS IPA Package created (build ${BUILD_VERSION}):"
 echo "    ${IPA_PATH}"
 echo "    Size: $(du -h "${IPA_PATH}" | cut -f1)"
 echo "================================================================="

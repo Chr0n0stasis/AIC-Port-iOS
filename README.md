@@ -24,7 +24,7 @@ flowchart TD
     E --> I
     H --> I
     
-    I -->|"IL2CPP C++ 代码生成\nxcodebuild 编译"| J["AliceInCradle_v0.30i_iOS.ipa"]
+    I -->|"IL2CPP C++ 代码生成\nxcodebuild 编译"| J["AliceInCradle_v0.30i_iOS_b42.1_Unsigned.ipa"]
 ```
 
 ### 1. 资源转换管线 (`tools/convert_assets.py`)
@@ -63,7 +63,9 @@ flowchart TD
    ```
 2. 进入 GitHub 仓库页面 -> **Actions** 标签页。
 3. 选择 **Build Alice in Cradle iOS IPA** 工作流，点击 **Run workflow**。
-4. 构建耗时约 4~6 分钟，构建完成后在 **Artifacts** 区域即可直接下载 `AliceInCradle_v0.30i_iOS`（内含已打包的未签名 `.ipa` 安装包）。
+4. 构建完成后在 **Artifacts** 区域下载对应的安装包。例如，第 42 次构建的第 2 次尝试会生成 `AliceInCradle_v0.30i_iOS_b42.2.zip`，里面是 `AliceInCradle_v0.30i_iOS_b42.2_Unsigned.ipa`。App 内部的构建号也是 `42.2`。
+
+本地构建可用 `AIC_BUILD_VERSION=42.2 bash scripts/build-ios.sh` 指定构建号。
 
 ---
 

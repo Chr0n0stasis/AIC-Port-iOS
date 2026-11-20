@@ -260,17 +260,27 @@ echo "[*] Compiling generated game logic C++ sources in parallel using ${NPROC} 
 find "${IL2CPP_OUT}" -name "*.cpp" -print0 | \
   xargs -0 -P "${NPROC}" -n 1 /tmp/compile_worker.sh "${OBJ_DIR}" "${SDK_PATH}" "${XCODE_DIR}" "${IL2CPP_OUT}"
 
-# Check for precompiled libil2cpp or compile from source
-echo "[*] Checking for precompiled IL2CPP static libraries in Playback Engine..."
-PRECOMPILED_IL2CPP=$(find "${EXTRACT_DIR}" -type f \( -name "libil2cpp*.a" -o -name "il2cpp*.a" \) 2>/dev/null | grep -i -v "simulator" | head -n 1 || true)
+# Check for precompiled ARM64 libil2cpp or compile from source
+echo "[*] Checking for precompiled ARM64 IL2CPP static libraries in Playback Engine..."
+PRECOMPILED_IL2CPP=""
+for cand in $(find "${EXTRACT_DIR}" -type f \( -name "libil2cpp*.a" -o -name "il2cpp*.a" \) 2>/dev/null); do
+  if [[ "${cand}" =~ sim|x64|x86 ]]; then
+    continue
+  fi
+  if lipo -archs "${cand}" 2>/dev/null | grep -qw "arm64"; then
+    PRECOMPILED_IL2CPP="${cand}"
+    break
+  fi
+done
+
 if [[ -n "${PRECOMPILED_IL2CPP}" && -f "${PRECOMPILED_IL2CPP}" ]]; then
-  echo "[+] Found precompiled IL2CPP runtime library: ${PRECOMPILED_IL2CPP}"
+  echo "[+] Found precompiled ARM64 IL2CPP runtime library: ${PRECOMPILED_IL2CPP}"
   cp -f "${PRECOMPILED_IL2CPP}" "${XCODE_DIR}/Libraries/libil2cpp.a"
   (cd "${OBJ_DIR}" && ar -x "${PRECOMPILED_IL2CPP}")
 else
-  echo "[*] Compiling libil2cpp runtime from source into libGameAssembly.a..."
+  echo "[*] No precompiled ARM64 libil2cpp found. Compiling libil2cpp runtime from source into libGameAssembly.a..."
   IL2CPP_SRC_DIR="${XCODE_DIR}/Il2CppOutputProject/IL2CPP"
-  find "${IL2CPP_SRC_DIR}/libil2cpp" -type f -name "*.cpp" \
+  find "${IL2CPP_SRC_DIR}/libil2cpp" -type f \( -name "*.cpp" -o -name "*.c" \) \
     ! -path "*/os/Win32/*" \
     ! -path "*/os/WindowsGames/*" \
     ! -path "*/os/Android/*" \
@@ -281,6 +291,12 @@ else
     ! -path "*/os/PS5/*" \
     ! -path "*/os/Emscripten/*" \
     ! -path "*/os/QNX/*" \
+    ! -path "*/os/WinRT/*" \
+    ! -path "*/gc/null/*" \
+    ! -path "*/gc/sgen/*" \
+    ! -path "*/tests/*" \
+    ! -name "main.cpp" \
+    ! -name "main.c" \
     -print0 | \
     xargs -0 -P "${NPROC}" -n 1 /tmp/compile_worker.sh "${OBJ_DIR}" "${SDK_PATH}" "${XCODE_DIR}" "${IL2CPP_OUT}"
 
@@ -290,7 +306,10 @@ else
     xcrun --sdk iphoneos clang -c -Os -arch arm64 -isysroot "${SDK_PATH}" -miphoneos-version-min=12.0 \
       -fPIC -fvisibility=hidden -Wno-everything \
       -DGC_NOT_DLL -DALL_INTERIOR_POINTERS -DNO_EXECUTE_PERMISSION \
+      -I"${IL2CPP_SRC_DIR}/external/bdwgc" \
       -I"${IL2CPP_SRC_DIR}/external/bdwgc/include" \
+      -I"${IL2CPP_SRC_DIR}/external/bdwgc/include/private" \
+      -I"${IL2CPP_SRC_DIR}/external/bdwgc/src" \
       "${IL2CPP_SRC_DIR}/external/bdwgc/extra/gc.c" \
       -o "${OBJ_DIR}/bdwgc_gc.o"
   elif [[ -d "${IL2CPP_SRC_DIR}/external/bdwgc/src" ]]; then
@@ -298,6 +317,16 @@ else
     find "${IL2CPP_SRC_DIR}/external/bdwgc/src" -type f -name "*.c" \
       ! -name "win32_*.c" ! -name "wince_*.c" -print0 | \
       xargs -0 -P "${NPROC}" -n 1 /tmp/compile_worker.sh "${OBJ_DIR}" "${SDK_PATH}" "${XCODE_DIR}" "${IL2CPP_OUT}"
+  fi
+
+  # Also compile xxHash if present
+  if [[ -f "${IL2CPP_SRC_DIR}/external/xxHash/xxhash.c" ]]; then
+    echo "[*] Compiling xxHash..."
+    xcrun --sdk iphoneos clang -c -Os -arch arm64 -isysroot "${SDK_PATH}" -miphoneos-version-min=12.0 \
+      -fPIC -fvisibility=hidden -Wno-everything \
+      -I"${IL2CPP_SRC_DIR}/external/xxHash" \
+      "${IL2CPP_SRC_DIR}/external/xxHash/xxhash.c" \
+      -o "${OBJ_DIR}/xxhash.o"
   fi
 fi
 

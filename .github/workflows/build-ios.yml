@@ -119,7 +119,6 @@ jobs:
           key: unity-ios-engine-2022.3.62f2-7670c08855a9
 
       - name: Configure IL2CPP compiler cache
-        if: inputs.private_audio != true
         id: compiler-cache
         shell: bash
         run: |
@@ -145,12 +144,57 @@ jobs:
           } >> "$GITHUB_ENV"
 
       - name: Cache generated IL2CPP object files
-        if: steps.compiler-cache.outputs.toolchain != ''
+        if: inputs.private_audio != true && steps.compiler-cache.outputs.toolchain != ''
         uses: actions/cache@v4
         with:
           path: /tmp/aic_ios_build/ccache
           key: aic-il2cpp-ccache-v1-${{ runner.arch }}-${{ steps.compiler-cache.outputs.toolchain }}-${{ hashFiles('PatchedManaged/**', 'tools/AssemblyPatcher/*.cs', 'tools/AssemblyPatcher/*.csproj', 'src/*.cs', 'src/*.csproj', 'scripts/build-ios.sh') }}
           restore-keys: aic-il2cpp-ccache-v1-${{ runner.arch }}-${{ steps.compiler-cache.outputs.toolchain }}-
+
+      - name: Restore private IL2CPP compiler cache
+        if: inputs.private_audio == true && steps.compiler-cache.outputs.toolchain != ''
+        id: private-compiler-cache
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.AIC_PRIVATE_ASSETS_TOKEN }}
+          ASSETS_REPO: ${{ vars.AIC_PRIVATE_ASSETS_REPO }}
+          TOOLCHAIN: ${{ steps.compiler-cache.outputs.toolchain }}
+          INPUT_HASH: ${{ hashFiles('PatchedManaged/**', 'tools/AssemblyPatcher/*.cs', 'tools/AssemblyPatcher/*.csproj', 'src/*.cs', 'src/*.csproj', 'scripts/build-ios.sh', 'scripts/stage-cri-ios-sdk.py') }}
+        run: |
+          prefix="il2cpp-ccache-v1-${RUNNER_ARCH}-${TOOLCHAIN}-"
+          sdk_hash=$(shasum -a 256 "$AIC_CRI_SDK_ZIP" | cut -d ' ' -f 1)
+          key=$(printf '%s\n' "$INPUT_HASH" "$sdk_hash" | shasum -a 256 | cut -d ' ' -f 1)
+          archive="${prefix}${key}.tar"
+          printf 'archive=%s\n' "$archive" >> "$GITHUB_OUTPUT"
+
+          if ! assets=$(gh release view ios-inputs-0.30i --repo "$ASSETS_REPO" --json assets); then
+            echo '::warning::Could not list the private compiler caches.'
+            exit 0
+          fi
+          candidate=$(jq -r --arg key "$archive" --arg prefix "$prefix" '
+            [.assets[] | select(.state == "uploaded" and (.name | startswith($prefix)))] as $caches
+            | ($caches | map(select(.name == $key)) | first)
+              // ($caches | sort_by(.createdAt) | last)
+              | .name // empty' <<< "$assets")
+          if [[ -z "$candidate" ]]; then
+            echo '[*] No private compiler cache for this toolchain.'
+            exit 0
+          fi
+
+          cache_dir=$(mktemp -d "$RUNNER_TEMP/aic-ccache.XXXXXX")
+          mkdir -p "$cache_dir/ccache"
+          if gh release download ios-inputs-0.30i --repo "$ASSETS_REPO" --dir "$cache_dir" --pattern "$candidate" &&
+              tar -xf "$cache_dir/$candidate" -C "$cache_dir/ccache"; then
+            mkdir -p "$(dirname "$CCACHE_DIR")"
+            mv "$cache_dir/ccache" "$CCACHE_DIR"
+            if [[ "$archive" == "$candidate" ]]; then
+              printf 'hit=true\n' >> "$GITHUB_OUTPUT"
+            fi
+            echo '[+] Restored private compiler cache. See ccache statistics for object hits.'
+          else
+            echo '::warning::Could not restore the private compiler cache.'
+          fi
+          rm -f -- "$cache_dir/$candidate"
 
       - name: Make scripts executable
         run: chmod +x scripts/*.sh
@@ -197,4 +241,22 @@ jobs:
           fi
           cache_dir=$(mktemp -d "$RUNNER_TEMP/aic-textures.XXXXXX")
           tar -cf "$cache_dir/$CACHE_ARCHIVE" -C "$AIC_TEXTURE_OVERLAY" .
+          gh release upload ios-inputs-0.30i "$cache_dir/$CACHE_ARCHIVE" --repo "$ASSETS_REPO"
+
+      - name: Save private IL2CPP compiler cache
+        if: ${{ !cancelled() && inputs.private_audio == true && steps.build.outputs.ccache_ready == 'true' && steps.private-compiler-cache.outputs.archive != '' && steps.private-compiler-cache.outputs.hit != 'true' }}
+        continue-on-error: true
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.AIC_PRIVATE_ASSETS_TOKEN }}
+          ASSETS_REPO: ${{ vars.AIC_PRIVATE_ASSETS_REPO }}
+          CACHE_ARCHIVE: ${{ steps.private-compiler-cache.outputs.archive }}
+        run: |
+          if [[ "$(gh api "repos/$ASSETS_REPO" --jq .private)" != true ]]; then
+            echo '::warning::The compiler cache destination must be private.'
+            exit 1
+          fi
+          ccache --cleanup
+          cache_dir=$(mktemp -d "$RUNNER_TEMP/aic-ccache.XXXXXX")
+          tar -cf "$cache_dir/$CACHE_ARCHIVE" -C "$CCACHE_DIR" .
           gh release upload ios-inputs-0.30i "$cache_dir/$CACHE_ARCHIVE" --repo "$ASSETS_REPO"

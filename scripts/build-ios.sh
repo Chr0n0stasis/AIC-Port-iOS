@@ -445,6 +445,9 @@ fi
 
 if [[ "${AIC_USE_CCACHE:-0}" == 1 ]]; then
   ccache --show-stats
+  if [[ -n "${GITHUB_OUTPUT:-}" ]]; then
+    printf 'ccache_ready=true\n' >> "$GITHUB_OUTPUT"
+  fi
 fi
 
 NUM_OBJS=$(find "${OBJ_DIR}" -name "*.o" | wc -l | tr -d ' ')

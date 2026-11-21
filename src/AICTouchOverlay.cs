@@ -78,8 +78,11 @@ namespace AIC.iOS
                 var go = new GameObject("[AIC_TouchOverlay]");
                 DontDestroyOnLoad(go);
                 _instance = go.AddComponent<AICTouchOverlay>();
+                MobileMapCleanup.ListenForMemoryWarnings();
             }
         }
+
+        private void LateUpdate() => MobileMapCleanup.Tick();
 
         private int stickFingerId = -1;
         private Vector2 stickTouchOrigin;
@@ -108,8 +111,10 @@ namespace AIC.iOS
                         {
                             if (control.Action == TouchAction.ToggleControls)
                                 extraControlsOpen = !extraControlsOpen;
-                            if (control.Action == TouchAction.DebugF7)
+                            else if (control.Action == TouchAction.DebugF7)
                                 debugF7Pending = true;
+                            else if (control.Action == TouchAction.ToggleWormWallImmunity)
+                                MobileSettings.ToggleWormWallImmunity();
                         }
                         buttonTouches.Remove(touch.fingerId);
                     }

@@ -125,20 +125,41 @@ internal static class IosStartupPatcher
         var eventsIL = eventsUpdate.Body.GetILProcessor();
         eventsIL.InsertAfter(keyboardF7, eventsIL.Create(OpCodes.Call, game.MainModule.ImportReference(readDebugF7)));
 
-        WaitForMapResourceCleanup(game.MainModule, overlay.MainModule);
+        UseDocumentsDebugConfig(game.MainModule, overlay.MainModule);
+        InstallMapResourceCleanup(game.MainModule, overlay.MainModule);
         WriteStagedAssembly(game, path);
         Console.WriteLine("[+] Installed the iOS gamepad input provider and F7 debug shortcut");
-        Console.WriteLine("[+] Wait for unused resources to unload before preparing the next map");
+        Console.WriteLine("[+] Read _debug.txt from the app's Documents directory");
+        Console.WriteLine("[+] Reclaim closed-map resources before loading and limit the cache on low-memory devices");
     }
 
-    private static void WaitForMapResourceCleanup(ModuleDefinition game, ModuleDefinition overlay)
+    private static void UseDocumentsDebugConfig(ModuleDefinition game, ModuleDefinition overlay)
+    {
+        var readConfig = GetMobileSettings(overlay).Methods.Single(method => method.Name == "ReadDebugConfig" &&
+            method.IsStatic && method.ReturnType.MetadataType == MetadataType.String &&
+            method.Parameters.Count == 1 && method.Parameters[0].ParameterType.MetadataType == MetadataType.String);
+        var loadDebug = game.GetType("XX.X").Methods.Single(method =>
+            method.Name == "loadDebug" && method.IsStatic && !method.HasParameters);
+        var readBundled = loadDebug.Body.Instructions.Single(instruction => instruction.OpCode == OpCodes.Call &&
+            instruction.Operand is MethodReference called && called.DeclaringType.FullName == "NKT" &&
+            called.Name == "readStreamingText" && called.ReturnType.MetadataType == MetadataType.String &&
+            instruction.Previous?.OpCode == OpCodes.Ldc_I4_0 &&
+            instruction.Previous.Previous?.Operand is string fileName && fileName == "_debug.txt");
+
+        var il = loadDebug.Body.GetILProcessor();
+        il.InsertAfter(readBundled, il.Create(OpCodes.Call, game.ImportReference(readConfig)));
+    }
+
+    private static void InstallMapResourceCleanup(ModuleDefinition game, ModuleDefinition overlay)
     {
         var cleanup = overlay.GetType("AIC.iOS.MobileMapCleanup")
             ?? throw new InvalidOperationException("AIC.iOS.dll is missing MobileMapCleanup. Build with src/MobileMapCleanup.cs.");
-        var begin = cleanup.Methods.Single(method => method.Name == "Begin" && method.IsStatic &&
-            !method.HasParameters && method.ReturnType.FullName == "UnityEngine.AsyncOperation");
+        var request = cleanup.Methods.Single(method => method.Name == "RequestAfterMapClose" && method.IsStatic &&
+            !method.HasParameters && method.ReturnType.MetadataType == MetadataType.Void);
         var isPending = cleanup.Methods.Single(method => method.Name == "IsPending" && method.IsStatic &&
             !method.HasParameters && method.ReturnType.MetadataType == MetadataType.Boolean);
+        var cacheLimit = cleanup.Methods.Single(method => method.Name == "ClosedMapCacheLimit" && method.IsStatic &&
+            !method.HasParameters && method.ReturnType.MetadataType == MetadataType.Int32);
         var map = game.GetType("m2d.M2DBase");
         var changeMap = map.Methods.Single(method => method.Name == "changeMap" &&
             method.Parameters.Count == 1 && method.Parameters[0].ParameterType.FullName == "m2d.Map2d");
@@ -147,7 +168,29 @@ internal static class IosStartupPatcher
             called.DeclaringType.FullName == "UnityEngine.Resources" && !called.HasParameters &&
             called.ReturnType.FullName == "UnityEngine.AsyncOperation");
 
-        unload.Operand = game.ImportReference(begin);
+        var unloadResult = unload.Next;
+        var closeEnd = changeMap.Body.Instructions.Single(instruction => instruction.OpCode == OpCodes.Stfld &&
+            instruction.Operand is FieldReference field && field.DeclaringType.FullName == "m2d.M2DBase" &&
+            field.Name == "WRC_Air" && instruction.Next?.OpCode == OpCodes.Ldnull &&
+            instruction.Next.Next?.OpCode == OpCodes.Ret);
+        if (unloadResult?.OpCode != OpCodes.Pop || closeEnd.Offset <= unload.Offset)
+            throw new InvalidOperationException("Unexpected resource sweep in the map close path.");
+
+        // Keep the old branch target, and request the sweep after the stock
+        // map-close code has detached its mob textures and scene references.
+        unload.OpCode = OpCodes.Nop;
+        unload.Operand = null;
+        unloadResult.OpCode = OpCodes.Nop;
+        var changeIL = changeMap.Body.GetILProcessor();
+        changeIL.InsertAfter(closeEnd, changeIL.Create(OpCodes.Call, game.ImportReference(request)));
+
+        // The game removes the incoming map from AMapHistory first, then uses
+        // this threshold in its existing loop that closes and removes cached maps.
+        var retainedMapCount = changeMap.Body.Instructions.Single(instruction => instruction.OpCode == OpCodes.Ldc_I4_1 &&
+            CallsMapHistoryCount(instruction.Previous) &&
+            (instruction.Next?.OpCode == OpCodes.Ble_S || instruction.Next?.OpCode == OpCodes.Ble));
+        retainedMapCount.OpCode = OpCodes.Call;
+        retainedMapCount.Operand = game.ImportReference(cacheLimit);
 
         var pending = game.ImportReference(isPending);
         foreach (var name in new[] { "loadMapAsync", "loadMapAsyncFinalize" })
@@ -155,16 +198,50 @@ internal static class IosStartupPatcher
             // Both methods return true while more loading work is pending.
             var load = map.Methods.Single(method => method.Name == name &&
                 method.ReturnType.MetadataType == MetadataType.Boolean && method.HasBody);
-            var first = load.Body.Instructions[0];
-            var il = load.Body.GetILProcessor();
-            il.InsertBefore(first, il.Create(OpCodes.Call, pending));
-            il.InsertBefore(first, il.Create(OpCodes.Brfalse_S, first));
-            il.InsertBefore(first, il.Create(OpCodes.Ldc_I4_1));
-            il.InsertBefore(first, il.Create(OpCodes.Ret));
+            ReturnWhen(load, pending, returnValue: true);
         }
+
+        var isLowMemoryDevice = cleanup.Methods.Single(method => method.Name == "get_IsLowMemoryDevice" &&
+            method.IsStatic && !method.HasParameters && method.ReturnType.MetadataType == MetadataType.Boolean);
+        TrimUnusedRenderTextures(game, game.ImportReference(isLowMemoryDevice));
     }
 
-    internal static void PatchMobileRendering(string managedDirectory)
+    private static void TrimUnusedRenderTextures(ModuleDefinition game, MethodReference isLowMemoryDevice)
+    {
+        var pool = game.GetType("XX.RenderTexturePool");
+        var releaseAll = pool.Methods.Single(method => method.Name == "releaseAll" &&
+            !method.IsStatic && !method.HasParameters && method.ReturnType.MetadataType == MetadataType.Void);
+        var dispose = pool.Methods.Single(method => method.Name == "dispose" &&
+            !method.IsStatic && !method.HasParameters && method.ReturnType.MetadataType == MetadataType.Void);
+
+        // The camera teardown marks all buffers reusable here. On smaller
+        // devices, discard their backing memory and let Pop recreate on demand.
+        var first = releaseAll.Body.Instructions[0];
+        var il = releaseAll.Body.GetILProcessor();
+        il.InsertBefore(first, il.Create(OpCodes.Call, isLowMemoryDevice));
+        il.InsertBefore(first, il.Create(OpCodes.Brfalse_S, first));
+        il.InsertBefore(first, il.Create(OpCodes.Ldarg_0));
+        il.InsertBefore(first, il.Create(OpCodes.Call, dispose));
+        il.InsertBefore(first, il.Create(OpCodes.Ret));
+    }
+
+    private static bool CallsMapHistoryCount(Instruction? instruction) =>
+        instruction?.OpCode == OpCodes.Callvirt && instruction.Operand is MethodReference method &&
+        method.Name == "get_Count" && !method.HasParameters &&
+        instruction.Previous?.OpCode == OpCodes.Ldfld && instruction.Previous.Operand is FieldReference field &&
+        field.DeclaringType.FullName == "m2d.M2DBase" && field.Name == "AMapHistory";
+
+    private static void ReturnWhen(MethodDefinition method, MethodReference predicate, bool returnValue)
+    {
+        var first = method.Body.Instructions[0];
+        var il = method.Body.GetILProcessor();
+        il.InsertBefore(first, il.Create(OpCodes.Call, predicate));
+        il.InsertBefore(first, il.Create(OpCodes.Brfalse_S, first));
+        il.InsertBefore(first, il.Create(returnValue ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0));
+        il.InsertBefore(first, il.Create(OpCodes.Ret));
+    }
+
+    internal static void PatchMobileSettings(string managedDirectory)
     {
         var inputPath = Path.Combine(managedDirectory, "unsafeAssem.dll");
         var settingsPath = Path.Combine(managedDirectory, "Assembly-CSharp.dll");
@@ -173,6 +250,7 @@ internal static class IosStartupPatcher
         var parameters = new ReaderParameters { InMemory = true, AssemblyResolver = resolver };
         using var input = AssemblyDefinition.ReadAssembly(inputPath, parameters);
         using var settings = AssemblyDefinition.ReadAssembly(settingsPath, parameters);
+        using var overlay = AssemblyDefinition.ReadAssembly(Path.Combine(managedDirectory, "AIC.iOS.dll"));
         var setMode = input.MainModule.GetType("XX.IN").Methods.Single(method =>
             method.Name == "setFullScreenMode" && method.IsStatic && method.Parameters.Count == 2 &&
             method.Body.Instructions.Any(instruction => instruction.Operand is MethodReference called &&
@@ -193,11 +271,29 @@ internal static class IosStartupPatcher
         desktopWindowSetting.Previous.OpCode = OpCodes.Ldc_I4_0;
 
         DisableMosaicDrawing(settings.MainModule);
+        InstallWormWallImmunity(settings.MainModule, overlay.MainModule);
 
         WriteStagedAssembly(input, inputPath);
         WriteStagedAssembly(settings, settingsPath);
         Console.WriteLine("[+] Kept the iOS native display size and disabled the desktop window settings");
         Console.WriteLine("[+] Routed the mosaic renderer through its disabled path");
+        Console.WriteLine("[+] Installed the optional worm wall immunity setting");
+    }
+
+    private static TypeDefinition GetMobileSettings(ModuleDefinition module) =>
+        module.GetType("AIC.iOS.MobileSettings")
+        ?? throw new InvalidOperationException("AIC.iOS.dll is missing MobileSettings. Build with src/MobileSettings.cs.");
+
+    private static void InstallWormWallImmunity(ModuleDefinition game, ModuleDefinition overlay)
+    {
+        var isImmune = GetMobileSettings(overlay).Methods.Single(method =>
+            method.Name == "get_WormWallImmune" && method.IsStatic && !method.HasParameters &&
+            method.ReturnType.MetadataType == MetadataType.Boolean);
+        var canPull = game.GetType("nel.PR").Methods.Single(method => method.Name == "canPullByWorm" &&
+            !method.IsStatic && !method.HasParameters && method.ReturnType.MetadataType == MetadataType.Boolean);
+
+        // The stock trap checks this on contact and again just before grabbing.
+        ReturnWhen(canPull, game.ImportReference(isImmune), returnValue: false);
     }
 
     private static void DisableMosaicDrawing(ModuleDefinition module)

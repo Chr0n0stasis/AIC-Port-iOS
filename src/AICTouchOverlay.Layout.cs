@@ -8,7 +8,7 @@ namespace AIC.iOS
         private enum TouchAction
         {
             Button, LeftTrigger, RightTrigger, SpellLeft, SpellUp, SpellRight, SpellDown,
-            ToggleControls, DebugF7,
+            ToggleControls, DebugF7, ToggleWormWallImmunity,
         }
 
         private sealed class TouchControl
@@ -66,6 +66,7 @@ namespace AIC.iOS
         private readonly TouchControl menu = new TouchControl("MENU", GamepadButton.Start);
         private readonly TouchControl more = new TouchControl("···", TouchAction.ToggleControls);
         private readonly TouchControl debug = new TouchControl("F7", TouchAction.DebugF7);
+        private readonly TouchControl wormWall = new TouchControl("WORM GUARD", TouchAction.ToggleWormWallImmunity);
         private readonly TouchControl[] extraControls =
         {
             new TouchControl("L TAB", GamepadButton.LeftShoulder),
@@ -94,7 +95,7 @@ namespace AIC.iOS
 
         private void Awake()
         {
-            var primary = new[] { attack, magic, dodge, jump, run, target, map, item, menu, more, debug };
+            var primary = new[] { attack, magic, dodge, jump, run, target, map, item, menu, more, debug, wormWall };
             firstExtraControl = primary.Length;
             controls = new TouchControl[primary.Length + extraControls.Length];
             primary.CopyTo(controls, 0);
@@ -145,6 +146,7 @@ namespace AIC.iOS
                 Place(extraControls[i], center, top, (i - 1.5f) * 65f, 87f, 59f, 46f);
             for (int i = 4; i < extraControls.Length; i++)
                 Place(extraControls[i], center, top, (i - 6f) * 70f, 139f, 64f, 46f);
+            Place(wormWall, center, top, 0f, 191f, 142f, 46f);
         }
 
         private void Place(TouchControl control, float anchorX, float anchorY,
@@ -163,6 +165,10 @@ namespace AIC.iOS
         {
             if (control == debug)
                 return Time.unscaledTime - debugF7PolledAt < 0.5f;
+            if (control == more)
+                return true;
+            if (control == wormWall)
+                return extraControlsOpen;
             return !hardwareConnected && (!control.IsExtra || extraControlsOpen);
         }
 
@@ -180,7 +186,7 @@ namespace AIC.iOS
 
         private void OnGUI()
         {
-            if (Event.current.type != EventType.Repaint || (hardwareConnected && !IsVisible(debug)))
+            if (Event.current.type != EventType.Repaint)
                 return;
 
             if (controlLabel == null)
@@ -225,7 +231,8 @@ namespace AIC.iOS
 
         private void DrawControl(TouchControl control)
         {
-            bool pressed = control.IsHeld || (control == more && extraControlsOpen);
+            bool wormWallEnabled = control == wormWall && MobileSettings.WormWallImmune;
+            bool pressed = control.IsHeld || (control == more && extraControlsOpen) || wormWallEnabled;
             Rect rect = control.Bounds;
             Color surface = pressed ? Alpha(control.Accent, 0.68f) : Glass;
             if (control.Round)
@@ -245,7 +252,10 @@ namespace AIC.iOS
 
             GUI.color = pressed ? new Color32(28, 21, 31, 255) : Ink;
             controlLabel.fontSize = Mathf.Max(10, Mathf.RoundToInt((control.Round ? 12f : 11f) * scale));
-            GUI.Label(rect, control.Label, controlLabel);
+            string label = control == wormWall
+                ? (wormWallEnabled ? "WORM GUARD ON" : "WORM GUARD OFF")
+                : control.Label;
+            GUI.Label(rect, label, controlLabel);
             if (control.MenuHint != null)
             {
                 GUI.color = pressed ? new Color32(28, 21, 31, 255) : Alpha(Ink, 0.68f);

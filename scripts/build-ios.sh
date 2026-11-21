@@ -574,7 +574,7 @@ IL2CPP_INCS=$(find "${XCODE_DIR}/Il2CppOutputProject/IL2CPP" -type d \( -name "I
 
 LDFLAGS_EXTRA="-force_load ${XCODE_DIR}/Libraries/libNativePlugins.a -framework GameController"
 if [[ -n "${CRI_SDK_LIBRARY}" ]]; then
-  LDFLAGS_EXTRA="${LDFLAGS_EXTRA} -force_load ${CRI_SDK_LIBRARY} -framework AVFoundation -framework AudioToolbox -framework CoreAudio -framework CFNetwork"
+  LDFLAGS_EXTRA="${LDFLAGS_EXTRA} -force_load ${CRI_SDK_LIBRARY} -framework UIKit -framework AVFoundation -framework AudioToolbox -framework CoreAudio -framework CFNetwork"
 fi
 if [[ -f "${GAMEASSEMBLY_LIB}" ]]; then
   LDFLAGS_EXTRA="${LDFLAGS_EXTRA} -force_load ${GAMEASSEMBLY_LIB}"

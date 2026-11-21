@@ -78,6 +78,20 @@ AIC_CRI_SDK_ZIP="/path/to/criadx2le_sdk_unity_v3_14_00_01_smartphone_j.zip" \
 
 构建使用同一 SDK 的托管源码和 iOS ARM64 音频库，并检查游戏引用的 API 和原生导出。公开 CI 的默认配置使用静音回退。SDK 的使用和分发条件见 [CRI ADX LE 官网](https://game.criware.jp/en/products/adx-le_zh/)。
 
+### 用 GitHub Actions 构建私有有声测试包
+
+在存放构建输入的私有仓库创建 `ios-inputs-0.30i` Release，添加以下两个附件。
+
+- `aic-game-inputs-0.30i.tar.gz`，在包的根目录包含 `ConvertedData` 和 `PatchedManaged`。
+- `criadx2le_sdk_unity_v3_14_00_01_smartphone_j.zip`，直接使用原始 SDK ZIP。
+
+在同一私有仓库建好 `ios-test-builds` Release，用于接收构建结果。在执行 Actions 的仓库中设置以下两个值。
+
+- Actions 变量 `AIC_PRIVATE_ASSETS_REPO` 填私有仓库的 `owner/repo`。
+- Actions Secret `AIC_PRIVATE_ASSETS_TOKEN` 填只授权该私有仓库、具备 `Contents: Read and write` 权限的 fine-grained token。
+
+手动运行 Build Alice in Cradle iOS IPA 时选择 `private_audio`。macOS job 仍在执行 Actions 的仓库运行，验证目标仓库为私有后，将未签名 IPA 上传到 `ios-test-builds`。普通构建继续使用现有流程。
+
 ---
 
 ## 📲 iOS 安装与侧载方式

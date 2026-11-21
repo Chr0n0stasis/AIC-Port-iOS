@@ -5,6 +5,11 @@ on:
     branches:
       - main
   workflow_dispatch:
+    inputs:
+      private_audio:
+        description: Build with CRI audio and send the IPA to the private release
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -17,7 +22,20 @@ jobs:
 
     steps:
       - name: Checkout repository
+        if: inputs.private_audio != true
         uses: actions/checkout@v4
+
+      - name: Checkout build sources
+        if: inputs.private_audio == true
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          sparse-checkout: |
+            native
+            resources
+            scripts
+            src
+            tools
 
       - name: Set up .NET Core SDK
         uses: actions/setup-dotnet@v4
@@ -29,7 +47,35 @@ jobs:
         with:
           python-version: '3.11'
 
+      - name: Download private build inputs
+        if: inputs.private_audio == true
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.AIC_PRIVATE_ASSETS_TOKEN }}
+          ASSETS_REPO: ${{ vars.AIC_PRIVATE_ASSETS_REPO }}
+        run: |
+          test -n "$ASSETS_REPO" && test -n "$GH_TOKEN" || {
+            echo '::error::Configure AIC_PRIVATE_ASSETS_REPO and AIC_PRIVATE_ASSETS_TOKEN.'
+            exit 1
+          }
+          if [[ "$(gh api "repos/$ASSETS_REPO" --jq .private)" != true ]]; then
+            echo '::error::The build inputs repository must be private.'
+            exit 1
+          fi
+          gh release view ios-test-builds --repo "$ASSETS_REPO" >/dev/null
+          sdk_name=criadx2le_sdk_unity_v3_14_00_01_smartphone_j.zip
+          inputs_name=aic-game-inputs-0.30i.tar.gz
+          inputs_dir=$(mktemp -d "$RUNNER_TEMP/aic-inputs.XXXXXX")
+          gh release download ios-inputs-0.30i --repo "$ASSETS_REPO" --dir "$inputs_dir" \
+            --pattern "$sdk_name" --pattern "$inputs_name"
+          test -s "$inputs_dir/$sdk_name"
+          tar -xzf "$inputs_dir/$inputs_name"
+          test -f PatchedManaged/Assembly-CSharp.dll
+          test -f ConvertedData/globalgamemanagers
+          printf 'AIC_CRI_SDK_ZIP=%s\n' "$inputs_dir/$sdk_name" >> "$GITHUB_ENV"
+
       - name: Cache converted iOS textures
+        if: inputs.private_audio != true
         uses: actions/cache@v4
         with:
           path: /tmp/aic_ios_build/texture-overlay
@@ -43,6 +89,7 @@ jobs:
           key: unity-ios-engine-2022.3.62f2-7670c08855a9
 
       - name: Configure IL2CPP compiler cache
+        if: inputs.private_audio != true
         id: compiler-cache
         shell: bash
         run: |
@@ -85,8 +132,23 @@ jobs:
         run: bash scripts/build-ios.sh
 
       - name: Upload iOS IPA Artifact
+        if: inputs.private_audio != true
         uses: actions/upload-artifact@v4
         with:
           name: ${{ steps.build.outputs.artifact_name }}
           path: ${{ steps.build.outputs.ipa_path }}
           if-no-files-found: error
+
+      - name: Upload IPA to the private release
+        if: inputs.private_audio == true
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.AIC_PRIVATE_ASSETS_TOKEN }}
+          ASSETS_REPO: ${{ vars.AIC_PRIVATE_ASSETS_REPO }}
+          IPA_PATH: ${{ steps.build.outputs.ipa_path }}
+        run: |
+          if [[ "$(gh api "repos/$ASSETS_REPO" --jq .private)" != true ]]; then
+            echo '::error::The IPA destination repository must be private.'
+            exit 1
+          fi
+          gh release upload ios-test-builds "$IPA_PATH" --repo "$ASSETS_REPO"

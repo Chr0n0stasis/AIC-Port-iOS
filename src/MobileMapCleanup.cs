@@ -88,6 +88,17 @@ namespace AIC.iOS
             if (!tracingMap)
                 return;
 
+            WriteMemory(stage);
+        }
+
+        public static void TraceEventMemory(string stage)
+        {
+            if (IsLowMemoryDevice && Application.platform == RuntimePlatform.IPhonePlayer)
+                WriteMemory(stage);
+        }
+
+        private static void WriteMemory(string stage)
+        {
             const long MiB = 1024 * 1024;
             string ledger = ReadMemoryLedger(out MemoryLedger snapshot) != 0
                 ? $" footprint={snapshot.Footprint / MiB} MiB graphics={snapshot.Graphics / MiB} MiB" +

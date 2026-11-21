@@ -369,12 +369,33 @@ internal static class IosStartupPatcher
 
         DisableMosaicDrawing(settings.MainModule);
         InstallWormWallImmunity(settings.MainModule, overlay.MainModule);
+        TraceCityCasterMemory(settings.MainModule, overlay.MainModule);
 
         WriteStagedAssembly(input, inputPath);
         WriteStagedAssembly(settings, settingsPath);
         Console.WriteLine("[+] Kept the iOS native display size and disabled the desktop window settings");
         Console.WriteLine("[+] Routed the mosaic renderer through its disabled path");
         Console.WriteLine("[+] Installed the optional worm wall immunity setting");
+    }
+
+    private static void TraceCityCasterMemory(ModuleDefinition game, ModuleDefinition overlay)
+    {
+        var trace = game.ImportReference(overlay.GetType("AIC.iOS.MobileMapCleanup").Methods.Single(method =>
+            method.Name == "TraceEventMemory"));
+        var eventRead = game.GetType("nel.NelM2DEventListener").Methods.Single(method =>
+            method.Name == "EvtRead" && method.HasBody && method.Body.Instructions.Any(instruction =>
+                instruction.Operand is MethodReference called && called.DeclaringType.FullName == "nel.CityCasterManager" &&
+                called.Name == "Summon"));
+        var summon = eventRead.Body.Instructions.Single(instruction =>
+            instruction.Operand is MethodReference called && called.DeclaringType.FullName == "nel.CityCasterManager" &&
+            called.Name == "Summon");
+        var summonPop = summon.Next;
+        if (summonPop?.OpCode != OpCodes.Pop)
+            throw new InvalidOperationException("Unexpected CityCasterManager.Summon result handling.");
+        var il = eventRead.Body.GetILProcessor();
+        var stage = il.Create(OpCodes.Ldstr, "after citycaster summon");
+        il.InsertAfter(summonPop, stage);
+        il.InsertAfter(stage, il.Create(OpCodes.Call, trace));
     }
 
     internal static void PatchPixelLinerTextures(string managedDirectory)

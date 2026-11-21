@@ -25,6 +25,22 @@ namespace AIC.iOS
         [DllImport("__Internal", EntryPoint = "os_proc_available_memory")]
         private static extern UIntPtr AvailableProcessMemory();
 
+        [StructLayout(LayoutKind.Sequential)]
+        private struct MemoryLedger
+        {
+            public long Footprint;
+            public long Graphics;
+            public long Media;
+            public long Device;
+            public long InternalResident;
+            public long Compressed;
+            public long CriAtom;
+            public long CriFs;
+        }
+
+        [DllImport("__Internal", EntryPoint = "AICReadMemoryLedger")]
+        private static extern int ReadMemoryLedger(out MemoryLedger snapshot);
+
         public static bool IsLowMemoryDevice
         {
             get
@@ -53,12 +69,18 @@ namespace AIC.iOS
                 return;
 
             const long MiB = 1024 * 1024;
+            string ledger = ReadMemoryLedger(out MemoryLedger snapshot) != 0
+                ? $" footprint={snapshot.Footprint / MiB} MiB graphics={snapshot.Graphics / MiB} MiB" +
+                  $" media={snapshot.Media / MiB} MiB device={snapshot.Device / MiB} MiB" +
+                  $" internal={snapshot.InternalResident / MiB} MiB compressed={snapshot.Compressed / MiB} MiB" +
+                  $" criAtom={snapshot.CriAtom / MiB} MiB criFs={snapshot.CriFs / MiB} MiB"
+                : " ledger=unavailable";
             Debug.Log($"[AIC Memory] {stage} frame={Time.frameCount} " +
                 $"headroom={AvailableProcessMemory().ToUInt64() / (ulong)MiB} MiB " +
                 $"unityUsed={Profiler.GetTotalAllocatedMemoryLong() / MiB} MiB " +
                 $"unityReserved={Profiler.GetTotalReservedMemoryLong() / MiB} MiB " +
                 $"managed={GC.GetTotalMemory(false) / MiB} MiB " +
-                $"textures={Texture.currentTextureMemory / (ulong)MiB} MiB");
+                $"textures={Texture.currentTextureMemory / (ulong)MiB} MiB" + ledger);
         }
 
         public static void FinishMapMemoryTrace()

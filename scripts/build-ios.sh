@@ -287,7 +287,10 @@ clang -c -O3 -arch arm64 -isysroot "${SDK_PATH}" -miphoneos-version-min=12.0 \
 clang -c -O3 -arch arm64 -isysroot "${SDK_PATH}" -miphoneos-version-min=12.0 \
   -fobjc-arc "${ROOT_DIR}/native/ios/GameControllerBridge.m" -o GameControllerBridge.o
 
-NATIVE_OBJECTS=(nanosockets.o RegisterMonoModules.o UnityICallRegistration.o GameControllerBridge.o)
+clang -c -O3 -arch arm64 -isysroot "${SDK_PATH}" -miphoneos-version-min=12.0 \
+  "${ROOT_DIR}/native/ios/MemoryLedger.c" -o MemoryLedger.o
+
+NATIVE_OBJECTS=(nanosockets.o RegisterMonoModules.o UnityICallRegistration.o GameControllerBridge.o MemoryLedger.o)
 if [[ -z "${CRI_SDK_LIBRARY}" ]]; then
   clang -c -O3 -arch arm64 -isysroot "${SDK_PATH}" -miphoneos-version-min=12.0 \
     -Wno-deprecated-non-prototype -Wno-strict-prototypes \

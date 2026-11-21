@@ -23,8 +23,12 @@ UNSUPPORTED_FORMATS = {
     TextureFormat.BC4, TextureFormat.BC5, TextureFormat.BC6H, TextureFormat.BC7,
 }
 
+# Large sampled artwork can keep its dimensions with one quarter of the GPU
+# storage. Keep readable textures and map-chip inputs in their original format.
+LARGE_IOS_ART_DIRECTORIES = {"Enemies", "EvImg", "Fatal", "PxlNoel", "SpineAnim"}
 
-def repair_ios_texture_bundle(source, destination):
+
+def repair_ios_texture_bundle(source, destination, compress_large_art):
     import astc_encoder
     from PIL import Image
     from UnityPy.streams import EndianBinaryReader
@@ -40,13 +44,23 @@ def repair_ios_texture_bundle(source, destination):
         if obj.type.name != "Texture2D":
             continue
         tex = obj.read()
-        if tex.m_TextureFormat != TextureFormat.BC7:
+        is_bc7 = tex.m_TextureFormat == TextureFormat.BC7
+        stream = tex.m_StreamData
+        is_streamed = stream is not None and stream.path and stream.size
+        is_large_art = (
+            compress_large_art and tex.m_TextureFormat == TextureFormat.RGBA32
+            and tex.m_Width * tex.m_Height >= 2048 * 2048
+            and not tex.m_IsReadable and not is_streamed and tex.m_MipCount == 1
+            and tex.m_TextureDimension == 2 and tex.m_ImageCount == 1
+            and not tex.m_PlatformBlob
+        )
+        if not (is_bc7 or is_large_art):
             continue
         if tex.m_MipCount != 1 or tex.m_PlatformBlob:
             raise ValueError(f"Unexpected BC7 texture layout: {source}:{tex.m_Name}")
 
-        # BC7 and ASTC 4x4 both use a 16-byte block. Keep the same stream offsets
-        # and alpha channels, including textures used as inputs to the map atlas.
+        # Keep the original channels and image orientation. BC7 and ASTC 4x4
+        # use the same block size, so existing stream offsets are preserved.
         image = tex.image.transpose(Image.Transpose.FLIP_TOP_BOTTOM).convert("RGBA")
         image_data = astc_encoder.ASTCImage(
             astc_encoder.ASTCType.U8, tex.m_Width, tex.m_Height, 1, image.tobytes()
@@ -58,11 +72,10 @@ def repair_ios_texture_bundle(source, destination):
         data = astc_encoder.ASTCContext(config).compress(
             image_data, astc_encoder.ASTCSwizzle.from_str("RGBA")
         )
-        if len(data) != len(tex.get_image_data()):
+        if is_bc7 and len(data) != len(tex.get_image_data()):
             raise ValueError(f"ASTC stream size differs from BC7: {source}:{tex.m_Name}")
 
-        stream = tex.m_StreamData
-        if stream is not None and stream.path and stream.size:
+        if is_streamed:
             name = PurePosixPath(stream.path).name
             resource = bundle.files[name]
             original = resource.bytes
@@ -74,6 +87,7 @@ def repair_ios_texture_bundle(source, destination):
             bundle.files[name] = replacement
         else:
             tex.image_data = data
+        tex.m_CompleteImageSize = len(data)
         tex.m_TextureFormat = TextureFormat.ASTC_RGBA_4x4
         tex.save()
         changed = True
@@ -90,12 +104,17 @@ def repair_ios_textures(source, output):
         raise ValueError(f"No asset bundles found in {source}")
     with ProcessPoolExecutor(max_workers=min(3, os.cpu_count() or 1)) as executor:
         tasks = {
-            executor.submit(repair_ios_texture_bundle, path, output / path.relative_to(source)): path
+            executor.submit(
+                repair_ios_texture_bundle,
+                path,
+                output / path.relative_to(source),
+                path.relative_to(source).parts[0] in LARGE_IOS_ART_DIRECTORIES,
+            ): path
             for path in files
         }
         for task in as_completed(tasks):
             if task.result():
-                print(f"[+] Converted BC7 to ASTC: {tasks[task].relative_to(source)}", flush=True)
+                print(f"[+] Converted to iOS ASTC: {tasks[task].relative_to(source)}", flush=True)
     output.mkdir(parents=True, exist_ok=True)
     (output / ".complete").touch()
 

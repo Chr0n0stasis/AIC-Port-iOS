@@ -13,6 +13,7 @@ class Program
             var managedDir = args[1];
             IosStartupPatcher.PatchInputSystem(managedDir);
             IosStartupPatcher.InstallMobileInputUpdate(managedDir);
+            IosStartupPatcher.UseMobileDisplay(managedDir);
             if (args is ["--ios-startup", _, "--cri-sdk-exports", var exportsPath])
                 CriSdkVerifier.Verify(managedDir, exportsPath);
             else if (args.Length == 2)

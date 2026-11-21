@@ -114,6 +114,39 @@ internal static class IosStartupPatcher
         Console.WriteLine("[+] Installed the iOS gamepad input provider before game input dispatch");
     }
 
+    internal static void UseMobileDisplay(string managedDirectory)
+    {
+        var inputPath = Path.Combine(managedDirectory, "unsafeAssem.dll");
+        var settingsPath = Path.Combine(managedDirectory, "Assembly-CSharp.dll");
+        using var resolver = new DefaultAssemblyResolver();
+        resolver.AddSearchDirectory(managedDirectory);
+        var parameters = new ReaderParameters { InMemory = true, AssemblyResolver = resolver };
+        using var input = AssemblyDefinition.ReadAssembly(inputPath, parameters);
+        using var settings = AssemblyDefinition.ReadAssembly(settingsPath, parameters);
+        var setMode = input.MainModule.GetType("XX.IN").Methods.Single(method =>
+            method.Name == "setFullScreenMode" && method.IsStatic && method.Parameters.Count == 2 &&
+            method.Body.Instructions.Any(instruction => instruction.Operand is MethodReference called &&
+                called.DeclaringType.FullName == "UnityEngine.Screen" && called.Name == "SetResolution"));
+
+        var desktopWindowSetting = settings.MainModule.Types.Single(type => type.Name == "UiCFG").Methods
+            .Where(method => method.IsConstructor && method.HasBody)
+            .SelectMany(method => method.Body.Instructions)
+            .Single(instruction => instruction.OpCode == OpCodes.Stfld &&
+                instruction.Operand is FieldReference field && field.Name == "enable_fullscreen");
+        if (desktopWindowSetting.Previous.OpCode != OpCodes.Ldc_I4_1)
+            throw new InvalidOperationException("Unexpected initial state for the desktop window options.");
+
+        // iOS owns the drawable size. XX.IN.checkWindowSizeChanged still updates
+        // the game's existing aspect-ratio viewport whenever that size changes.
+        setMode.Body = new MethodBody(setMode);
+        setMode.Body.GetILProcessor().Emit(OpCodes.Ret);
+        desktopWindowSetting.Previous.OpCode = OpCodes.Ldc_I4_0;
+
+        WriteStagedAssembly(input, inputPath);
+        WriteStagedAssembly(settings, settingsPath);
+        Console.WriteLine("[+] Kept the iOS native display size and disabled the desktop window settings");
+    }
+
     private static void WriteStagedAssembly(AssemblyDefinition assembly, string path)
     {
         var staged = path + ".tmp";

@@ -19,7 +19,7 @@ static uint32_t ButtonBit(GCControllerButtonInput *button, unsigned bit)
 }
 
 __attribute__((visibility("default")))
-void AICPollGameController(AICGamepadState *state)
+int32_t AICPollGameController(AICGamepadState *state)
 {
     *state = (AICGamepadState){0};
     @autoreleasepool {
@@ -28,14 +28,10 @@ void AICPollGameController(AICGamepadState *state)
             pad = controller.extendedGamepad;
             if (pad != nil) break;
         }
-        if (pad == nil) return;
+        if (pad == nil) return 0;
 
         state->leftX = pad.leftThumbstick.xAxis.value;
         state->leftY = pad.leftThumbstick.yAxis.value;
-        if (state->leftX * state->leftX + state->leftY * state->leftY < 0.02f) {
-            state->leftX = pad.dpad.xAxis.value;
-            state->leftY = pad.dpad.yAxis.value;
-        }
         state->rightX = pad.rightThumbstick.xAxis.value;
         state->rightY = pad.rightThumbstick.yAxis.value;
         state->leftTrigger = pad.leftTrigger.value;
@@ -54,4 +50,5 @@ void AICPollGameController(AICGamepadState *state)
             state->buttons |= ButtonBit(pad.buttonMenu, Start) | ButtonBit(pad.buttonOptions, Select);
         }
     }
+    return 1;
 }

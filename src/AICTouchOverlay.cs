@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -17,6 +18,7 @@ namespace AIC.iOS
         private Gamepad bridgePad;
         private PlayerInput player;
         private bool reportedInputError;
+        private bool hardwareConnected;
 
         [StructLayout(LayoutKind.Sequential)]
         private struct AppleGamepadState
@@ -26,7 +28,7 @@ namespace AIC.iOS
         }
 
         [DllImport("__Internal", EntryPoint = "AICPollGameController")]
-        private static extern void PollGameController(out AppleGamepadState state);
+        private static extern int PollGameController(out AppleGamepadState state);
 
         // Called at the original InputSystem.Update site in XX.IN.run, before
         // KEY.updatePressing consumes button edges and rebuilds the press bits.
@@ -36,7 +38,6 @@ namespace AIC.iOS
             {
                 try
                 {
-                    _instance.ReadTouches();
                     _instance.QueueGamepadState();
                 }
                 catch (Exception error)
@@ -56,6 +57,7 @@ namespace AIC.iOS
         {
             Screen.sleepTimeout = SleepTimeout.NeverSleep;
             Application.targetFrameRate = 60;
+            Input.multiTouchEnabled = true;
 
             if (_instance == null)
             {
@@ -67,6 +69,7 @@ namespace AIC.iOS
 
         // Layout constants
         private float scale = 1f;
+        private int layoutWidth, layoutHeight;
         private Rect leftStickArea;
         private Rect btnJump, btnAtk, btnMagic, btnEvade, btnRun, btnMenu, btnMap;
 
@@ -76,8 +79,8 @@ namespace AIC.iOS
         private bool isStickActive;
         private int stickFingerId = -1;
 
-        // Button state
-        private bool pressedJump, pressedAtk, pressedMagic, pressedEvade, pressedRun, pressedMenu, pressedMap;
+        private readonly Dictionary<int, GamepadButton> buttonTouches = new Dictionary<int, GamepadButton>();
+        private uint touchButtons;
 
         void Awake()
         {
@@ -86,8 +89,8 @@ namespace AIC.iOS
 
         void UpdateLayout()
         {
-            float w = Screen.width;
-            float h = Screen.height;
+            float w = layoutWidth = Screen.width;
+            float h = layoutHeight = Screen.height;
             // Base scale on screen height (assuming reference height 1080)
             scale = Mathf.Max(1.0f, h / 1080f);
 
@@ -113,24 +116,25 @@ namespace AIC.iOS
 
         private void ReadTouches()
         {
-            // Reset button states
-            pressedJump = false;
-            pressedAtk = false;
-            pressedMagic = false;
-            pressedEvade = false;
-            pressedRun = false;
-            pressedMenu = false;
-            pressedMap = false;
+            touchButtons = 0;
 
             // Process Touch inputs
             int touchCount = Input.touchCount;
+            if (touchCount == 0)
+            {
+                ClearTouchState();
+                return;
+            }
             bool stickStillActive = false;
 
             for (int i = 0; i < touchCount; i++)
             {
                 Touch t = Input.GetTouch(i);
                 if (t.phase == TouchPhase.Ended || t.phase == TouchPhase.Canceled)
+                {
+                    buttonTouches.Remove(t.fingerId);
                     continue;
+                }
                 Vector2 screenPos = new Vector2(t.position.x, Screen.height - t.position.y); // Flip Y for GUI
 
                 // Check Left Joystick
@@ -138,6 +142,7 @@ namespace AIC.iOS
                 {
                     stickCurrent = screenPos;
                     stickStillActive = true;
+                    continue;
                 }
                 else if (leftStickArea.Contains(screenPos) && !isStickActive && t.phase == TouchPhase.Began)
                 {
@@ -146,16 +151,19 @@ namespace AIC.iOS
                     stickCurrent = screenPos;
                     isStickActive = true;
                     stickStillActive = true;
+                    continue;
                 }
 
-                // Check Action Buttons
-                if (btnJump.Contains(screenPos)) pressedJump = true;
-                if (btnAtk.Contains(screenPos)) pressedAtk = true;
-                if (btnMagic.Contains(screenPos)) pressedMagic = true;
-                if (btnEvade.Contains(screenPos)) pressedEvade = true;
-                if (btnRun.Contains(screenPos)) pressedRun = true;
-                if (btnMenu.Contains(screenPos)) pressedMenu = true;
-                if (btnMap.Contains(screenPos)) pressedMap = true;
+                if (t.phase == TouchPhase.Began)
+                {
+                    buttonTouches.Remove(t.fingerId);
+                    var button = GetTouchButton(screenPos);
+                    if (button.HasValue)
+                        buttonTouches[t.fingerId] = button.Value;
+                }
+
+                if (buttonTouches.TryGetValue(t.fingerId, out var heldButton))
+                    touchButtons |= 1u << (int)heldButton;
             }
 
             if (!stickStillActive)
@@ -165,16 +173,57 @@ namespace AIC.iOS
             }
         }
 
+        private GamepadButton? GetTouchButton(Vector2 position)
+        {
+            if (btnJump.Contains(position)) return GamepadButton.South;
+            if (btnAtk.Contains(position)) return GamepadButton.West;
+            if (btnMagic.Contains(position)) return GamepadButton.East;
+            if (btnEvade.Contains(position)) return GamepadButton.North;
+            if (btnRun.Contains(position)) return GamepadButton.LeftStick;
+            if (btnMenu.Contains(position)) return GamepadButton.Start;
+            if (btnMap.Contains(position)) return GamepadButton.LeftShoulder;
+            return null;
+        }
+
+        private void ClearTouchState()
+        {
+            isStickActive = false;
+            stickFingerId = -1;
+            buttonTouches.Clear();
+            touchButtons = 0;
+        }
+
+        private void OnApplicationFocus(bool focused)
+        {
+            if (!focused)
+                ClearTouchState();
+        }
+
         private void QueueGamepadState()
         {
-            PollGameController(out var hardware);
+            bool connected = PollGameController(out var hardware) != 0;
+            if (connected != hardwareConnected)
+            {
+                ClearTouchState();
+                hardwareConnected = connected;
+            }
+            if (!hardwareConnected)
+            {
+                if (layoutWidth != Screen.width || layoutHeight != Screen.height)
+                {
+                    ClearTouchState();
+                    UpdateLayout();
+                }
+                ReadTouches();
+            }
+
             var state = new GamepadState
             {
                 leftStick = new Vector2(hardware.LeftX, hardware.LeftY),
                 rightStick = new Vector2(hardware.RightX, hardware.RightY),
                 leftTrigger = hardware.LeftTrigger,
                 rightTrigger = hardware.RightTrigger,
-                buttons = hardware.Buttons,
+                buttons = hardwareConnected ? hardware.Buttons : touchButtons,
             };
 
             if (isStickActive)
@@ -183,13 +232,6 @@ namespace AIC.iOS
                 if (delta.magnitude > 25f * scale)
                     state.leftStick = new Vector2(delta.x, -delta.y).normalized;
             }
-
-            if (pressedJump || pressedMap) state = state.WithButton(GamepadButton.South);
-            if (pressedAtk) state = state.WithButton(GamepadButton.West);
-            if (pressedMagic) state = state.WithButton(GamepadButton.East);
-            if (pressedEvade) state = state.WithButton(GamepadButton.North);
-            if (pressedRun) state = state.WithButton(GamepadButton.LeftStick);
-            if (pressedMenu) state = state.WithButton(GamepadButton.Start);
 
             bool active = state.buttons != 0 || state.leftStick.sqrMagnitude > 0.02f ||
                 state.rightStick.sqrMagnitude > 0.02f || state.leftTrigger > 0.2f || state.rightTrigger > 0.2f;
@@ -210,6 +252,10 @@ namespace AIC.iOS
         {
             if (player == null)
                 return;
+            // Touches can also produce pointer activity. Keep the player's action
+            // scheme paired to the bridge while the mobile controls are in use.
+            if (!player.neverAutoSwitchControlSchemes)
+                player.neverAutoSwitchControlSchemes = true;
             foreach (var device in player.devices)
             {
                 if (device == bridgePad)
@@ -218,8 +264,13 @@ namespace AIC.iOS
             player.SwitchCurrentControlScheme("Gamepad", bridgePad);
         }
 
+        private bool TouchButtonPressed(GamepadButton button) => (touchButtons & (1u << (int)button)) != 0;
+
         void OnGUI()
         {
+            if (hardwareConnected)
+                return;
+
             // Semi-transparent style
             var prevColor = GUI.color;
             GUI.color = new Color(1f, 1f, 1f, 0.45f);
@@ -235,19 +286,19 @@ namespace AIC.iOS
             }
 
             // Draw Action Buttons
-            GUI.color = pressedJump ? new Color(1f, 0.9f, 0.3f, 0.8f) : new Color(1f, 1f, 1f, 0.45f);
+            GUI.color = TouchButtonPressed(GamepadButton.South) ? new Color(1f, 0.9f, 0.3f, 0.8f) : new Color(1f, 1f, 1f, 0.45f);
             GUI.Box(btnJump, "JUMP\n(A)");
 
-            GUI.color = pressedAtk ? new Color(1f, 0.3f, 0.3f, 0.8f) : new Color(1f, 1f, 1f, 0.45f);
+            GUI.color = TouchButtonPressed(GamepadButton.West) ? new Color(1f, 0.3f, 0.3f, 0.8f) : new Color(1f, 1f, 1f, 0.45f);
             GUI.Box(btnAtk, "ATK\n(X)");
 
-            GUI.color = pressedMagic ? new Color(0.8f, 0.4f, 1f, 0.8f) : new Color(1f, 1f, 1f, 0.45f);
+            GUI.color = TouchButtonPressed(GamepadButton.East) ? new Color(0.8f, 0.4f, 1f, 0.8f) : new Color(1f, 1f, 1f, 0.45f);
             GUI.Box(btnMagic, "MAGIC\n(B)");
 
-            GUI.color = pressedEvade ? new Color(0.3f, 1f, 0.5f, 0.8f) : new Color(1f, 1f, 1f, 0.45f);
+            GUI.color = TouchButtonPressed(GamepadButton.North) ? new Color(0.3f, 1f, 0.5f, 0.8f) : new Color(1f, 1f, 1f, 0.45f);
             GUI.Box(btnEvade, "DASH\n(Y)");
 
-            GUI.color = pressedRun ? new Color(1f, 0.6f, 0.2f, 0.8f) : new Color(1f, 1f, 1f, 0.45f);
+            GUI.color = TouchButtonPressed(GamepadButton.LeftStick) ? new Color(1f, 0.6f, 0.2f, 0.8f) : new Color(1f, 1f, 1f, 0.45f);
             GUI.Box(btnRun, "RUN");
 
             // Utility buttons

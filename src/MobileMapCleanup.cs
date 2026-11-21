@@ -1,4 +1,7 @@
+using System;
+using System.Runtime.InteropServices;
 using UnityEngine;
+using UnityEngine.Profiling;
 
 namespace AIC.iOS
 {
@@ -16,6 +19,11 @@ namespace AIC.iOS
         private static int earliestCleanupFrame;
         private static float lastMemoryWarning = float.NegativeInfinity;
         private static float cleanupStartedAt;
+        private static bool tracingMap;
+        private static int traceFrames;
+
+        [DllImport("__Internal", EntryPoint = "os_proc_available_memory")]
+        private static extern UIntPtr AvailableProcessMemory();
 
         public static bool IsLowMemoryDevice
         {
@@ -31,6 +39,33 @@ namespace AIC.iOS
         }
 
         public static int ClosedMapCacheLimit() => IsLowMemoryDevice ? 0 : 1;
+
+        public static void BeginMapMemoryTrace()
+        {
+            tracingMap = IsLowMemoryDevice && Application.platform == RuntimePlatform.IPhonePlayer;
+            traceFrames = 0;
+            TraceMapMemory("before map close");
+        }
+
+        public static void TraceMapMemory(string stage)
+        {
+            if (!tracingMap)
+                return;
+
+            const long MiB = 1024 * 1024;
+            Debug.Log($"[AIC Memory] {stage} frame={Time.frameCount} " +
+                $"headroom={AvailableProcessMemory().ToUInt64() / (ulong)MiB} MiB " +
+                $"unityUsed={Profiler.GetTotalAllocatedMemoryLong() / MiB} MiB " +
+                $"unityReserved={Profiler.GetTotalReservedMemoryLong() / MiB} MiB " +
+                $"managed={GC.GetTotalMemory(false) / MiB} MiB " +
+                $"textures={Texture.currentTextureMemory / (ulong)MiB} MiB");
+        }
+
+        public static void FinishMapMemoryTrace()
+        {
+            TraceMapMemory("after map open");
+            traceFrames = tracingMap ? 32 : 0;
+        }
 
         // On small devices, allow deferred Destroy calls from the closed map
         // to run at end of frame before scanning for unused assets.
@@ -50,6 +85,7 @@ namespace AIC.iOS
 
             if (mapOpenFrame < 0)
             {
+                TraceMapMemory("atlas ready");
                 // Let the atlas upload and queued destruction cross a rendered
                 // frame before allocating the incoming map's scene resources.
                 mapOpenFrame = Time.frameCount + 2;
@@ -59,6 +95,7 @@ namespace AIC.iOS
                 return true;
 
             waitBeforeMapOpen = false;
+            TraceMapMemory("before map open");
             return false;
         }
 
@@ -103,6 +140,7 @@ namespace AIC.iOS
                     return true;
                 pendingCleanup = null;
                 Debug.Log($"[AIC] Unused asset sweep completed in {Time.realtimeSinceStartup - cleanupStartedAt:F2}s");
+                TraceMapMemory("after unused asset sweep");
             }
 
             if (!cleanupRequested)
@@ -119,6 +157,16 @@ namespace AIC.iOS
 
         // A map can close without an active map loader, for example when
         // returning to the title. Service the same queue from the player loop.
-        internal static void Tick() => IsPending();
+        internal static void Tick()
+        {
+            IsPending();
+            if (traceFrames == 0)
+                return;
+
+            if (traceFrames > 28 || traceFrames % 4 == 0)
+                TraceMapMemory("after map frame");
+            if (--traceFrames == 0)
+                tracingMap = false;
+        }
     }
 }

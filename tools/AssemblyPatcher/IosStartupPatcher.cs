@@ -214,7 +214,49 @@ internal static class IosStartupPatcher
         TrimUnusedRenderTextures(game, game.ImportReference(isLowMemoryDevice));
         RebuildGrowingMapAtlas(game, map, cleanup);
         DeferMapOpenAfterAtlas(game, map, cleanup);
+        TraceMapTransitionMemory(game, changeMap, cleanup);
     }
+
+    private static void TraceMapTransitionMemory(ModuleDefinition game, MethodDefinition changeMap, TypeDefinition cleanup)
+    {
+        var begin = game.ImportReference(cleanup.Methods.Single(method => method.Name == "BeginMapMemoryTrace"));
+        var trace = game.ImportReference(cleanup.Methods.Single(method => method.Name == "TraceMapMemory"));
+        var finish = game.ImportReference(cleanup.Methods.Single(method => method.Name == "FinishMapMemoryTrace"));
+
+        var calls = changeMap.Body.Instructions.Where(instruction =>
+            instruction.OpCode == OpCodes.Callvirt && instruction.Operand is MethodReference called &&
+            called.DeclaringType.FullName == "m2d.Map2d").ToArray();
+        var closeCall = calls.First(instruction => ((MethodReference)instruction.Operand).Name == "close");
+        var openCall = calls.Single(instruction => ((MethodReference)instruction.Operand).Name == "open");
+        var changeIL = changeMap.Body.GetILProcessor();
+        changeIL.InsertBefore(closeCall, changeIL.Create(OpCodes.Call, begin));
+        changeIL.InsertAfter(openCall.Next, changeIL.Create(OpCodes.Call, finish));
+
+        var open = ((MethodReference)openCall.Operand).Resolve();
+        var events = game.GetType("m2d.M2EventContainer").Methods.Single(method => method.Name == "reload" &&
+            method.HasBody && method.Body.Instructions.Any(instruction => instruction.Operand is string message &&
+                message.StartsWith("M2EventContainer::reload", StringComparison.Ordinal)));
+        var eventLog = events.Body.Instructions.Last(instruction => instruction.OpCode == OpCodes.Call &&
+            instruction.Operand is MethodReference called && called.DeclaringType.FullName == "XX.X" && called.Name == "dl");
+
+        foreach (var (method, checkpoint, stage) in new[] {
+            (open, FindCall(open, "prepareMeshDrawer"), "after map mesh setup"),
+            (open, FindCall(open, "init"), "after camera setup"),
+            (open, FindCall(open, "openSubMaps"), "after submap open"),
+            (events, eventLog, "after event reload"),
+        })
+        {
+            var il = method.Body.GetILProcessor();
+            var label = il.Create(OpCodes.Ldstr, stage);
+            il.InsertAfter(checkpoint, label);
+            il.InsertAfter(label, il.Create(OpCodes.Call, trace));
+        }
+    }
+
+    private static Instruction FindCall(MethodDefinition method, string name) =>
+        method.Body.Instructions.Single(instruction =>
+            (instruction.OpCode == OpCodes.Call || instruction.OpCode == OpCodes.Callvirt) &&
+            instruction.Operand is MethodReference called && called.Name == name);
 
     private static void DeferMapOpenAfterAtlas(ModuleDefinition game, TypeDefinition map, TypeDefinition cleanup)
     {

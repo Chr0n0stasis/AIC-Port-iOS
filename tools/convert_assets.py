@@ -25,10 +25,10 @@ UNSUPPORTED_FORMATS = {
 
 # Large sampled artwork can keep its dimensions with one quarter of the GPU
 # storage. Keep readable textures and map-chip inputs in their original format.
-LARGE_IOS_ART_DIRECTORIES = {"Enemies", "EvImg", "Fatal", "PxlNoel", "SpineAnim"}
+LARGE_IOS_ART_DIRECTORIES = {"Enemies", "EvImg", "Fatal", "Pxl", "PxlNoel", "SpineAnim"}
 
 
-def repair_ios_texture_bundle(source, destination, compress_large_art):
+def repair_ios_texture_bundle(source, destination, min_rgba_pixels):
     import astc_encoder
     from PIL import Image
     from UnityPy.streams import EndianBinaryReader
@@ -39,8 +39,12 @@ def repair_ios_texture_bundle(source, destination, compress_large_art):
 
     env = UnityPy.load(str(source))
     bundle = env.file
+    objects = list(env.objects)
+    single_texture_bundle = len(objects) == 2 and {obj.type.name for obj in objects} == {
+        "AssetBundle", "Texture2D",
+    }
     changed = False
-    for obj in env.objects:
+    for obj in objects:
         if obj.type.name != "Texture2D":
             continue
         tex = obj.read()
@@ -48,12 +52,22 @@ def repair_ios_texture_bundle(source, destination, compress_large_art):
         stream = tex.m_StreamData
         is_streamed = stream is not None and stream.path and stream.size
         is_large_art = (
-            compress_large_art and tex.m_TextureFormat == TextureFormat.RGBA32
-            and tex.m_Width * tex.m_Height >= 2048 * 2048
-            and not tex.m_IsReadable and not is_streamed and tex.m_MipCount == 1
+            min_rgba_pixels is not None and tex.m_TextureFormat == TextureFormat.RGBA32
+            and tex.m_Width * tex.m_Height >= min_rgba_pixels
+            and not tex.m_IsReadable and tex.m_MipCount == 1
             and tex.m_TextureDimension == 2 and tex.m_ImageCount == 1
             and not tex.m_PlatformBlob
         )
+        if is_large_art and is_streamed:
+            # A smaller stream can replace the resource only when this texture
+            # owns the whole resource. Keep all shared streams untouched.
+            if not single_texture_bundle or stream.offset != 0:
+                continue
+            resource = bundle.files.get(PurePosixPath(stream.path).name)
+            if resource is None or not 0 <= len(resource.bytes) - stream.size < 16:
+                continue
+            if any(resource.bytes[stream.size:]):
+                continue
         if not (is_bc7 or is_large_art):
             continue
         if tex.m_MipCount != 1 or tex.m_PlatformBlob:
@@ -80,9 +94,13 @@ def repair_ios_texture_bundle(source, destination, compress_large_art):
             resource = bundle.files[name]
             original = resource.bytes
             end = stream.offset + stream.size
-            if stream.size != len(data) or end > len(original):
+            if end > len(original):
                 raise ValueError(f"Invalid texture stream: {source}:{tex.m_Name}")
-            replacement = EndianBinaryReader(original[:stream.offset] + data + original[end:])
+            if is_bc7:
+                replacement = EndianBinaryReader(original[:stream.offset] + data + original[end:])
+            else:
+                replacement = EndianBinaryReader(data)
+                stream.size = len(data)
             replacement.flags = resource.flags
             bundle.files[name] = replacement
         else:
@@ -103,18 +121,17 @@ def repair_ios_textures(source, output):
     if not files:
         raise ValueError(f"No asset bundles found in {source}")
     with ProcessPoolExecutor(max_workers=min(3, os.cpu_count() or 1)) as executor:
-        tasks = {
-            executor.submit(
-                repair_ios_texture_bundle,
-                path,
-                output / path.relative_to(source),
-                path.relative_to(source).parts[0] in LARGE_IOS_ART_DIRECTORIES,
-            ): path
-            for path in files
-        }
+        tasks = {}
+        for path in files:
+            relative = path.relative_to(source)
+            directory = relative.parts[0]
+            minimum = None
+            if directory in LARGE_IOS_ART_DIRECTORIES:
+                minimum = 1024 ** 2 if directory == "Enemies" else 2048 ** 2
+            tasks[executor.submit(repair_ios_texture_bundle, path, output / relative, minimum)] = relative
         for task in as_completed(tasks):
             if task.result():
-                print(f"[+] Converted to iOS ASTC: {tasks[task].relative_to(source)}", flush=True)
+                print(f"[+] Converted to iOS ASTC: {tasks[task]}", flush=True)
     output.mkdir(parents=True, exist_ok=True)
     (output / ".complete").touch()
 

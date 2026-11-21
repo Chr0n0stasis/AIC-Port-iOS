@@ -133,7 +133,8 @@ internal static class IosStartupPatcher
 
     private static void WaitForMapResourceCleanup(ModuleDefinition game, ModuleDefinition overlay)
     {
-        var cleanup = overlay.GetType("AIC.iOS.MobileMapCleanup");
+        var cleanup = overlay.GetType("AIC.iOS.MobileMapCleanup")
+            ?? throw new InvalidOperationException("AIC.iOS.dll is missing MobileMapCleanup. Build with src/MobileMapCleanup.cs.");
         var begin = cleanup.Methods.Single(method => method.Name == "Begin" && method.IsStatic &&
             !method.HasParameters && method.ReturnType.FullName == "UnityEngine.AsyncOperation");
         var isPending = cleanup.Methods.Single(method => method.Name == "IsPending" && method.IsStatic &&

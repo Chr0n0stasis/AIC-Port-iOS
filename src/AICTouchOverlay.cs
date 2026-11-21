@@ -12,7 +12,7 @@ namespace AIC.iOS
     /// AIC On-Screen Touch Controller for iOS
     /// Sends touch controls and Apple's physical gamepads through the game input actions.
     /// </summary>
-    public class AICTouchOverlay : MonoBehaviour
+    public partial class AICTouchOverlay : MonoBehaviour
     {
         private static AICTouchOverlay _instance;
         private Gamepad bridgePad;
@@ -81,132 +81,123 @@ namespace AIC.iOS
             }
         }
 
-        // Layout constants
-        private float scale = 1f;
-        private int layoutWidth, layoutHeight;
-        private Rect leftStickArea;
-        private Rect btnJump, btnAtk, btnMagic, btnEvade, btnRun, btnMenu, btnMap;
-        private Rect btnDebugF7;
-
-        // Joystick state
-        private Vector2 stickOrigin;
-        private Vector2 stickCurrent;
-        private bool isStickActive;
         private int stickFingerId = -1;
+        private Vector2 stickTouchOrigin;
+        private Vector2 stickOffset;
+        private readonly Dictionary<int, TouchControl> buttonTouches = new Dictionary<int, TouchControl>();
 
-        private readonly Dictionary<int, GamepadButton> buttonTouches = new Dictionary<int, GamepadButton>();
-        private uint touchButtons;
-
-        void Awake()
+        private GamepadState ReadTouches()
         {
-            UpdateLayout();
-        }
+            var state = new GamepadState();
+            foreach (var control in controls)
+                control.IsHeld = false;
 
-        void UpdateLayout()
-        {
-            float w = layoutWidth = Screen.width;
-            float h = layoutHeight = Screen.height;
-            // Base scale on screen height (assuming reference height 1080)
-            scale = Mathf.Max(1.0f, h / 1080f);
-
-            float padSize = 260f * scale;
-            leftStickArea = new Rect(40f * scale, h - padSize - 40f * scale, padSize, padSize);
-
-            float btnRadius = 85f * scale;
-            float rightMargin = w - 40f * scale;
-            float bottomMargin = h - 40f * scale;
-
-            // Action cluster layout (Diamond layout on right)
-            btnJump = new Rect(rightMargin - btnRadius * 2.2f, bottomMargin - btnRadius * 1.5f, btnRadius, btnRadius);
-            btnAtk = new Rect(rightMargin - btnRadius * 3.5f, bottomMargin - btnRadius * 2.5f, btnRadius, btnRadius);
-            btnMagic = new Rect(rightMargin - btnRadius * 2.2f, bottomMargin - btnRadius * 3.8f, btnRadius, btnRadius);
-            btnEvade = new Rect(rightMargin - btnRadius * 0.9f, bottomMargin - btnRadius * 2.5f, btnRadius, btnRadius);
-            btnRun = new Rect(rightMargin - btnRadius * 0.9f, bottomMargin - btnRadius * 4.0f, btnRadius * 0.9f, btnRadius * 0.9f);
-
-            // Top utility buttons
-            float topBtnSize = 70f * scale;
-            btnMenu = new Rect(w - topBtnSize - 40f * scale, 30f * scale, topBtnSize, topBtnSize);
-            btnMap = new Rect(40f * scale, 30f * scale, topBtnSize, topBtnSize);
-            btnDebugF7 = new Rect(btnMap.xMax + 16f * scale, btnMap.y, topBtnSize, topBtnSize);
-        }
-
-        private void ReadTouches()
-        {
-            touchButtons = 0;
-
-            // Process Touch inputs
-            int touchCount = Input.touchCount;
-            if (touchCount == 0)
-            {
-                ClearTouchState();
-                return;
-            }
+            // Release previous owners before assigning new fingers. Unity need
+            // not enumerate simultaneous Began and Ended touches in that order.
+            int count = Input.touchCount;
             bool stickStillActive = false;
-
-            for (int i = 0; i < touchCount; i++)
+            for (int i = 0; i < count; i++)
             {
-                Touch t = Input.GetTouch(i);
-                if (t.phase == TouchPhase.Ended || t.phase == TouchPhase.Canceled)
+                Touch touch = Input.GetTouch(i);
+                if (touch.phase == TouchPhase.Ended || touch.phase == TouchPhase.Canceled)
                 {
-                    buttonTouches.Remove(t.fingerId);
-                    continue;
+                    if (buttonTouches.TryGetValue(touch.fingerId, out var control))
+                    {
+                        if (touch.phase == TouchPhase.Ended && IsVisible(control) &&
+                            control.Contains(ToGuiPoint(touch.position)))
+                        {
+                            if (control.Action == TouchAction.ToggleControls)
+                                extraControlsOpen = !extraControlsOpen;
+                            if (control.Action == TouchAction.DebugF7)
+                                debugF7Pending = true;
+                        }
+                        buttonTouches.Remove(touch.fingerId);
+                    }
                 }
-                Vector2 screenPos = new Vector2(t.position.x, Screen.height - t.position.y); // Flip Y for GUI
-
-                // Check Left Joystick
-                if (t.fingerId == stickFingerId)
+                else if (touch.fingerId == stickFingerId)
                 {
-                    stickCurrent = screenPos;
                     stickStillActive = true;
-                    continue;
                 }
-                else if (leftStickArea.Contains(screenPos) && !isStickActive && t.phase == TouchPhase.Began)
-                {
-                    stickFingerId = t.fingerId;
-                    stickOrigin = screenPos;
-                    stickCurrent = screenPos;
-                    isStickActive = true;
-                    stickStillActive = true;
-                    continue;
-                }
-
-                if (t.phase == TouchPhase.Began)
-                {
-                    buttonTouches.Remove(t.fingerId);
-                    var button = GetTouchButton(screenPos);
-                    if (button.HasValue)
-                        buttonTouches[t.fingerId] = button.Value;
-                }
-
-                if (buttonTouches.TryGetValue(t.fingerId, out var heldButton))
-                    touchButtons |= 1u << (int)heldButton;
             }
-
             if (!stickStillActive)
             {
-                isStickActive = false;
                 stickFingerId = -1;
+                stickOffset = Vector2.zero;
             }
+            if (count == 0)
+                buttonTouches.Clear();
+
+            for (int i = 0; i < count; i++)
+            {
+                Touch touch = Input.GetTouch(i);
+                if (touch.phase == TouchPhase.Ended || touch.phase == TouchPhase.Canceled)
+                    continue;
+
+                Vector2 position = ToGuiPoint(touch.position);
+                if (touch.phase == TouchPhase.Began && touch.fingerId != stickFingerId &&
+                    !buttonTouches.ContainsKey(touch.fingerId))
+                {
+                    TouchControl control = FindTouchControl(position);
+                    if (control != null)
+                        buttonTouches.Add(touch.fingerId, control);
+                    else if (!hardwareConnected && stickFingerId == -1 &&
+                        (position - stickCenter).sqrMagnitude <= stickHitRadius * stickHitRadius)
+                    {
+                        stickFingerId = touch.fingerId;
+                        stickTouchOrigin = position;
+                    }
+                }
+
+                if (touch.fingerId == stickFingerId)
+                    stickOffset = position - stickTouchOrigin;
+                else if (buttonTouches.TryGetValue(touch.fingerId, out var control) && IsVisible(control))
+                    ApplyTouchControl(control, ref state);
+            }
+
+            // AIC's movement actions are four directional controls with their
+            // own press thresholds. Keep the existing full deflection past the dead zone.
+            float deadZone = 10f * scale;
+            if (stickOffset.sqrMagnitude > deadZone * deadZone)
+                state.leftStick = new Vector2(stickOffset.x, -stickOffset.y).normalized;
+            return state;
         }
 
-        private GamepadButton? GetTouchButton(Vector2 position)
+        private static void ApplyTouchControl(TouchControl control, ref GamepadState state)
         {
-            if (btnJump.Contains(position)) return GamepadButton.South;
-            if (btnAtk.Contains(position)) return GamepadButton.West;
-            if (btnMagic.Contains(position)) return GamepadButton.East;
-            if (btnEvade.Contains(position)) return GamepadButton.North;
-            if (btnRun.Contains(position)) return GamepadButton.LeftStick;
-            if (btnMenu.Contains(position)) return GamepadButton.Start;
-            if (btnMap.Contains(position)) return GamepadButton.LeftShoulder;
-            return null;
+            control.IsHeld = true;
+            switch (control.Action)
+            {
+                case TouchAction.Button:
+                    state.buttons |= 1u << (int)control.Button;
+                    break;
+                case TouchAction.LeftTrigger:
+                    state.leftTrigger = 1f;
+                    break;
+                case TouchAction.RightTrigger:
+                    state.rightTrigger = 1f;
+                    break;
+                case TouchAction.SpellLeft:
+                    state.rightStick = Vector2.left;
+                    break;
+                case TouchAction.SpellUp:
+                    state.rightStick = Vector2.up;
+                    break;
+                case TouchAction.SpellRight:
+                    state.rightStick = Vector2.right;
+                    break;
+                case TouchAction.SpellDown:
+                    state.rightStick = Vector2.down;
+                    break;
+            }
         }
 
         private void ClearTouchState()
         {
-            isStickActive = false;
             stickFingerId = -1;
+            stickOffset = Vector2.zero;
             buttonTouches.Clear();
-            touchButtons = 0;
+            foreach (var control in controls)
+                control.IsHeld = false;
         }
 
         private void OnApplicationFocus(bool focused)
@@ -215,6 +206,7 @@ namespace AIC.iOS
             {
                 ClearTouchState();
                 debugF7Pending = false;
+                extraControlsOpen = false;
             }
         }
 
@@ -225,30 +217,23 @@ namespace AIC.iOS
             {
                 ClearTouchState();
                 hardwareConnected = connected;
+                extraControlsOpen = false;
             }
-            if (layoutWidth != Screen.width || layoutHeight != Screen.height)
+            Rect safeArea = Screen.safeArea;
+            if (layoutWidth != Screen.width || layoutHeight != Screen.height || layoutSafeArea != safeArea)
             {
                 ClearTouchState();
-                UpdateLayout();
+                UpdateLayout(safeArea);
             }
-            if (!hardwareConnected)
-                ReadTouches();
-
-            var state = new GamepadState
+            GamepadState touchState = ReadTouches();
+            GamepadState state = hardwareConnected ? new GamepadState
             {
                 leftStick = new Vector2(hardware.LeftX, hardware.LeftY),
                 rightStick = new Vector2(hardware.RightX, hardware.RightY),
                 leftTrigger = hardware.LeftTrigger,
                 rightTrigger = hardware.RightTrigger,
-                buttons = hardwareConnected ? hardware.Buttons : touchButtons,
-            };
-
-            if (isStickActive)
-            {
-                Vector2 delta = stickCurrent - stickOrigin;
-                if (delta.magnitude > 25f * scale)
-                    state.leftStick = new Vector2(delta.x, -delta.y).normalized;
-            }
+                buttons = hardware.Buttons,
+            } : touchState;
 
             bool active = state.buttons != 0 || state.leftStick.sqrMagnitude > 0.02f ||
                 state.rightStick.sqrMagnitude > 0.02f || state.leftTrigger > 0.2f || state.rightTrigger > 0.2f;
@@ -281,52 +266,5 @@ namespace AIC.iOS
             player.SwitchCurrentControlScheme("Gamepad", bridgePad);
         }
 
-        private bool TouchButtonPressed(GamepadButton button) => (touchButtons & (1u << (int)button)) != 0;
-
-        void OnGUI()
-        {
-            if (Time.unscaledTime - debugF7PolledAt < 0.5f && GUI.Button(btnDebugF7, "F7"))
-                debugF7Pending = true;
-
-            if (hardwareConnected)
-                return;
-
-            // Semi-transparent style
-            var prevColor = GUI.color;
-            GUI.color = new Color(1f, 1f, 1f, 0.45f);
-
-            // Draw Joystick Base & Knob
-            GUI.Box(leftStickArea, "PAD");
-            if (isStickActive)
-            {
-                float knobRadius = 60f * scale;
-                Rect knobRect = new Rect(stickCurrent.x - knobRadius / 2f, stickCurrent.y - knobRadius / 2f, knobRadius, knobRadius);
-                GUI.color = new Color(0.3f, 0.8f, 1f, 0.75f);
-                GUI.Box(knobRect, "");
-            }
-
-            // Draw Action Buttons
-            GUI.color = TouchButtonPressed(GamepadButton.South) ? new Color(1f, 0.9f, 0.3f, 0.8f) : new Color(1f, 1f, 1f, 0.45f);
-            GUI.Box(btnJump, "JUMP\n(A)");
-
-            GUI.color = TouchButtonPressed(GamepadButton.West) ? new Color(1f, 0.3f, 0.3f, 0.8f) : new Color(1f, 1f, 1f, 0.45f);
-            GUI.Box(btnAtk, "ATK\n(X)");
-
-            GUI.color = TouchButtonPressed(GamepadButton.East) ? new Color(0.8f, 0.4f, 1f, 0.8f) : new Color(1f, 1f, 1f, 0.45f);
-            GUI.Box(btnMagic, "MAGIC\n(B)");
-
-            GUI.color = TouchButtonPressed(GamepadButton.North) ? new Color(0.3f, 1f, 0.5f, 0.8f) : new Color(1f, 1f, 1f, 0.45f);
-            GUI.Box(btnEvade, "DASH\n(Y)");
-
-            GUI.color = TouchButtonPressed(GamepadButton.LeftStick) ? new Color(1f, 0.6f, 0.2f, 0.8f) : new Color(1f, 1f, 1f, 0.45f);
-            GUI.Box(btnRun, "RUN");
-
-            // Utility buttons
-            GUI.color = new Color(1f, 1f, 1f, 0.45f);
-            GUI.Box(btnMenu, "MENU");
-            GUI.Box(btnMap, "MAP");
-
-            GUI.color = prevColor;
-        }
     }
 }

@@ -129,7 +129,7 @@ internal static class IosStartupPatcher
         Console.WriteLine("[+] Installed the iOS gamepad input provider and F7 debug shortcut");
     }
 
-    internal static void UseMobileDisplay(string managedDirectory)
+    internal static void PatchMobileRendering(string managedDirectory)
     {
         var inputPath = Path.Combine(managedDirectory, "unsafeAssem.dll");
         var settingsPath = Path.Combine(managedDirectory, "Assembly-CSharp.dll");
@@ -157,9 +157,36 @@ internal static class IosStartupPatcher
         setMode.Body.GetILProcessor().Emit(OpCodes.Ret);
         desktopWindowSetting.Previous.OpCode = OpCodes.Ldc_I4_0;
 
+        DisableMosaicDrawing(settings.MainModule);
+
         WriteStagedAssembly(input, inputPath);
         WriteStagedAssembly(settings, settingsPath);
         Console.WriteLine("[+] Kept the iOS native display size and disabled the desktop window settings");
+        Console.WriteLine("[+] Routed the mosaic renderer through its disabled path");
+    }
+
+    private static void DisableMosaicDrawing(ModuleDefinition module)
+    {
+        var draw = module.GetType("nel.MosaicShower").Methods.Single(method =>
+            method.Name == "FnDrawMosaic" && !method.IsStatic && method.Parameters.Count == 3 &&
+            method.ReturnType.MetadataType == MetadataType.Boolean && method.HasBody);
+        var enabled = draw.Body.Instructions.Single(instruction =>
+            instruction.OpCode == OpCodes.Ldfld && instruction.Operand is FieldReference field &&
+            field.DeclaringType.FullName == "nel.MosaicShower" && field.Name == "enabled" &&
+            field.FieldType.MetadataType == MetadataType.Boolean);
+        var drawWhenEnabled = enabled.Next;
+        if (drawWhenEnabled == null ||
+            (drawWhenEnabled.OpCode != OpCodes.Brtrue && drawWhenEnabled.OpCode != OpCodes.Brtrue_S) ||
+            drawWhenEnabled.Next?.OpCode != OpCodes.Ldc_I4_1 ||
+            drawWhenEnabled.Next.Next?.OpCode != OpCodes.Ret)
+        {
+            throw new InvalidOperationException("Unexpected mosaic renderer enable check.");
+        }
+
+        // Follow the stock disabled path before either the GL or mesh render
+        // path starts. Preserve its return value and the preceding camera checks.
+        drawWhenEnabled.OpCode = OpCodes.Pop;
+        drawWhenEnabled.Operand = null;
     }
 
     private static void WriteStagedAssembly(AssemblyDefinition assembly, string path)

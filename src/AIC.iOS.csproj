@@ -17,6 +17,9 @@
     <Reference Include="UnityEngine.InputLegacyModule">
       <HintPath>..\PatchedManaged\UnityEngine.InputLegacyModule.dll</HintPath>
     </Reference>
+    <Reference Include="UnityEngine.TextRenderingModule">
+      <HintPath>..\PatchedManaged\UnityEngine.TextRenderingModule.dll</HintPath>
+    </Reference>
     <Reference Include="Unity.InputSystem">
       <HintPath>..\PatchedManaged\Unity.InputSystem.dll</HintPath>
     </Reference>

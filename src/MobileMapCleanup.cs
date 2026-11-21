@@ -56,11 +56,18 @@ namespace AIC.iOS
 
         public static int ClosedMapCacheLimit() => IsLowMemoryDevice ? 0 : 1;
 
-        public static float AdjustRenderBufferScale(float scale)
+        public static void ApplyLowMemoryDisplay()
         {
             int memory = SystemInfo.systemMemorySize;
-            float limit = memory > 0 && memory <= LowMemoryDeviceLimitMiB ? 0.5f : 0.75f;
-            return Mathf.Min(scale, limit);
+            float scale = memory > 0 && memory <= LowMemoryDeviceLimitMiB ? 0.5f :
+                memory > 0 && memory <= 4096 ? 0.75f : 1f;
+            if (scale >= 1f || Application.platform != RuntimePlatform.IPhonePlayer)
+                return;
+
+            int width = Mathf.RoundToInt(Screen.width * scale);
+            int height = Mathf.RoundToInt(Screen.height * scale);
+            Screen.SetResolution(width, height, true);
+            Debug.Log($"[AIC] iOS display resolution: {width}x{height} ({scale:P0})");
         }
 
         public static void BeginMapMemoryTrace()
@@ -88,7 +95,7 @@ namespace AIC.iOS
                 $"unityReserved={Profiler.GetTotalReservedMemoryLong() / MiB} MiB " +
                 $"managed={GC.GetTotalMemory(false) / MiB} MiB " +
                 $"textures={Texture.currentTextureMemory / (ulong)MiB} MiB " +
-                $"renderScale={AdjustRenderBufferScale(1f):F2}" + ledger);
+                $"screen={Screen.width}x{Screen.height}" + ledger);
         }
 
         public static void FinishMapMemoryTrace()

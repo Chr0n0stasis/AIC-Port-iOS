@@ -72,6 +72,7 @@ namespace AIC.iOS
             Screen.sleepTimeout = SleepTimeout.NeverSleep;
             Application.targetFrameRate = 60;
             Input.multiTouchEnabled = true;
+            MobileMapCleanup.ApplyLowMemoryDisplay();
 
             if (_instance == null)
             {

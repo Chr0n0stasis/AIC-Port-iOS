@@ -14,8 +14,6 @@ namespace AIC.iOS
         private static AsyncOperation pendingCleanup;
         private static bool cleanupRequested;
         private static bool atlasRebuildRequested;
-        private static bool waitBeforeMapOpen;
-        private static int mapOpenFrame;
         private static int earliestCleanupFrame;
         private static float lastMemoryWarning = float.NegativeInfinity;
         private static float cleanupStartedAt;
@@ -111,29 +109,6 @@ namespace AIC.iOS
             cleanupRequested = true;
             earliestCleanupFrame = Time.frameCount + (IsLowMemoryDevice ? 1 : 0);
             atlasRebuildRequested = IsLowMemoryDevice;
-            waitBeforeMapOpen = IsLowMemoryDevice;
-            mapOpenFrame = -1;
-        }
-
-        public static bool IsMapOpenDeferred()
-        {
-            if (!waitBeforeMapOpen)
-                return false;
-
-            if (mapOpenFrame < 0)
-            {
-                TraceMapMemory("atlas ready");
-                // Let the atlas upload and queued destruction cross a rendered
-                // frame before allocating the incoming map's scene resources.
-                mapOpenFrame = Time.frameCount + 2;
-            }
-
-            if (Time.frameCount < mapOpenFrame)
-                return true;
-
-            waitBeforeMapOpen = false;
-            TraceMapMemory("before map open");
-            return false;
         }
 
         public static bool TakeLargeAtlasRebuild(RenderTexture previousAtlas)

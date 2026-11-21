@@ -206,6 +206,32 @@ jobs:
         id: build
         run: bash scripts/build-ios.sh
 
+      - name: Generate member-level IPA patch
+        id: ipa-patch
+        if: inputs.private_audio == true
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.AIC_PRIVATE_ASSETS_TOKEN }}
+          ASSETS_REPO: ${{ vars.AIC_PRIVATE_ASSETS_REPO }}
+          TARGET_IPA: ${{ steps.build.outputs.ipa_path }}
+        run: |
+          base_name="$(gh release view ios-test-builds --repo "$ASSETS_REPO" --json assets \
+            --jq '[.assets[] | select(.name | endswith("_Unsigned.ipa"))] | sort_by(.createdAt) | reverse | .[0].name')"
+          if [[ -z "$base_name" || "$base_name" == null ]]; then
+            echo "No previous unsigned IPA; skipping patch."
+            exit 0
+          fi
+          patch_dir="$RUNNER_TEMP/ipa-member-patch"
+          mkdir -p "$patch_dir"
+          gh release download ios-test-builds --repo "$ASSETS_REPO" --pattern "$base_name" --dir "$patch_dir"
+          base_path="$patch_dir/$base_name"
+          target_name="$(basename "$TARGET_IPA" .ipa)"
+          base_version="${base_name%_Unsigned.ipa}"
+          patch_path="$patch_dir/${target_name}.from_${base_version}.aicpatch"
+          python3 tools/ipa_member_patch.py create --base "$base_path" --target "$TARGET_IPA" --output "$patch_path"
+          printf 'patch_path=%s\n' "$patch_path" >> "$GITHUB_OUTPUT"
+          printf 'base_name=%s\n' "$base_name" >> "$GITHUB_OUTPUT"
+
       - name: Upload iOS IPA Artifact
         if: inputs.private_audio != true
         uses: actions/upload-artifact@v4
@@ -221,12 +247,24 @@ jobs:
           GH_TOKEN: ${{ secrets.AIC_PRIVATE_ASSETS_TOKEN }}
           ASSETS_REPO: ${{ vars.AIC_PRIVATE_ASSETS_REPO }}
           IPA_PATH: ${{ steps.build.outputs.ipa_path }}
+          PATCH_PATH: ${{ steps.ipa-patch.outputs.patch_path }}
         run: |
           if [[ "$(gh api "repos/$ASSETS_REPO" --jq .private)" != true ]]; then
             echo '::error::The IPA destination repository must be private.'
             exit 1
           fi
           gh release upload ios-test-builds "$IPA_PATH" --repo "$ASSETS_REPO"
+          if [[ -n "$PATCH_PATH" && -f "$PATCH_PATH" ]]; then
+            gh release upload ios-test-builds "$PATCH_PATH" --repo "$ASSETS_REPO"
+          fi
+
+      - name: Upload member-level IPA patch artifact
+        if: ${{ inputs.private_audio != true && steps.ipa-patch.outputs.patch_path != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.build.outputs.artifact_name }}_patch
+          path: ${{ steps.ipa-patch.outputs.patch_path }}
+          if-no-files-found: error
 
       - name: Save private ASTC texture cache
         if: ${{ !cancelled() && inputs.private_audio == true && steps.private-textures.outputs.archive != '' && steps.private-textures.outputs.hit != 'true' }}

@@ -19,6 +19,8 @@ namespace AIC.iOS
         private PlayerInput player;
         private bool reportedInputError;
         private bool hardwareConnected;
+        private float debugF7PolledAt = float.NegativeInfinity;
+        private bool debugF7Pending;
 
         [StructLayout(LayoutKind.Sequential)]
         private struct AppleGamepadState
@@ -52,6 +54,18 @@ namespace AIC.iOS
             InputSystem.Update();
         }
 
+        // The game calls this only while its event debugger accepts F7.
+        public static bool ReadDebugF7(bool keyboardPressed)
+        {
+            if (_instance == null)
+                return keyboardPressed;
+            float now = Time.unscaledTime;
+            bool touchPressed = _instance.debugF7Pending && now - _instance.debugF7PolledAt < 0.5f;
+            _instance.debugF7Pending = false;
+            _instance.debugF7PolledAt = now;
+            return keyboardPressed || touchPressed;
+        }
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         public static void AutoInit()
         {
@@ -72,6 +86,7 @@ namespace AIC.iOS
         private int layoutWidth, layoutHeight;
         private Rect leftStickArea;
         private Rect btnJump, btnAtk, btnMagic, btnEvade, btnRun, btnMenu, btnMap;
+        private Rect btnDebugF7;
 
         // Joystick state
         private Vector2 stickOrigin;
@@ -112,6 +127,7 @@ namespace AIC.iOS
             float topBtnSize = 70f * scale;
             btnMenu = new Rect(w - topBtnSize - 40f * scale, 30f * scale, topBtnSize, topBtnSize);
             btnMap = new Rect(40f * scale, 30f * scale, topBtnSize, topBtnSize);
+            btnDebugF7 = new Rect(btnMap.xMax + 16f * scale, btnMap.y, topBtnSize, topBtnSize);
         }
 
         private void ReadTouches()
@@ -196,7 +212,10 @@ namespace AIC.iOS
         private void OnApplicationFocus(bool focused)
         {
             if (!focused)
+            {
                 ClearTouchState();
+                debugF7Pending = false;
+            }
         }
 
         private void QueueGamepadState()
@@ -207,15 +226,13 @@ namespace AIC.iOS
                 ClearTouchState();
                 hardwareConnected = connected;
             }
-            if (!hardwareConnected)
+            if (layoutWidth != Screen.width || layoutHeight != Screen.height)
             {
-                if (layoutWidth != Screen.width || layoutHeight != Screen.height)
-                {
-                    ClearTouchState();
-                    UpdateLayout();
-                }
-                ReadTouches();
+                ClearTouchState();
+                UpdateLayout();
             }
+            if (!hardwareConnected)
+                ReadTouches();
 
             var state = new GamepadState
             {
@@ -268,6 +285,9 @@ namespace AIC.iOS
 
         void OnGUI()
         {
+            if (Time.unscaledTime - debugF7PolledAt < 0.5f && GUI.Button(btnDebugF7, "F7"))
+                debugF7Pending = true;
+
             if (hardwareConnected)
                 return;
 

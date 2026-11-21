@@ -36,7 +36,7 @@ announce 1
 // When an error occured in your previous play,
 // you will announced about the error log in title scene.
 
-timestamp 0
+timestamp 1
 // add timestamp to the log exported.
 
 // (ver0.22f) If you have set both "announce" and "timestamp" to 1, you can use the debug menu by pressing F7 during the game.

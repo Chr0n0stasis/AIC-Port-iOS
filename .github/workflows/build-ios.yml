@@ -32,12 +32,14 @@ jobs:
         uses: actions/checkout@v4
         with:
           persist-credentials: false
+          sparse-checkout-cone-mode: false
           sparse-checkout: |
-            native
-            resources
-            scripts
-            src
-            tools
+            /native/
+            /resources/
+            /scripts/
+            /src/
+            /tools/
+            /ConvertedData/StreamingAssets/_debug.txt
 
       - name: Set up .NET Core SDK
         uses: actions/setup-dotnet@v4
@@ -71,9 +73,10 @@ jobs:
           gh release download ios-inputs-0.30i --repo "$ASSETS_REPO" --dir "$inputs_dir" \
             --pattern "$sdk_name" --pattern "$inputs_name"
           test -s "$inputs_dir/$sdk_name"
-          tar -xzf "$inputs_dir/$inputs_name"
+          tar --exclude 'ConvertedData/StreamingAssets/_debug.txt' -xzf "$inputs_dir/$inputs_name"
           test -f PatchedManaged/Assembly-CSharp.dll
           test -f ConvertedData/globalgamemanagers
+          test -f ConvertedData/StreamingAssets/_debug.txt
           printf 'AIC_CRI_SDK_ZIP=%s\n' "$inputs_dir/$sdk_name" >> "$GITHUB_ENV"
 
       - name: Cache converted iOS textures

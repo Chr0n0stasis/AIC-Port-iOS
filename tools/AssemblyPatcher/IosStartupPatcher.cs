@@ -99,7 +99,8 @@ internal static class IosStartupPatcher
             AssemblyResolver = resolver,
         });
         using var overlay = AssemblyDefinition.ReadAssembly(Path.Combine(managedDirectory, "AIC.iOS.dll"));
-        var update = overlay.MainModule.GetType("AIC.iOS.AICTouchOverlay").Methods.Single(method =>
+        var overlayType = overlay.MainModule.GetType("AIC.iOS.AICTouchOverlay");
+        var update = overlayType.Methods.Single(method =>
             method.Name == "UpdateInputSystem" && method.IsStatic && !method.HasParameters);
         var run = game.MainModule.GetType("XX.IN").Methods.Single(method =>
             method.Name == "run" && method.IsStatic && method.Parameters.Count == 1 &&
@@ -110,8 +111,22 @@ internal static class IosStartupPatcher
             method.Name == "Update" && !method.HasParameters);
 
         originalUpdate.Operand = game.MainModule.ImportReference(update);
+
+        var readDebugF7 = overlayType.Methods.Single(method => method.Name == "ReadDebugF7" &&
+            method.IsStatic && method.Parameters.Count == 1 &&
+            method.Parameters[0].ParameterType.MetadataType == MetadataType.Boolean);
+        var eventsUpdate = game.MainModule.GetType("evt.EV").Methods.Single(method =>
+            method.Name == "FixedUpdate" && !method.HasParameters);
+        var keyboardF7 = eventsUpdate.Body.Instructions.Single(instruction =>
+            instruction.OpCode == OpCodes.Call && instruction.Operand is MethodReference method &&
+            method.DeclaringType.FullName == "XX.IN" && method.Name == "getKD" &&
+            method.Parameters.Count == 3 && instruction.Previous?.Previous?.Previous is Instruction key &&
+            key.OpCode == OpCodes.Ldc_I4_S && key.Operand is sbyte keyCode && keyCode == 100);
+        var eventsIL = eventsUpdate.Body.GetILProcessor();
+        eventsIL.InsertAfter(keyboardF7, eventsIL.Create(OpCodes.Call, game.MainModule.ImportReference(readDebugF7)));
+
         WriteStagedAssembly(game, path);
-        Console.WriteLine("[+] Installed the iOS gamepad input provider before game input dispatch");
+        Console.WriteLine("[+] Installed the iOS gamepad input provider and F7 debug shortcut");
     }
 
     internal static void UseMobileDisplay(string managedDirectory)

@@ -237,7 +237,6 @@ echo "[*] Installing converted game assets into Data/..."
 cp -R "${ROOT_DIR}/ConvertedData/"* "${DATA_OUT}/"
 # The iOS player resolves Application.streamingAssetsPath to Data/Raw.
 mv "${DATA_OUT}/StreamingAssets" "${DATA_OUT}/Raw"
-python3 "${ROOT_DIR}/tools/patch_ios_low_memory_events.py" "${DATA_OUT}/Raw"
 TEXTURE_OVERLAY="${AIC_TEXTURE_OVERLAY:-${XCODE_DIR}/TextureOverlay}"
 if [[ ! -f "${TEXTURE_OVERLAY}/.complete" || -n "${CRI_SDK_LIBRARY}" ]]; then
   python3 -m venv "${WORK_DIR}/texture-venv"

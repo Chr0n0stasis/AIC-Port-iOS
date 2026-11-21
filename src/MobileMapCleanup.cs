@@ -57,7 +57,7 @@ namespace AIC.iOS
         public static void ApplyLowMemoryDisplay()
         {
             int memory = SystemInfo.systemMemorySize;
-            float scale = memory > 0 && memory <= LowMemoryDeviceLimitMiB ? 0.3f :
+            float scale = memory > 0 && memory <= LowMemoryDeviceLimitMiB ? 0.5f :
                 memory > 0 && memory <= 4096 ? 0.5f : 1f;
             if (scale >= 1f || Application.platform != RuntimePlatform.IPhonePlayer)
                 return;
@@ -71,8 +71,8 @@ namespace AIC.iOS
         public static int AdjustPixelTextureDimension(int dimension)
         {
             int memory = SystemInfo.systemMemorySize;
-            float scale = memory > 0 && memory <= LowMemoryDeviceLimitMiB ? 0.5f :
-                memory > 0 && memory <= 4096 ? 0.75f : 1f;
+            float scale = memory > 0 && memory <= LowMemoryDeviceLimitMiB ? 0.25f :
+                memory > 0 && memory <= 4096 ? 0.5f : 1f;
             return scale >= 1f ? dimension : Mathf.Max(1, Mathf.RoundToInt(dimension * scale));
         }
 

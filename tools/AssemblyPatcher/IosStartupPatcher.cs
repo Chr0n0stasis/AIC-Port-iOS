@@ -201,10 +201,45 @@ internal static class IosStartupPatcher
             ReturnWhen(load, pending, returnValue: true);
         }
 
+        var loadMap = map.Methods.Single(method => method.Name == "loadMapAsync" && !method.HasParameters);
+        var beginMaterialRead = loadMap.Body.Instructions.Single(instruction =>
+            instruction.OpCode == OpCodes.Ldnull && instruction.Next?.OpCode == OpCodes.Stloc_1 &&
+            instruction.Next.Next?.OpCode == OpCodes.Ldc_I4_1 && instruction.Next.Next.Next?.OpCode == OpCodes.Stloc_2);
+        // The stock loader can close the old map and begin loading materials in
+        // the same call, after the entry check has already run.
+        ReturnWhen(loadMap, pending, returnValue: true, entry: beginMaterialRead);
+
         var isLowMemoryDevice = cleanup.Methods.Single(method => method.Name == "get_IsLowMemoryDevice" &&
             method.IsStatic && !method.HasParameters && method.ReturnType.MetadataType == MetadataType.Boolean);
         TrimUnusedRenderTextures(game, game.ImportReference(isLowMemoryDevice));
         RebuildGrowingMapAtlas(game, map, cleanup);
+        DeferMapOpenAfterAtlas(game, map, cleanup);
+    }
+
+    private static void DeferMapOpenAfterAtlas(ModuleDefinition game, TypeDefinition map, TypeDefinition cleanup)
+    {
+        var finalize = map.Methods.Single(method => method.Name == "loadMapAsyncFinalize" &&
+            method.Parameters.Count == 1 && method.Parameters[0].ParameterType.FullName == "m2d.Map2d");
+        var defer = cleanup.Methods.Single(method => method.Name == "IsMapOpenDeferred" &&
+            method.IsStatic && !method.HasParameters && method.ReturnType.MetadataType == MetadataType.Boolean);
+        var dropLoader = finalize.Body.Instructions.Single(instruction =>
+            instruction.OpCode == OpCodes.Stfld && instruction.Operand is FieldReference field &&
+            field.Name == "ALoader" && instruction.Previous?.OpCode == OpCodes.Ldnull &&
+            instruction.Previous.Previous?.OpCode == OpCodes.Ldarg_0);
+        var open = dropLoader.Previous.Previous;
+        var il = finalize.Body.GetILProcessor();
+        var check = il.Create(OpCodes.Ldarg_1);
+        foreach (var instruction in finalize.Body.Instructions)
+            if (instruction.Operand == open)
+                instruction.Operand = check;
+
+        // Preserve ALoader while returning the stock "still loading" value.
+        il.InsertBefore(open, check);
+        il.InsertBefore(open, il.Create(OpCodes.Brfalse_S, open));
+        il.InsertBefore(open, il.Create(OpCodes.Call, game.ImportReference(defer)));
+        il.InsertBefore(open, il.Create(OpCodes.Brfalse_S, open));
+        il.InsertBefore(open, il.Create(OpCodes.Ldc_I4_1));
+        il.InsertBefore(open, il.Create(OpCodes.Ret));
     }
 
     private static void RebuildGrowingMapAtlas(ModuleDefinition game, TypeDefinition map, TypeDefinition cleanup)
@@ -286,11 +321,19 @@ internal static class IosStartupPatcher
         instruction.Previous?.OpCode == OpCodes.Ldfld && instruction.Previous.Operand is FieldReference field &&
         field.DeclaringType.FullName == "m2d.M2DBase" && field.Name == "AMapHistory";
 
-    private static void ReturnWhen(MethodDefinition method, MethodReference predicate, bool returnValue)
+    private static void ReturnWhen(MethodDefinition method, MethodReference predicate, bool returnValue,
+        Instruction entry = null)
     {
-        var first = method.Body.Instructions[0];
+        var first = entry ?? method.Body.Instructions[0];
         var il = method.Body.GetILProcessor();
-        il.InsertBefore(first, il.Create(OpCodes.Call, predicate));
+        var check = il.Create(OpCodes.Call, predicate);
+        if (entry != null)
+        {
+            foreach (var instruction in method.Body.Instructions)
+                if (instruction.Operand == entry)
+                    instruction.Operand = check;
+        }
+        il.InsertBefore(first, check);
         il.InsertBefore(first, il.Create(OpCodes.Brfalse_S, first));
         il.InsertBefore(first, il.Create(returnValue ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0));
         il.InsertBefore(first, il.Create(OpCodes.Ret));

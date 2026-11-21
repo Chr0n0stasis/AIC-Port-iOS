@@ -26,9 +26,11 @@ UNSUPPORTED_FORMATS = {
 # Large sampled artwork can keep its dimensions with one quarter of the GPU
 # storage. Keep readable textures and map-chip inputs in their original format.
 LARGE_IOS_ART_DIRECTORIES = {"Enemies", "EvImg", "Fatal", "Pxl", "PxlNoel", "SpineAnim"}
+NOEL_PALETTE_BUNDLE = Path("PxlNoel/noel.pxls.bytes.texture_0.dat")
+NOEL_PALETTE_NAME = "noel.pxls.bytes.texture_1"
 
 
-def repair_ios_texture_bundle(source, destination, min_rgba_pixels):
+def repair_ios_texture_bundle(source, destination, min_rgba_pixels, drop_palette_cpu_copy=False):
     import astc_encoder
     from PIL import Image
     from UnityPy.streams import EndianBinaryReader
@@ -44,10 +46,25 @@ def repair_ios_texture_bundle(source, destination, min_rgba_pixels):
         "AssetBundle", "Texture2D",
     }
     changed = False
+    palette_found = False
     for obj in objects:
         if obj.type.name != "Texture2D":
             continue
         tex = obj.read()
+        if drop_palette_cpu_copy and tex.m_Name == NOEL_PALETTE_NAME:
+            if palette_found or tex.m_TextureFormat != TextureFormat.RGBA32 or (
+                tex.m_Width, tex.m_Height, tex.m_MipCount
+            ) != (4096, 4096, 1):
+                raise ValueError(f"Unexpected Noel palette texture layout: {source}")
+            palette_found = True
+            # Preserve the palette pixels and GPU format. This source page is
+            # used through PixelLiner's texture references, with no CPU edits.
+            if tex.m_IsReadable:
+                tex.m_IsReadable = False
+                tex.save()
+                changed = True
+            continue
+
         is_bc7 = tex.m_TextureFormat == TextureFormat.BC7
         stream = tex.m_StreamData
         is_streamed = stream is not None and stream.path and stream.size
@@ -110,6 +127,8 @@ def repair_ios_texture_bundle(source, destination, min_rgba_pixels):
         tex.save()
         changed = True
 
+    if drop_palette_cpu_copy and not palette_found:
+        raise ValueError(f"Missing Noel palette texture in {source}")
     if changed:
         destination.parent.mkdir(parents=True, exist_ok=True)
         destination.write_bytes(bundle.save(packer="lz4"))
@@ -128,10 +147,12 @@ def repair_ios_textures(source, output):
             minimum = None
             if directory in LARGE_IOS_ART_DIRECTORIES:
                 minimum = 1024 ** 2 if directory == "Enemies" else 2048 ** 2
-            tasks[executor.submit(repair_ios_texture_bundle, path, output / relative, minimum)] = relative
+            fix_palette = relative == NOEL_PALETTE_BUNDLE
+            task = executor.submit(repair_ios_texture_bundle, path, output / relative, minimum, fix_palette)
+            tasks[task] = relative
         for task in as_completed(tasks):
             if task.result():
-                print(f"[+] Converted to iOS ASTC: {tasks[task]}", flush=True)
+                print(f"[+] Prepared iOS textures: {tasks[task]}", flush=True)
     output.mkdir(parents=True, exist_ok=True)
     (output / ".complete").touch()
 

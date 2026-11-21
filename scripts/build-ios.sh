@@ -240,7 +240,8 @@ mv "${DATA_OUT}/StreamingAssets" "${DATA_OUT}/Raw"
 TEXTURE_OVERLAY="${AIC_TEXTURE_OVERLAY:-${XCODE_DIR}/TextureOverlay}"
 if [[ ! -f "${TEXTURE_OVERLAY}/.complete" ]]; then
   python3 -m venv "${WORK_DIR}/texture-venv"
-  "${WORK_DIR}/texture-venv/bin/python" -m pip install --disable-pip-version-check UnityPy==1.25.3
+  "${WORK_DIR}/texture-venv/bin/python" -m pip install --disable-pip-version-check \
+    -r "${ROOT_DIR}/tools/requirements-ios-textures.txt"
   "${WORK_DIR}/texture-venv/bin/python" "${ROOT_DIR}/tools/convert_assets.py" --repair-ios-textures \
     "${ROOT_DIR}/ConvertedData/StreamingAssets" "${TEXTURE_OVERLAY}"
 fi

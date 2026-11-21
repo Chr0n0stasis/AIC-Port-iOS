@@ -19,6 +19,8 @@ jobs:
     name: Build Unsigned iOS IPA (Release)
     runs-on: macos-latest
     timeout-minutes: 60
+    env:
+      AIC_TEXTURE_OVERLAY: /tmp/aic_ios_build/texture-overlay
 
     steps:
       - name: Checkout repository
@@ -78,8 +80,36 @@ jobs:
         if: inputs.private_audio != true
         uses: actions/cache@v4
         with:
-          path: /tmp/aic_ios_build/texture-overlay
-          key: aic-ios-textures-${{ runner.arch }}-${{ hashFiles('ConvertedData/StreamingAssets/**/*.dat', 'tools/convert_assets.py') }}
+          path: ${{ env.AIC_TEXTURE_OVERLAY }}
+          key: aic-ios-textures-${{ runner.arch }}-${{ hashFiles('ConvertedData/StreamingAssets/**/*.dat', 'tools/convert_assets.py', 'tools/requirements-ios-textures.txt') }}
+
+      - name: Restore private ASTC texture cache
+        if: inputs.private_audio == true
+        id: private-textures
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.AIC_PRIVATE_ASSETS_TOKEN }}
+          ASSETS_REPO: ${{ vars.AIC_PRIVATE_ASSETS_REPO }}
+          TEXTURE_INPUT_HASH: ${{ hashFiles('ConvertedData/StreamingAssets/**/*.dat', 'tools/convert_assets.py', 'tools/requirements-ios-textures.txt') }}
+        run: |
+          test -n "$TEXTURE_INPUT_HASH"
+          archive="astc-textures-${RUNNER_ARCH}-${TEXTURE_INPUT_HASH}.tar"
+          printf 'archive=%s\n' "$archive" >> "$GITHUB_OUTPUT"
+          cache_dir=$(mktemp -d "$RUNNER_TEMP/aic-textures.XXXXXX")
+          if gh release download ios-inputs-0.30i --repo "$ASSETS_REPO" --dir "$cache_dir" --pattern "$archive"; then
+            mkdir -p "$cache_dir/overlay"
+            if tar -xf "$cache_dir/$archive" -C "$cache_dir/overlay" && [[ -f "$cache_dir/overlay/.complete" ]]; then
+              mkdir -p "$(dirname "$AIC_TEXTURE_OVERLAY")"
+              mv "$cache_dir/overlay" "$AIC_TEXTURE_OVERLAY"
+              printf 'hit=true\n' >> "$GITHUB_OUTPUT"
+              echo '[+] Reusing private ASTC textures.'
+            else
+              echo '::warning::The private ASTC cache could not be restored.'
+            fi
+            rm -f -- "$cache_dir/$archive"
+          else
+            echo '[*] Private ASTC cache unavailable. The build will convert the textures.'
+          fi
 
       - name: Cache Unity iOS Playback Engine
         uses: actions/cache@v4
@@ -127,8 +157,6 @@ jobs:
 
       - name: Execute iOS Port Build Pipeline
         id: build
-        env:
-          AIC_TEXTURE_OVERLAY: /tmp/aic_ios_build/texture-overlay
         run: bash scripts/build-ios.sh
 
       - name: Upload iOS IPA Artifact
@@ -152,3 +180,21 @@ jobs:
             exit 1
           fi
           gh release upload ios-test-builds "$IPA_PATH" --repo "$ASSETS_REPO"
+
+      - name: Save private ASTC texture cache
+        if: ${{ !cancelled() && inputs.private_audio == true && steps.private-textures.outputs.archive != '' && steps.private-textures.outputs.hit != 'true' }}
+        continue-on-error: true
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.AIC_PRIVATE_ASSETS_TOKEN }}
+          ASSETS_REPO: ${{ vars.AIC_PRIVATE_ASSETS_REPO }}
+          CACHE_ARCHIVE: ${{ steps.private-textures.outputs.archive }}
+        run: |
+          [[ -f "$AIC_TEXTURE_OVERLAY/.complete" ]] || exit 0
+          if [[ "$(gh api "repos/$ASSETS_REPO" --jq .private)" != true ]]; then
+            echo '::warning::The texture cache destination must be private.'
+            exit 1
+          fi
+          cache_dir=$(mktemp -d "$RUNNER_TEMP/aic-textures.XXXXXX")
+          tar -cf "$cache_dir/$CACHE_ARCHIVE" -C "$AIC_TEXTURE_OVERLAY" .
+          gh release upload ios-inputs-0.30i "$cache_dir/$CACHE_ARCHIVE" --repo "$ASSETS_REPO"

@@ -14,6 +14,7 @@ class Program
             IosStartupPatcher.PatchInputSystem(managedDir);
             IosStartupPatcher.InstallMobileRuntimeHooks(managedDir);
             IosStartupPatcher.PatchMobileSettings(managedDir);
+            IosStartupPatcher.PatchPixelLinerTextures(managedDir);
             if (args is ["--ios-startup", _, "--cri-sdk-exports", var exportsPath])
                 CriSdkVerifier.Verify(managedDir, exportsPath);
             else if (args.Length == 2)

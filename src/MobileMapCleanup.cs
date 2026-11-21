@@ -68,6 +68,14 @@ namespace AIC.iOS
             Debug.Log($"[AIC] iOS display resolution: {width}x{height} ({scale:P0})");
         }
 
+        public static int AdjustPixelTextureDimension(int dimension)
+        {
+            int memory = SystemInfo.systemMemorySize;
+            float scale = memory > 0 && memory <= LowMemoryDeviceLimitMiB ? 0.5f :
+                memory > 0 && memory <= 4096 ? 0.75f : 1f;
+            return scale >= 1f ? dimension : Mathf.Max(1, Mathf.RoundToInt(dimension * scale));
+        }
+
         public static void BeginMapMemoryTrace()
         {
             tracingMap = IsLowMemoryDevice && Application.platform == RuntimePlatform.IPhonePlayer;

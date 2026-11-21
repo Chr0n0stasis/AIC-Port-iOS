@@ -25,7 +25,9 @@ UNSUPPORTED_FORMATS = {
 
 # Large sampled artwork can keep its dimensions with one quarter of the GPU
 # storage. Keep readable textures and map-chip inputs in their original format.
-LARGE_IOS_ART_DIRECTORIES = {"Enemies", "EvImg", "Fatal", "Pxl", "PxlNoel", "SpineAnim"}
+LARGE_IOS_ART_DIRECTORIES = {
+    "Enemies", "EvImg", "Fatal", "MapChars", "Pxl", "PxlNoel", "SpineAnim"
+}
 NOEL_PALETTE_BUNDLE = Path("PxlNoel/noel.pxls.bytes.texture_0.dat")
 NOEL_PALETTE_NAME = "noel.pxls.bytes.texture_1"
 
@@ -146,7 +148,12 @@ def repair_ios_textures(source, output):
             directory = relative.parts[0]
             minimum = None
             if directory in LARGE_IOS_ART_DIRECTORIES:
-                minimum = 1024 ** 2 if directory == "Enemies" else 2048 ** 2
+                if directory == "Enemies":
+                    minimum = 1024 ** 2
+                elif directory == "MapChars":
+                    minimum = 512 ** 2
+                else:
+                    minimum = 2048 ** 2
             fix_palette = relative == NOEL_PALETTE_BUNDLE
             task = executor.submit(repair_ios_texture_bundle, path, output / relative, minimum, fix_palette)
             tasks[task] = relative

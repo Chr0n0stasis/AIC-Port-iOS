@@ -377,6 +377,38 @@ internal static class IosStartupPatcher
         Console.WriteLine("[+] Installed the optional worm wall immunity setting");
     }
 
+    internal static void PatchPixelLinerTextures(string managedDirectory)
+    {
+        var path = Path.Combine(managedDirectory, "pixelliner.dll");
+        using var resolver = new DefaultAssemblyResolver();
+        resolver.AddSearchDirectory(managedDirectory);
+        using var assembly = AssemblyDefinition.ReadAssembly(path, new ReaderParameters
+        {
+            InMemory = true,
+            AssemblyResolver = resolver,
+        });
+        using var overlay = AssemblyDefinition.ReadAssembly(Path.Combine(managedDirectory, "AIC.iOS.dll"));
+        var adjust = overlay.MainModule.GetType("AIC.iOS.MobileMapCleanup").Methods.Single(method =>
+            method.Name == "AdjustPixelTextureDimension" && method.IsStatic &&
+            method.Parameters.Count == 1 && method.Parameters[0].ParameterType.MetadataType == MetadataType.Int32 &&
+            method.ReturnType.MetadataType == MetadataType.Int32);
+        var method = assembly.MainModule.GetType("PxlsTexture").Methods.Single(candidate =>
+            candidate.Name == "CopyToRenderTexture" && candidate.Parameters.Count == 2 &&
+            candidate.Parameters[0].ParameterType.FullName == "UnityEngine.Texture");
+        var constructor = method.Body.Instructions.Single(instruction =>
+            instruction.OpCode == OpCodes.Newobj && instruction.Operand is MethodReference called &&
+            called.DeclaringType.FullName == "UnityEngine.RenderTexture" && called.Parameters.Count == 6);
+        var window = method.Body.Instructions.SkipWhile(instruction => instruction != constructor).TakeLast(8).ToArray();
+        var width = window.Single(instruction => Calls(instruction, "UnityEngine.Texture", "get_width"));
+        var height = window.Single(instruction => Calls(instruction, "UnityEngine.Texture", "get_height"));
+        var il = method.Body.GetILProcessor();
+        il.InsertAfter(width, il.Create(OpCodes.Call, assembly.MainModule.ImportReference(adjust)));
+        il.InsertAfter(height, il.Create(OpCodes.Call, assembly.MainModule.ImportReference(adjust)));
+
+        WriteStagedAssembly(assembly, path);
+        Console.WriteLine("[+] Limited PixelLiner runtime texture dimensions on memory-constrained devices");
+    }
+
     private static TypeDefinition GetMobileSettings(ModuleDefinition module) =>
         module.GetType("AIC.iOS.MobileSettings")
         ?? throw new InvalidOperationException("AIC.iOS.dll is missing MobileSettings. Build with src/MobileSettings.cs.");

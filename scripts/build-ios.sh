@@ -238,15 +238,18 @@ cp -R "${ROOT_DIR}/ConvertedData/"* "${DATA_OUT}/"
 # The iOS player resolves Application.streamingAssetsPath to Data/Raw.
 mv "${DATA_OUT}/StreamingAssets" "${DATA_OUT}/Raw"
 TEXTURE_OVERLAY="${AIC_TEXTURE_OVERLAY:-${XCODE_DIR}/TextureOverlay}"
-if [[ ! -f "${TEXTURE_OVERLAY}/.complete" ]]; then
+if [[ ! -f "${TEXTURE_OVERLAY}/.complete" || -n "${CRI_SDK_LIBRARY}" ]]; then
   python3 -m venv "${WORK_DIR}/texture-venv"
   "${WORK_DIR}/texture-venv/bin/python" -m pip install --disable-pip-version-check \
     -r "${ROOT_DIR}/tools/requirements-ios-textures.txt"
+fi
+if [[ ! -f "${TEXTURE_OVERLAY}/.complete" ]]; then
   "${WORK_DIR}/texture-venv/bin/python" "${ROOT_DIR}/tools/convert_assets.py" --repair-ios-textures \
     "${ROOT_DIR}/ConvertedData/StreamingAssets" "${TEXTURE_OVERLAY}"
 fi
 rsync -a --exclude=.complete "${TEXTURE_OVERLAY}/" "${DATA_OUT}/Raw/"
 if [[ -n "${CRI_SDK_LIBRARY}" ]]; then
+  "${WORK_DIR}/texture-venv/bin/python" "${ROOT_DIR}/tools/migrate_cri_scenes.py" "${DATA_OUT}"
   cp "${CRI_SDK_STAGE}/CRI_ADX_LE_End_User_License_Agreement.txt" "${DATA_OUT}/Raw/"
 fi
 mkdir -p "${DATA_OUT}/Managed" "${DATA_OUT}/Managed/Metadata"

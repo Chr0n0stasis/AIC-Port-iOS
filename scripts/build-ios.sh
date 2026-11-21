@@ -132,7 +132,7 @@ if [[ -n "${AIC_CRI_SDK_ZIP:-}" ]]; then
   CRI_SDK_STAGE="${XCODE_DIR}/CriSdk"
   python3 "${ROOT_DIR}/scripts/stage-cri-ios-sdk.py" "${AIC_CRI_SDK_ZIP}" "${CRI_SDK_STAGE}" "${MANAGED_IN}"
   CRI_SDK_LIBRARY="${CRI_SDK_STAGE}/libcri_ware_unity.a"
-  xcrun lipo -verify_arch arm64 "${CRI_SDK_LIBRARY}"
+  xcrun lipo "${CRI_SDK_LIBRARY}" -verify_arch arm64
   xcrun nm -arch arm64 -gUj "${CRI_SDK_LIBRARY}" > "${CRI_SDK_STAGE}/exports.txt"
   dotnet build "${CRI_SDK_STAGE}/CriRuntime.csproj" --configuration Release --output "${CRI_SDK_STAGE}/Managed"
   cp -f "${CRI_SDK_STAGE}/Managed/CriMw.CriWare.Runtime.dll" "${MANAGED_IN}/"

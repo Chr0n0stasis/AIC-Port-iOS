@@ -88,7 +88,7 @@ internal static class IosStartupPatcher
         Console.WriteLine("[+] Bound CRI error callbacks to the static iOS audio fallback");
     }
 
-    internal static void InstallMobileInputUpdate(string managedDirectory)
+    internal static void InstallMobileRuntimeHooks(string managedDirectory)
     {
         var path = Path.Combine(managedDirectory, "unsafeAssem.dll");
         using var resolver = new DefaultAssemblyResolver();
@@ -125,8 +125,42 @@ internal static class IosStartupPatcher
         var eventsIL = eventsUpdate.Body.GetILProcessor();
         eventsIL.InsertAfter(keyboardF7, eventsIL.Create(OpCodes.Call, game.MainModule.ImportReference(readDebugF7)));
 
+        WaitForMapResourceCleanup(game.MainModule, overlay.MainModule);
         WriteStagedAssembly(game, path);
         Console.WriteLine("[+] Installed the iOS gamepad input provider and F7 debug shortcut");
+        Console.WriteLine("[+] Wait for unused resources to unload before preparing the next map");
+    }
+
+    private static void WaitForMapResourceCleanup(ModuleDefinition game, ModuleDefinition overlay)
+    {
+        var cleanup = overlay.GetType("AIC.iOS.MobileMapCleanup");
+        var begin = cleanup.Methods.Single(method => method.Name == "Begin" && method.IsStatic &&
+            !method.HasParameters && method.ReturnType.FullName == "UnityEngine.AsyncOperation");
+        var isPending = cleanup.Methods.Single(method => method.Name == "IsPending" && method.IsStatic &&
+            !method.HasParameters && method.ReturnType.MetadataType == MetadataType.Boolean);
+        var map = game.GetType("m2d.M2DBase");
+        var changeMap = map.Methods.Single(method => method.Name == "changeMap" &&
+            method.Parameters.Count == 1 && method.Parameters[0].ParameterType.FullName == "m2d.Map2d");
+        var unload = changeMap.Body.Instructions.Single(instruction => instruction.OpCode == OpCodes.Call &&
+            instruction.Operand is MethodReference called && called.Name == "UnloadUnusedAssets" &&
+            called.DeclaringType.FullName == "UnityEngine.Resources" && !called.HasParameters &&
+            called.ReturnType.FullName == "UnityEngine.AsyncOperation");
+
+        unload.Operand = game.ImportReference(begin);
+
+        var pending = game.ImportReference(isPending);
+        foreach (var name in new[] { "loadMapAsync", "loadMapAsyncFinalize" })
+        {
+            // Both methods return true while more loading work is pending.
+            var load = map.Methods.Single(method => method.Name == name &&
+                method.ReturnType.MetadataType == MetadataType.Boolean && method.HasBody);
+            var first = load.Body.Instructions[0];
+            var il = load.Body.GetILProcessor();
+            il.InsertBefore(first, il.Create(OpCodes.Call, pending));
+            il.InsertBefore(first, il.Create(OpCodes.Brfalse_S, first));
+            il.InsertBefore(first, il.Create(OpCodes.Ldc_I4_1));
+            il.InsertBefore(first, il.Create(OpCodes.Ret));
+        }
     }
 
     internal static void PatchMobileRendering(string managedDirectory)

@@ -212,6 +212,7 @@ internal static class IosStartupPatcher
         var isLowMemoryDevice = cleanup.Methods.Single(method => method.Name == "get_IsLowMemoryDevice" &&
             method.IsStatic && !method.HasParameters && method.ReturnType.MetadataType == MetadataType.Boolean);
         TrimUnusedRenderTextures(game, game.ImportReference(isLowMemoryDevice));
+        LimitRenderBufferScale(game, cleanup);
         RebuildGrowingMapAtlas(game, map, cleanup);
         DeferMapOpenAfterAtlas(game, map, cleanup);
         TraceMapTransitionMemory(game, changeMap, cleanup);
@@ -336,6 +337,23 @@ internal static class IosStartupPatcher
         il.InsertBefore(first, il.Create(OpCodes.Brfalse_S, first));
         il.InsertBefore(first, il.Create(OpCodes.Ldarg_0));
         il.InsertBefore(first, il.Create(OpCodes.Call, recalculate));
+    }
+
+    private static void LimitRenderBufferScale(ModuleDefinition game, TypeDefinition cleanup)
+    {
+        var adjust = cleanup.Methods.Single(method => method.Name == "AdjustRenderBufferScale" &&
+            method.IsStatic && method.Parameters.Count == 1 &&
+            method.Parameters[0].ParameterType.MetadataType == MetadataType.Single &&
+            method.ReturnType.MetadataType == MetadataType.Single);
+        var camera = game.GetType("m2d.M2Camera");
+        var initBuffer = camera.Methods.Single(method => method.Name == "initBufferScreen" &&
+            method.HasBody && method.HasParameters && method.Parameters.Count == 6 &&
+            method.ReturnType.FullName == "UnityEngine.RenderTexture");
+        var first = initBuffer.Body.Instructions[0];
+        var il = initBuffer.Body.GetILProcessor();
+        il.InsertBefore(first, il.Create(OpCodes.Ldarg_2));
+        il.InsertBefore(first, il.Create(OpCodes.Call, game.ImportReference(adjust)));
+        il.InsertBefore(first, il.Create(OpCodes.Starg, initBuffer.Parameters[1]));
     }
 
     private static void TrimUnusedRenderTextures(ModuleDefinition game, MethodReference isLowMemoryDevice)

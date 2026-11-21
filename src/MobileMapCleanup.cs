@@ -6,9 +6,11 @@ namespace AIC.iOS
     {
         private const int LowMemoryDeviceLimitMiB = 3072;
         private const float MemoryWarningCooldownSeconds = 10f;
+        private const long LargeAtlasPixels = 4096L * 2048;
         private static bool? lowMemoryDevice;
         private static AsyncOperation pendingCleanup;
         private static bool cleanupRequested;
+        private static bool atlasRebuildRequested;
         private static int earliestCleanupFrame;
         private static float lastMemoryWarning = float.NegativeInfinity;
         private static float cleanupStartedAt;
@@ -34,6 +36,21 @@ namespace AIC.iOS
         {
             cleanupRequested = true;
             earliestCleanupFrame = Time.frameCount + (IsLowMemoryDevice ? 1 : 0);
+            atlasRebuildRequested = IsLowMemoryDevice;
+        }
+
+        public static bool TakeLargeAtlasRebuild(RenderTexture previousAtlas)
+        {
+            if (!atlasRebuildRequested || cleanupRequested || pendingCleanup != null)
+                return false;
+
+            atlasRebuildRequested = false;
+            if (previousAtlas == null || !previousAtlas.IsCreated() ||
+                (long)previousAtlas.width * previousAtlas.height < LargeAtlasPixels)
+                return false;
+
+            Debug.Log($"[AIC] Rebuilding the {previousAtlas.width}x{previousAtlas.height} map atlas after map close");
+            return true;
         }
 
         internal static void ListenForMemoryWarnings()

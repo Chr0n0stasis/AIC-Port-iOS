@@ -204,6 +204,61 @@ internal static class IosStartupPatcher
         var isLowMemoryDevice = cleanup.Methods.Single(method => method.Name == "get_IsLowMemoryDevice" &&
             method.IsStatic && !method.HasParameters && method.ReturnType.MetadataType == MetadataType.Boolean);
         TrimUnusedRenderTextures(game, game.ImportReference(isLowMemoryDevice));
+        RebuildGrowingMapAtlas(game, map, cleanup);
+    }
+
+    private static void RebuildGrowingMapAtlas(ModuleDefinition game, TypeDefinition map, TypeDefinition cleanup)
+    {
+        var atlas = game.GetType("m2d.M2ImageAtlas");
+        var prepare = atlas.Methods.Single(method => method.Name == "prepareAtlasProgress" &&
+            method.Parameters.Count == 2 && method.ReturnType.MetadataType == MetadataType.Boolean);
+        var recalculate = atlas.Methods.Single(method => method.Name == "recalcAtlasContent" &&
+            !method.HasParameters && method.ReturnType.MetadataType == MetadataType.Void);
+        var takeRebuild = cleanup.Methods.Single(method => method.Name == "TakeLargeAtlasRebuild" &&
+            method.IsStatic && method.Parameters.Count == 1 &&
+            method.Parameters[0].ParameterType.FullName == "UnityEngine.RenderTexture" &&
+            method.ReturnType.MetadataType == MetadataType.Boolean);
+        var owner = atlas.Fields.Single(field => field.Name == "M2D" && field.FieldType.FullName == map.FullName);
+        var currentMap = map.Fields.Single(field => field.Name == "curMap");
+        var loadedIndex = atlas.Fields.Single(field => field.Name == "loaded_index");
+        var directories = atlas.Fields.Single(field => field.Name == "Aloaded_dir");
+        var count = prepare.Body.Instructions.First(instruction => instruction.OpCode == OpCodes.Callvirt &&
+            instruction.Operand is MethodReference method && method.Name == "get_Count" &&
+            instruction.Previous?.Operand is FieldReference field && field.FullName == directories.FullName);
+        var container = atlas.BaseType.Resolve();
+        var getTexture = container.Methods.Single(method => method.Name == "get_Tx" &&
+            !method.HasParameters && method.ReturnType.FullName == "UnityEngine.RenderTexture");
+        var allocator = prepare.Body.Instructions.Single(instruction => instruction.OpCode == OpCodes.Call &&
+            instruction.Operand is MethodReference method &&
+            method.DeclaringType.FullName == container.FullName && method.Name == "initAtlasTextureFirstMemory" &&
+            instruction.Next?.OpCode == OpCodes.Pop);
+        var first = allocator.Next.Next;
+        if (first == null || first.OpCode != OpCodes.Ldarg_0)
+            throw new InvalidOperationException("Unexpected map atlas allocation entry point.");
+
+        // Only a closed map can request this. A full reset uses the stock
+        // atlas rebuild, which clears the old render target before repainting.
+        var il = prepare.Body.GetILProcessor();
+        il.InsertBefore(first, il.Create(OpCodes.Ldarg_0));
+        il.InsertBefore(first, il.Create(OpCodes.Ldfld, owner));
+        il.InsertBefore(first, il.Create(OpCodes.Ldfld, currentMap));
+        il.InsertBefore(first, il.Create(OpCodes.Brtrue_S, first));
+        il.InsertBefore(first, il.Create(OpCodes.Ldarg_0));
+        il.InsertBefore(first, il.Create(OpCodes.Ldfld, loadedIndex));
+        il.InsertBefore(first, il.Create(OpCodes.Ldc_I4_0));
+        il.InsertBefore(first, il.Create(OpCodes.Blt_S, first));
+        il.InsertBefore(first, il.Create(OpCodes.Ldarg_0));
+        il.InsertBefore(first, il.Create(OpCodes.Ldfld, directories));
+        il.InsertBefore(first, il.Create(OpCodes.Callvirt, (MethodReference)count.Operand));
+        il.InsertBefore(first, il.Create(OpCodes.Ldarg_0));
+        il.InsertBefore(first, il.Create(OpCodes.Ldfld, loadedIndex));
+        il.InsertBefore(first, il.Create(OpCodes.Ble_S, first));
+        il.InsertBefore(first, il.Create(OpCodes.Ldarg_0));
+        il.InsertBefore(first, il.Create(OpCodes.Call, getTexture));
+        il.InsertBefore(first, il.Create(OpCodes.Call, game.ImportReference(takeRebuild)));
+        il.InsertBefore(first, il.Create(OpCodes.Brfalse_S, first));
+        il.InsertBefore(first, il.Create(OpCodes.Ldarg_0));
+        il.InsertBefore(first, il.Create(OpCodes.Call, recalculate));
     }
 
     private static void TrimUnusedRenderTextures(ModuleDefinition game, MethodReference isLowMemoryDevice)

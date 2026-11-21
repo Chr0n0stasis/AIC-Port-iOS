@@ -392,15 +392,17 @@ internal static class IosStartupPatcher
             method.Name == "AdjustPixelTextureDimension" && method.IsStatic &&
             method.Parameters.Count == 1 && method.Parameters[0].ParameterType.MetadataType == MetadataType.Int32 &&
             method.ReturnType.MetadataType == MetadataType.Int32);
-        var method = assembly.MainModule.GetType("PxlsTexture").Methods.Single(candidate =>
+        var method = assembly.MainModule.GetType("PixelLiner.PxlsTexture").Methods.Single(candidate =>
             candidate.Name == "CopyToRenderTexture" && candidate.Parameters.Count == 2 &&
             candidate.Parameters[0].ParameterType.FullName == "UnityEngine.Texture");
         var constructor = method.Body.Instructions.Single(instruction =>
             instruction.OpCode == OpCodes.Newobj && instruction.Operand is MethodReference called &&
-            called.DeclaringType.FullName == "UnityEngine.RenderTexture" && called.Parameters.Count == 6);
-        var window = method.Body.Instructions.SkipWhile(instruction => instruction != constructor).TakeLast(8).ToArray();
-        var width = window.Single(instruction => Calls(instruction, "UnityEngine.Texture", "get_width"));
-        var height = window.Single(instruction => Calls(instruction, "UnityEngine.Texture", "get_height"));
+            called.DeclaringType.FullName == "UnityEngine.RenderTexture" && called.Name == ".ctor");
+        var beforeConstructor = method.Body.Instructions.TakeWhile(instruction => instruction != constructor).Reverse().ToArray();
+        var width = beforeConstructor.First(instruction =>
+            instruction.Operand is MethodReference called && called.Name == "get_width");
+        var height = beforeConstructor.First(instruction =>
+            instruction.Operand is MethodReference called && called.Name == "get_height");
         var il = method.Body.GetILProcessor();
         il.InsertAfter(width, il.Create(OpCodes.Call, assembly.MainModule.ImportReference(adjust)));
         il.InsertAfter(height, il.Create(OpCodes.Call, assembly.MainModule.ImportReference(adjust)));
